@@ -2,6 +2,7 @@ import React from 'react';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import { Button, Result, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { withLocale } from '@/lib/i18n';
 
 const { Paragraph, Text } = Typography;
 
@@ -28,14 +29,14 @@ const ErrorResult: React.FC<ErrorResultProps> = ({
     <Button 
       type="primary" 
       key="console"
-      onClick={onGoConsole || (() => navigate('/dashboard'))}
+      onClick={onGoConsole || (() => navigate(withLocale('/admin/dashboard')))}
       className="bg-red-600 hover:bg-red-700 border-red-600"
     >
       Quay lại trang chủ
     </Button>,
     <Button 
       key="buy" 
-      onClick={onBuyAgain || (() => navigate('/'))}
+      onClick={onBuyAgain || (() => navigate(withLocale('/')))}
     >
       Thử lại
     </Button>,

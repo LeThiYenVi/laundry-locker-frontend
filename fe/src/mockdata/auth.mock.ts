@@ -43,10 +43,10 @@ export const mockUsers: User[] = [
 
 // Mock Login Credentials
 export const mockCredentials = {
-  admin: { username: "admin", password: "admin123" },
-  manager: { username: "manager", password: "manager123" },
-  staff: { username: "staff", password: "staff123" },
-  customer: { username: "customer", password: "customer123" },
+  admin: { username: "admin@laundry.com", password: "admin123" },
+  manager: { username: "manager@laundry.com", password: "manager123" },
+  staff: { username: "staff@laundry.com", password: "staff123" },
+  customer: { username: "customer@laundry.com", password: "customer123" },
 };
 
 // Mock Auth API

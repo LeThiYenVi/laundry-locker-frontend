@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { withLocale } from '@/lib/i18n';
 
 interface SuccessResultProps {
   title?: string;
@@ -23,14 +24,14 @@ const SuccessResult: React.FC<SuccessResultProps> = ({
     <Button 
       type="primary" 
       key="console"
-      onClick={onGoConsole || (() => navigate('/dashboard'))}
+      onClick={onGoConsole || (() => navigate(withLocale('/admin/dashboard')))}
       className="bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
     >
       Xem đơn hàng
     </Button>,
     <Button 
       key="buy" 
-      onClick={onBuyAgain || (() => navigate('/'))}
+      onClick={onBuyAgain || (() => navigate(withLocale('/')))}
     >
       Đặt xe khác
     </Button>,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { withLocale } from '@/lib/i18n';
 
 interface WarningResultProps {
   title?: string;
@@ -21,7 +22,7 @@ const WarningResult: React.FC<WarningResultProps> = ({
     <Button 
       type="primary" 
       key="console"
-      onClick={onGoConsole || (() => navigate('/'))}
+      onClick={onGoConsole || (() => navigate(withLocale('/')))}
       className="bg-orange-600 hover:bg-orange-700 border-orange-600"
     >
       Thử lại

@@ -2,13 +2,9 @@ import { Outlet } from "react-router-dom";
 
 const AuthLayout = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-50">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-center text-2xl font-bold mb-6">Hệ thống Admin</h2>
-        
-        <Outlet /> 
-        
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-blue-50">
+      {/* Allow child routes to control layout (no fixed card wrapper) */}
+      <Outlet />
     </div>
   );
 };

@@ -2,7 +2,6 @@ import React from 'react';
 import { SmileOutlined, CheckCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, notification } from 'antd';
 import type { NotificationArgsProps } from 'antd';
-import './notifications.css';
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error' | 'custom';
 

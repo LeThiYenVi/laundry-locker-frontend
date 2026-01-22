@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { withLocale } from '@/lib/i18n';
 
 interface Result500Props {
   title?: string;
@@ -20,7 +21,7 @@ const Result500: React.FC<Result500Props> = ({
   const defaultExtra = (
     <Button 
       type="primary" 
-      onClick={onBackHome || (() => navigate('/'))}
+      onClick={onBackHome || (() => navigate(withLocale('/')))}
       className="bg-red-600 hover:bg-red-700 border-red-600"
     >
       Quay về trang chủ

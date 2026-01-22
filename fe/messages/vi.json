@@ -1,1 +1,61 @@
-{}
+{
+	"brand": {
+		"title": "LockerWash",
+		"subtitle": "Tủ giặt thông minh, theo yêu cầu"
+	},
+	"signin": {
+		"title": "Đăng nhập vào tài khoản của bạn"
+	},
+	"label": {
+		"email": "E-mail",
+		"password": "Mật khẩu"
+	},
+	"placeholder": {
+		"email": "you@domain.com",
+		"password": "••••••••"
+	},
+	"link": {
+		"forgot": "Quên mật khẩu?"
+	},
+	"info": {
+		"devHint": "Cần truy cập? Nhấn Login để sử dụng tài khoản giả lập (dev)."
+	},
+	"right": {
+		"title": "Quần áo sạch, theo lịch của bạn.",
+		"subtitle": "Truy cập tủ 24/7"
+	},
+	"button": {
+		"login": "Đăng nhập"
+	}
+,
+	"admin": {
+		"orders": {
+			"title": "Đơn hàng",
+			"empty": "Chưa có đơn hàng",
+			"table": {
+				"id": "Mã",
+				"customer": "Khách hàng",
+				"status": "Trạng thái",
+				"total": "Tổng"
+			}
+		},
+		"feedback": {
+			"title": "Phản hồi",
+			"empty": "Chưa có phản hồi"
+		},
+		"partners": {
+			"title": "Đối tác",
+			"empty": "Chưa có đối tác"
+		}
+	}
+	,
+	"lockers": {
+		"title": "Tủ",
+		"empty": "Chưa có tủ nào",
+		"table": {
+			"id": "Mã tủ",
+			"location": "Vị trí",
+			"status": "Trạng thái"
+		}
+	}
+}

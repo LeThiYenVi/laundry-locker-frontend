@@ -6,6 +6,7 @@ import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import LockrIcon from '~/components/ui/LockrIcon';
 
 function DashboardPage() {
   const [activeTab, setActiveTab] = useState('Organization');
@@ -35,7 +36,7 @@ function DashboardPage() {
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-4xl font-bold text-gray-900">My Organization</h1>
+          <h1 className="text-4xl font-bold text-gray-900">My Organization  </h1>
 
           <div className="flex gap-3">
             <Button variant="outline" size="default" className="flex items-center gap-2">
