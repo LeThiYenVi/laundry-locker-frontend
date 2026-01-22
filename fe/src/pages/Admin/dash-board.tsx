@@ -1,6 +1,11 @@
 import { Settings, Plus, TrendingUp, Database, ChevronDown, Users, BookOpen, HelpCircle, Briefcase } from 'lucide-react';
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 function DashboardPage() {
   const [activeTab, setActiveTab] = useState('Organization');
@@ -31,41 +36,37 @@ function DashboardPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-4xl font-bold text-gray-900">My Organization</h1>
-          
+
           <div className="flex gap-3">
-            <button className="px-6 py-2.5 border-2 border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <Button variant="outline" size="default" className="flex items-center gap-2">
               <Settings size={18} />
               Settings
-            </button>
-            <button className="px-6 py-2.5 bg-pink-200 rounded-xl font-medium text-gray-900 hover:bg-pink-300 transition-colors flex items-center gap-2">
+            </Button>
+            <Button size="default" className="flex items-center gap-2 bg-pink-200 text-gray-900 hover:bg-pink-300">
               <Plus size={18} />
               Create a new scenario
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Tabs Navigation */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all duration-200 ${
-                activeTab === tab
-                  ? 'bg-black text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+          <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v)}>
+            <TabsList>
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab} value={tab} className="rounded-full px-5 py-2.5">
+                  {tab}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
       {/* Top Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Operations Card */}
-        <div className="bg-linear-to-br from-blue-100 to-blue-50 rounded-3xl p-6 border border-blue-200">
+        <Card className="bg-linear-to-br from-blue-100 to-blue-50 rounded-3xl p-6 border border-blue-200">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-white rounded-xl">
               <TrendingUp className="text-blue-600" size={24} />
@@ -87,10 +88,10 @@ function DashboardPage() {
               />
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Data Transfer Card */}
-        <div className="bg-linear-to-br from-cyan-100 to-cyan-50 rounded-3xl p-6 border border-cyan-200">
+        <Card className="bg-linear-to-br from-cyan-100 to-cyan-50 rounded-3xl p-6 border border-cyan-200">
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-white rounded-xl">
               <Database className="text-cyan-600" size={24} />
@@ -112,37 +113,35 @@ function DashboardPage() {
               />
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Promo Card */}
-        <div className="bg-linear-to-br from-gray-900 to-black rounded-3xl p-6 text-white flex flex-col justify-between">
+        <Card className="bg-linear-to-br from-gray-900 to-black rounded-3xl p-6 text-white flex flex-col justify-between">
           <div>
             <h3 className="text-xl font-bold mb-2">Take Your Automation to the Next Level</h3>
             <p className="text-gray-400 text-sm mb-6">
               Unlock advanced features and unlimited operations
             </p>
           </div>
-          <button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
-            Upgrade
-          </button>
-        </div>
+          <Button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">Upgrade</Button>
+        </Card>
       </div>
 
       {/* Statistics Section */}
       <div className="bg-white rounded-3xl p-8 mb-8 border border-gray-200">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Statistics</h2>
-          <div className="relative">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="appearance-none px-4 py-2 pr-10 bg-gray-100 rounded-xl font-medium text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
-            >
-              <option>2025</option>
-              <option>2024</option>
-              <option>2023</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={20} />
+          <div className="relative w-40">
+            <Select value={selectedYear} onValueChange={(v) => setSelectedYear(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder={selectedYear} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2023">2023</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -183,15 +182,19 @@ function DashboardPage() {
           {recommendations.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <div
+              <Card
                 key={idx}
                 className="bg-white rounded-3xl p-8 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-lg cursor-pointer group"
               >
                 <div className={`w-16 h-16 bg-linear-to-br ${item.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                  <Icon className="text-white" size={28} />
+                  <Avatar className="!bg-transparent shadow-none p-0">
+                    <AvatarFallback className="!bg-transparent">
+                      <Icon className="text-white" size={28} />
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">{item.label}</h3>
-              </div>
+              </Card>
             );
           })}
         </div>

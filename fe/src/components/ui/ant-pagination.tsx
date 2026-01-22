@@ -46,7 +46,6 @@ const AntPagination: React.FC<AntPaginationProps> = ({
       onChange={handleChange}
       onShowSizeChange={handleShowSizeChange}
       pageSizeOptions={['10', '20', '50', '100']}
-      size="default"
       className="text-center"
     />
   );
