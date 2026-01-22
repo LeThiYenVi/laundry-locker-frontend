@@ -1,18 +1,27 @@
 import { Settings, Plus, TrendingUp, Database, ChevronDown, Users, BookOpen, HelpCircle, Briefcase } from 'lucide-react';
 import { useState } from 'react';
+import { t } from '@/lib/i18n';
+import { ADMIN_DASHBOARD } from '@/constants/adminpage.constants';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import LockrIcon from '~/components/ui/LockrIcon';
 
 function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('Organization');
+  const [activeTab, setActiveTab] = useState(t(ADMIN_DASHBOARD.TABS.ORGANIZATION));
   const [selectedYear, setSelectedYear] = useState('2025');
 
-  const tabs = ['Organization', 'Teams', 'Users', 'Subscription', 'Payment', 'Installed apps', 'Variables'];
+  const tabs = [
+    t(ADMIN_DASHBOARD.TABS.ORGANIZATION),
+    t(ADMIN_DASHBOARD.TABS.TEAMS),
+    t(ADMIN_DASHBOARD.TABS.USERS),
+    t(ADMIN_DASHBOARD.TABS.SUBSCRIPTION),
+    t(ADMIN_DASHBOARD.TABS.PAYMENT),
+    t(ADMIN_DASHBOARD.TABS.INSTALLED_APPS),
+    t(ADMIN_DASHBOARD.TABS.VARIABLES),
+  ];
 
   // Sample data for chart
   const chartData = [
@@ -36,16 +45,16 @@ function DashboardPage() {
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-4xl font-bold text-gray-900">My Organization  </h1>
+          <h1 className="text-4xl font-bold text-gray-900">{t(ADMIN_DASHBOARD.TITLE)}</h1>
 
           <div className="flex gap-3">
             <Button variant="outline" size="default" className="flex items-center gap-2">
               <Settings size={18} />
-              Settings
+              {t(ADMIN_DASHBOARD.SETTINGS)}
             </Button>
             <Button size="default" className="flex items-center gap-2 bg-pink-200 text-gray-900 hover:bg-pink-300">
               <Plus size={18} />
-              Create a new scenario
+              {t(ADMIN_DASHBOARD.CREATE_SCENARIO)}
             </Button>
           </div>
         </div>
@@ -73,11 +82,11 @@ function DashboardPage() {
               <TrendingUp className="text-blue-600" size={24} />
             </div>
             <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
-              72% Used
+              72% {t(ADMIN_DASHBOARD.USED)}
             </span>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Operations</h3>
-          <p className="text-sm text-gray-600 mb-4">10,000 / 13,889</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">{t(ADMIN_DASHBOARD.CARDS.OPERATIONS_TITLE)}</h3>
+          <p className="text-sm text-gray-600 mb-4">{t(ADMIN_DASHBOARD.CARDS.OPERATIONS_SUBTITLE)}</p>
           {/* Progress Bar */}
           <div className="flex gap-1 h-2">
             {[...Array(10)].map((_, i) => (
@@ -93,16 +102,16 @@ function DashboardPage() {
 
         {/* Data Transfer Card */}
         <Card className="bg-linear-to-br from-cyan-100 to-cyan-50 rounded-3xl p-6 border border-cyan-200">
-          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-white rounded-xl">
               <Database className="text-cyan-600" size={24} />
             </div>
-            <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
-              32% Used
-            </span>
+              <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
+                32% {t(ADMIN_DASHBOARD.USED)}
+              </span>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Data transfer</h3>
-          <p className="text-sm text-gray-600 mb-4">3.2 GB / 10 GB</p>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">{t(ADMIN_DASHBOARD.CARDS.DATA_TITLE)}</h3>
+          <p className="text-sm text-gray-600 mb-4">{t(ADMIN_DASHBOARD.CARDS.DATA_SUBTITLE)}</p>
           {/* Progress Bar */}
           <div className="flex gap-1 h-2">
             {[...Array(10)].map((_, i) => (
@@ -119,23 +128,21 @@ function DashboardPage() {
         {/* Promo Card */}
         <Card className="bg-linear-to-br from-gray-900 to-black rounded-3xl p-6 text-white flex flex-col justify-between">
           <div>
-            <h3 className="text-xl font-bold mb-2">Take Your Automation to the Next Level</h3>
-            <p className="text-gray-400 text-sm mb-6">
-              Unlock advanced features and unlimited operations
-            </p>
+            <h3 className="text-xl font-bold mb-2">{t(ADMIN_DASHBOARD.CARDS.PROMO_TITLE)}</h3>
+            <p className="text-gray-400 text-sm mb-6">{t(ADMIN_DASHBOARD.CARDS.PROMO_SUBTITLE)}</p>
           </div>
-          <Button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">Upgrade</Button>
+          <Button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">{t(ADMIN_DASHBOARD.CARDS.PROMO_CTA)}</Button>
         </Card>
       </div>
 
       {/* Statistics Section */}
       <div className="bg-white rounded-3xl p-8 mb-8 border border-gray-200">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Statistics</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t(ADMIN_DASHBOARD.STATISTICS.TITLE)}</h2>
           <div className="relative w-40">
             <Select value={selectedYear} onValueChange={(v) => setSelectedYear(v)}>
               <SelectTrigger>
-                <SelectValue placeholder={selectedYear} />
+                <SelectValue placeholder={t(ADMIN_DASHBOARD.STATISTICS.YEAR_PLACEHOLDER)} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="2025">2025</SelectItem>
@@ -178,23 +185,29 @@ function DashboardPage() {
 
       {/* Recommendations Section */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Recommended for you</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t(ADMIN_DASHBOARD.RECOMMENDATIONS.TITLE)}</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {recommendations.map((item, idx) => {
             const Icon = item.icon;
+            const labelKey = [
+              ADMIN_DASHBOARD.RECOMMENDATIONS.COMMUNITY,
+              ADMIN_DASHBOARD.RECOMMENDATIONS.ACADEMY,
+              ADMIN_DASHBOARD.RECOMMENDATIONS.HELPCENTER,
+              ADMIN_DASHBOARD.RECOMMENDATIONS.PARTNER_DIRECTORY,
+            ][idx];
             return (
               <Card
                 key={idx}
                 className="bg-white rounded-3xl p-8 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-lg cursor-pointer group"
               >
                 <div className={`w-16 h-16 bg-linear-to-br ${item.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                  <Avatar className="!bg-transparent shadow-none p-0">
-                    <AvatarFallback className="!bg-transparent">
+                  <Avatar className="bg-transparent! shadow-none p-0">
+                    <AvatarFallback className="bg-transparent!">
                       <Icon className="text-white" size={28} />
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">{item.label}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t(labelKey)}</h3>
               </Card>
             );
           })}

@@ -47,6 +47,119 @@
 			"title": "Partners",
 			"empty": "No partners added"
 		}
+		,
+		"dashboard": {
+			"title": "My Organization",
+			"settings": "Settings",
+			"createScenario": "Create a new scenario",
+			"tabs": {
+				"organization": "Organization",
+				"teams": "Teams",
+				"users": "Users",
+				"subscription": "Subscription",
+				"payment": "Payment",
+				"installedApps": "Installed apps",
+				"variables": "Variables"
+			},
+			"cards": {
+				"operations": {
+					"title": "Operations",
+					"subtitle": "10,000 / 13,889",
+					"used": "%{percent} Used"
+				},
+				"dataTransfer": {
+					"title": "Data transfer",
+					"subtitle": "3.2 GB / 10 GB",
+					"used": "%{percent} Used"
+				},
+				"promo": {
+					"title": "Take Your Automation to the Next Level",
+					"subtitle": "Unlock advanced features and unlimited operations",
+					"cta": "Upgrade"
+				}
+			},
+			"statistics": {
+				"title": "Statistics",
+				"yearSelectPlaceholder": "Select year"
+			},
+			"recommendations": {
+				"title": "Recommended for you",
+				"community": "Community",
+				"academy": "Academy",
+				"helpCenter": "Help center",
+				"partnerDirectory": "Partner directory"
+			},
+			"used": "Used"
+		},
+		"users": {
+			"header": {
+				"allUsers": "All Users:",
+				"projects": "Projects:"
+			},
+			"table": {
+				"settings": "Table settings",
+				"columns": {
+					"user": "User",
+					"role": "User Role",
+					"status": "Status",
+					"social": "Social",
+					"promote": "Promote",
+					"rating": "Rating",
+					"lastLogin": "Last Login"
+				}
+			},
+			"toolbar": {
+				"add": "Add new user",
+				"suspendAll": "Suspend all",
+				"archiveAll": "Archive all",
+				"deleteAll": "Delete all"
+			}
+		}
+	}
+,
+	"dashboard": {
+		"title": "My Organization",
+		"settings": "Settings",
+		"createScenario": "Create a new scenario",
+		"tabs": {
+			"organization": "Organization",
+			"teams": "Teams",
+			"users": "Users",
+			"subscription": "Subscription",
+			"payment": "Payment",
+			"installedApps": "Installed apps",
+			"variables": "Variables"
+		},
+		"cards": {
+			"operations": {
+				"title": "Operations",
+				"subtitle": "10,000 / 13,889",
+				"used": "%{percent} Used"
+			},
+			"dataTransfer": {
+				"title": "Data transfer",
+				"subtitle": "3.2 GB / 10 GB",
+				"used": "%{percent} Used"
+			},
+			"promo": {
+				"title": "Take Your Automation to the Next Level",
+				"subtitle": "Unlock advanced features and unlimited operations",
+				"cta": "Upgrade"
+			}
+		},
+		"statistics": {
+			"title": "Statistics",
+			"yearSelectPlaceholder": "Select year"
+		},
+		"recommendations": {
+			"title": "Recommended for you",
+			"community": "Community",
+			"academy": "Academy",
+			"helpCenter": "Help center",
+			"partnerDirectory": "Partner directory"
+		}
+		,
+		"used": "Used"
 	}
 	,
 	"lockers": {

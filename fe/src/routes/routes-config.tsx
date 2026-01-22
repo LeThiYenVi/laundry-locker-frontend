@@ -8,6 +8,8 @@ import OrdersPage from "../pages/Admin/orders";
 import FeedbackPage from "../pages/Admin/feedback";
 import PartnersPage from "../pages/Admin/partners";
 import LockersPage from "../pages/Admin/lockers";
+import UsersPage from "../pages/Admin/users";
+import SettingsPage from "../pages/Admin/settings";
 import { Navigate } from "react-router-dom";
 import LoginPage from "~/pages/auth/Login";
 import RootLayout from "../pages/RootLayout";
@@ -41,7 +43,9 @@ const routesConfig: RouteObject[] = [
         children: [
           { path: "dashboard", element: <DashboardPage /> },
           { path: "lockers", element: <LockersPage /> },
+          { path: "users", element: <UsersPage /> },
           { path: "orders", element: <OrdersPage /> },
+          { path: "settings", element: <SettingsPage /> },
           { path: "feedback", element: <FeedbackPage /> },
           { path: "partners", element: <PartnersPage /> },
           {

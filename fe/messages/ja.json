@@ -47,6 +47,119 @@
 			"title": "パートナー",
 			"empty": "パートナーがいません"
 		}
+		,
+		"dashboard": {
+			"title": "私の組織",
+			"settings": "設定",
+			"createScenario": "新しいシナリオを作成",
+			"tabs": {
+				"organization": "組織",
+				"teams": "チーム",
+				"users": "ユーザー",
+				"subscription": "サブスクリプション",
+				"payment": "支払い",
+				"installedApps": "インストール済みアプリ",
+				"variables": "変数"
+			},
+			"cards": {
+				"operations": {
+					"title": "オペレーション",
+					"subtitle": "10,000 / 13,889",
+					"used": "%{percent} 使用"
+				},
+				"dataTransfer": {
+					"title": "データ転送",
+					"subtitle": "3.2 GB / 10 GB",
+					"used": "%{percent} 使用"
+				},
+				"promo": {
+					"title": "自動化を次のレベルへ",
+					"subtitle": "高度な機能と無制限の操作をアンロック",
+					"cta": "アップグレード"
+				}
+			},
+			"statistics": {
+				"title": "統計",
+				"yearSelectPlaceholder": "年を選択"
+			},
+			"recommendations": {
+				"title": "おすすめ",
+				"community": "コミュニティ",
+				"academy": "アカデミー",
+				"helpCenter": "ヘルプセンター",
+				"partnerDirectory": "パートナーディレクトリ"
+			},
+			"used": "使用"
+		},
+		"users": {
+			"header": {
+				"allUsers": "すべてのユーザー:",
+				"projects": "プロジェクト:"
+			},
+			"table": {
+				"settings": "テーブル設定",
+				"columns": {
+					"user": "ユーザー",
+					"role": "役割",
+					"status": "ステータス",
+					"social": "ソーシャル",
+					"promote": "昇格",
+					"rating": "評価",
+					"lastLogin": "最終ログイン"
+				}
+			},
+			"toolbar": {
+				"add": "ユーザーを追加",
+				"suspendAll": "すべてを一時停止",
+				"archiveAll": "すべてをアーカイブ",
+				"deleteAll": "すべて削除"
+			}
+		}
+	}
+,
+	"dashboard": {
+		"title": "私の組織",
+		"settings": "設定",
+		"createScenario": "新しいシナリオを作成",
+		"tabs": {
+			"organization": "組織",
+			"teams": "チーム",
+			"users": "ユーザー",
+			"subscription": "サブスクリプション",
+			"payment": "支払い",
+			"installedApps": "インストール済みアプリ",
+			"variables": "変数"
+		},
+		"cards": {
+			"operations": {
+				"title": "オペレーション",
+				"subtitle": "10,000 / 13,889",
+				"used": "%{percent} 使用"
+			},
+			"dataTransfer": {
+				"title": "データ転送",
+				"subtitle": "3.2 GB / 10 GB",
+				"used": "%{percent} 使用"
+			},
+			"promo": {
+				"title": "自動化を次のレベルへ",
+				"subtitle": "高度な機能と無制限の操作をアンロック",
+				"cta": "アップグレード"
+			}
+		},
+		"statistics": {
+			"title": "統計",
+			"yearSelectPlaceholder": "年を選択"
+		},
+		"recommendations": {
+			"title": "おすすめ",
+			"community": "コミュニティ",
+			"academy": "アカデミー",
+			"helpCenter": "ヘルプセンター",
+			"partnerDirectory": "パートナーディレクトリ"
+		}
+		,
+		"used": "使用"
 	}
 	,
 	"lockers": {

@@ -1,4 +1,4 @@
-import { Home, Network, Truck, Link2, Globe, Users, Package, BarChart3, Calendar } from "lucide-react";
+import { Home, Network, Truck, Link2, Globe, Users, Package, BarChart3, Calendar, ListOrdered, Users2, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -16,16 +16,16 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "Dashboard" 
   },
   { 
-    icon: Network, 
-    path: "/admin/network", 
-    label: "Network",
-    permission: "view_network"
-  },
-  { 
     icon: Truck, 
     path: "/admin/lockers", 
     label: "Lockers",
     permission: "manage_lockers"
+  },
+  { 
+    icon: UserCog, 
+    path: "/admin/users", 
+    label: "Users",
+    permission: "manage_users"
   },
   { 
     icon: Package, 
@@ -33,35 +33,19 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "Orders",
     permission: "view_orders"
   },
+
+
+  { 
+    icon: ListOrdered, 
+    path: "/admin/feedback", 
+    label: "Feedback",
+    permission: "manage_feedback"
+  },
   { 
     icon: Users, 
-    path: "/admin/users", 
-    label: "Users",
-    permission: "manage_users"
-  },
-  { 
-    icon: BarChart3, 
-    path: "/admin/analytics", 
-    label: "Analytics",
-    permission: "view_analytics"
-  },
-  { 
-    icon: Calendar, 
-    path: "/admin/schedule", 
-    label: "Schedule",
-    permission: "view_schedule"
-  },
-  { 
-    icon: Link2, 
-    path: "/admin/integrations", 
-    label: "Integrations",
-    permission: "manage_integrations"
-  },
-  { 
-    icon: Globe, 
-    path: "/admin/settings", 
-    label: "Settings",
-    permission: "manage_settings"
+    path: "/admin/partners", 
+    label: "Partners",
+    permission: "manage_partners"
   },
 ];
 
