@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Card, CardContent, Button } from "~/components/ui";
+import { ChartBar } from "lucide-react";
 import { t } from "@/lib/i18n";
 
 const samplePartners: Array<{ id: string; name: string; contact: string }> = [];
@@ -8,7 +9,10 @@ export default function PartnersPage(): React.JSX.Element {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">{t("admin.partners.title")}</h1>
+        <div className="flex items-center gap-3">
+          <ChartBar size={20} className="text-gray-600" />
+          <h1 className="text-2xl font-semibold">{t("admin.partners.title")}</h1>
+        </div>
         <Button size="sm">Add Partner</Button>
       </div>
 
