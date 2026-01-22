@@ -31,7 +31,7 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary via-transparent to-secondary relative overflow-hidden w-full">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-900 via-transparent to-orange-200  relative overflow-hidden w-full">
       {/* Background abstract waves */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
