@@ -1,0 +1,706 @@
+import { ThemedText } from "@/components/themed-text";
+import { Icon } from "@rneui/themed";
+import {
+  Dimensions,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+const { width } = Dimensions.get("window");
+
+export default function ExploreScreen() {
+  const featuredServices = [
+    {
+      id: 1,
+      title: "Express Laundry",
+      subtitle: "Giặt nhanh trong 2 giờ",
+      icon: "bolt",
+      color: "#FF9800",
+      gradient: ["#FF9800", "#F57C00"],
+    },
+    {
+      id: 2,
+      title: "Premium Care",
+      subtitle: "Chăm sóc đặc biệt",
+      icon: "workspace-premium",
+      color: "#9C27B0",
+      gradient: ["#9C27B0", "#7B1FA2"],
+    },
+    {
+      id: 3,
+      title: "Eco Friendly",
+      subtitle: "Thân thiện môi trường",
+      icon: "eco",
+      color: "#4CAF50",
+      gradient: ["#4CAF50", "#388E3C"],
+    },
+  ];
+
+  const popularServices = [
+    {
+      id: 1,
+      name: "Giặt ủi cao cấp",
+      price: "120.000 VND",
+      rating: 4.8,
+      reviews: 256,
+      icon: "local-laundry-service",
+      tag: "Phổ biến",
+    },
+    {
+      id: 2,
+      name: "Giặt hấp khử khuẩn",
+      price: "150.000 VND",
+      rating: 4.9,
+      reviews: 189,
+      icon: "sanitizer",
+      tag: "Mới",
+    },
+    {
+      id: 3,
+      name: "Giặt thảm & chăn",
+      price: "200.000 VND",
+      rating: 4.7,
+      reviews: 142,
+      icon: "bed",
+      tag: "Ưu đãi",
+    },
+  ];
+
+  const tips = [
+    {
+      id: 1,
+      title: "Cách phân loại quần áo đúng cách",
+      category: "Hướng dẫn",
+      icon: "lightbulb",
+      color: "#FFC107",
+    },
+    {
+      id: 2,
+      title: "5 lợi ích của dịch vụ giặt ủi",
+      category: "Kiến thức",
+      icon: "article",
+      color: "#2196F3",
+    },
+    {
+      id: 3,
+      title: "Tiết kiệm thời gian với locker",
+      category: "Tips",
+      icon: "schedule",
+      color: "#4CAF50",
+    },
+  ];
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View>
+            <ThemedText style={styles.headerGreeting}>Khám phá</ThemedText>
+            <ThemedText style={styles.headerTitle}>Dịch vụ & Ưu đãi</ThemedText>
+          </View>
+          <TouchableOpacity style={styles.searchButton}>
+            <Icon name="search" type="material" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Featured Services Banner */}
+        <View style={styles.section}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.featuredScroll}
+          >
+            {featuredServices.map((service) => (
+              <TouchableOpacity
+                key={service.id}
+                style={[
+                  styles.featuredCard,
+                  { backgroundColor: service.color },
+                ]}
+                activeOpacity={0.8}
+              >
+                <View style={styles.featuredIcon}>
+                  <Icon
+                    name={service.icon}
+                    type="material"
+                    size={32}
+                    color="#fff"
+                  />
+                </View>
+                <View style={styles.featuredContent}>
+                  <ThemedText style={styles.featuredTitle}>
+                    {service.title}
+                  </ThemedText>
+                  <ThemedText style={styles.featuredSubtitle}>
+                    {service.subtitle}
+                  </ThemedText>
+                </View>
+                <Icon
+                  name="arrow-forward"
+                  type="material"
+                  size={24}
+                  color="rgba(255, 255, 255, 0.8)"
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Popular Services */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>
+              Dịch vụ phổ biến
+            </ThemedText>
+            <TouchableOpacity>
+              <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          {popularServices.map((service) => (
+            <TouchableOpacity
+              key={service.id}
+              style={styles.serviceCard}
+              activeOpacity={0.7}
+            >
+              <View style={styles.serviceIconContainer}>
+                <Icon
+                  name={service.icon}
+                  type="material"
+                  size={32}
+                  color="#003D5B"
+                />
+              </View>
+              <View style={styles.serviceInfo}>
+                <View style={styles.serviceHeader}>
+                  <ThemedText style={styles.serviceName}>
+                    {service.name}
+                  </ThemedText>
+                  {service.tag && (
+                    <View
+                      style={[
+                        styles.serviceTag,
+                        service.tag === "Phổ biến" && styles.popularTag,
+                        service.tag === "Mới" && styles.newTag,
+                        service.tag === "Ưu đãi" && styles.discountTag,
+                      ]}
+                    >
+                      <ThemedText style={styles.serviceTagText}>
+                        {service.tag}
+                      </ThemedText>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.serviceDetails}>
+                  <View style={styles.serviceRating}>
+                    <Icon
+                      name="star"
+                      type="material"
+                      size={14}
+                      color="#FFD700"
+                    />
+                    <ThemedText style={styles.ratingText}>
+                      {service.rating}
+                    </ThemedText>
+                    <ThemedText style={styles.reviewsText}>
+                      ({service.reviews})
+                    </ThemedText>
+                  </View>
+                  <ThemedText style={styles.servicePrice}>
+                    {service.price}
+                  </ThemedText>
+                </View>
+              </View>
+              <Icon
+                name="chevron-right"
+                type="material"
+                size={24}
+                color="#999"
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Promotional Banner */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.promoBanner} activeOpacity={0.8}>
+            <View style={styles.promoContent}>
+              <View style={styles.promoIcon}>
+                <Icon
+                  name="local-offer"
+                  type="material"
+                  size={32}
+                  color="#fff"
+                />
+              </View>
+              <View style={styles.promoText}>
+                <ThemedText style={styles.promoTitle}>
+                  Giảm 30% cho đơn hàng đầu tiên
+                </ThemedText>
+                <ThemedText style={styles.promoSubtitle}>
+                  Sử dụng mã: WELCOME30
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.promoButton}>
+              <ThemedText style={styles.promoButtonText}>Nhận ngay</ThemedText>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Tips & Guides */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>
+              Tips & Hướng dẫn
+            </ThemedText>
+            <TouchableOpacity>
+              <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tipsScroll}
+          >
+            {tips.map((tip) => (
+              <TouchableOpacity
+                key={tip.id}
+                style={styles.tipCard}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.tipIcon, { backgroundColor: tip.color }]}>
+                  <Icon
+                    name={tip.icon}
+                    type="material"
+                    size={28}
+                    color="#fff"
+                  />
+                </View>
+                <View style={styles.tipBadge}>
+                  <ThemedText style={styles.tipBadgeText}>
+                    {tip.category}
+                  </ThemedText>
+                </View>
+                <ThemedText style={styles.tipTitle}>{tip.title}</ThemedText>
+                <View style={styles.tipFooter}>
+                  <ThemedText style={styles.tipReadMore}>Đọc thêm</ThemedText>
+                  <Icon
+                    name="arrow-forward"
+                    type="material"
+                    size={16}
+                    color="#003D5B"
+                  />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Why Choose Us */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>
+            Tại sao chọn chúng tôi?
+          </ThemedText>
+
+          <View style={styles.featureGrid}>
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Icon
+                  name="verified"
+                  type="material"
+                  size={32}
+                  color="#4CAF50"
+                />
+              </View>
+              <ThemedText style={styles.featureTitle}>
+                Chất lượng đảm bảo
+              </ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Quy trình kiểm định chất lượng nghiêm ngặt
+              </ThemedText>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Icon
+                  name="access-time"
+                  type="material"
+                  size={32}
+                  color="#2196F3"
+                />
+              </View>
+              <ThemedText style={styles.featureTitle}>Nhanh chóng</ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Giao nhận đúng hẹn, tiết kiệm thời gian
+              </ThemedText>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Icon
+                  name="security"
+                  type="material"
+                  size={32}
+                  color="#FF9800"
+                />
+              </View>
+              <ThemedText style={styles.featureTitle}>An toàn</ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Hệ thống locker bảo mật cao
+              </ThemedText>
+            </View>
+
+            <View style={styles.featureCard}>
+              <View style={styles.featureIconContainer}>
+                <Icon
+                  name="support-agent"
+                  type="material"
+                  size={32}
+                  color="#9C27B0"
+                />
+              </View>
+              <ThemedText style={styles.featureTitle}>Hỗ trợ 24/7</ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Đội ngũ chăm sóc khách hàng tận tâm
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+  },
+  header: {
+    backgroundColor: "#003D5B",
+    paddingTop: 60,
+    paddingBottom: 24,
+  },
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  headerGreeting: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#fff",
+  },
+  searchButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  section: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#000",
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#003D5B",
+  },
+  featuredScroll: {
+    gap: 16,
+  },
+  featuredCard: {
+    width: width - 80,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 20,
+    borderRadius: 20,
+    gap: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  featuredIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  featuredContent: {
+    flex: 1,
+  },
+  featuredTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  featuredSubtitle: {
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.9)",
+  },
+  serviceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  serviceIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#E8F4F8",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  serviceInfo: {
+    flex: 1,
+    gap: 6,
+  },
+  serviceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  serviceName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#000",
+    flex: 1,
+  },
+  serviceTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  popularTag: {
+    backgroundColor: "#E3F2FD",
+  },
+  newTag: {
+    backgroundColor: "#FFF3E0",
+  },
+  discountTag: {
+    backgroundColor: "#E8F5E9",
+  },
+  serviceTagText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#003D5B",
+  },
+  serviceDetails: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  serviceRating: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#000",
+  },
+  reviewsText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  servicePrice: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#4CAF50",
+  },
+  promoBanner: {
+    backgroundColor: "#003D5B",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  promoContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 16,
+  },
+  promoIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  promoText: {
+    flex: 1,
+  },
+  promoTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  promoSubtitle: {
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  promoButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  promoButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#003D5B",
+  },
+  tipsScroll: {
+    gap: 16,
+  },
+  tipCard: {
+    width: 200,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  tipIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  tipBadge: {
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  tipBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#666",
+  },
+  tipTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#000",
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  tipFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  tipReadMore: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#003D5B",
+  },
+  featureGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginTop: 16,
+  },
+  featureCard: {
+    width: "48%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  featureIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#000",
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  featureDescription: {
+    fontSize: 11,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  bottomSpacer: {
+    height: 40,
+  },
+});
