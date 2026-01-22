@@ -76,7 +76,7 @@ export const SIDEBAR_BRAND = {
 export const SIDEBAR_CONFIG = {
   width: "w-20", // Collapsed width
   expandedWidth: "w-64", // Expanded width (for future hover feature)
-  bgColor: "bg-blue-950",
+  bgColor: "bg-blue-950 opacity-90",
   hoverBgColor: "hover:bg-orange-600",
   activeBgColor: "bg-orange-600",
   textColor: "text-white",

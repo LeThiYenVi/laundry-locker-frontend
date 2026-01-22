@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { withLocale } from '@/lib/i18n';
 
 interface InfoResultProps {
   title?: string;
@@ -21,7 +22,7 @@ const InfoResult: React.FC<InfoResultProps> = ({
     <Button 
       type="primary" 
       key="console"
-      onClick={onGoConsole || (() => navigate('/dashboard'))}
+      onClick={onGoConsole || (() => navigate(withLocale('/admin/dashboard')))}
       className="bg-blue-600 hover:bg-blue-700 border-blue-600"
     >
       Quay lại trang chủ

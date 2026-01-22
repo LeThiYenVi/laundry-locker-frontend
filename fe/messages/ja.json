@@ -1,1 +1,61 @@
-{}
+{
+	"brand": {
+		"title": "LockerWash",
+		"subtitle": "オンデマンドのスマートランドリーロッカー"
+	},
+	"signin": {
+		"title": "アカウントにサインイン"
+	},
+	"label": {
+		"email": "メールアドレス",
+		"password": "パスワード"
+	},
+	"placeholder": {
+		"email": "you@domain.com",
+		"password": "••••••••"
+	},
+	"link": {
+		"forgot": "パスワードをお忘れですか？"
+	},
+	"info": {
+		"devHint": "アクセスが必要ですか？ログインをクリックするとモックアカウントで入れます（開発用）。"
+	},
+	"right": {
+		"title": "予定に合わせてきれいな服を。",
+		"subtitle": "24時間いつでもロッカーへアクセス"
+	},
+	"button": {
+		"login": "ログイン"
+	}
+,
+	"admin": {
+		"orders": {
+			"title": "注文",
+			"empty": "注文はありません",
+			"table": {
+				"id": "注文ID",
+				"customer": "顧客",
+				"status": "ステータス",
+				"total": "合計"
+			}
+		},
+		"feedback": {
+			"title": "フィードバック",
+			"empty": "フィードバックはありません"
+		},
+		"partners": {
+			"title": "パートナー",
+			"empty": "パートナーがいません"
+		}
+	}
+	,
+	"lockers": {
+		"title": "ロッカー",
+		"empty": "ロッカーはありません",
+		"table": {
+			"id": "ロッカーID",
+			"location": "場所",
+			"status": "状態"
+		}
+	}
+}

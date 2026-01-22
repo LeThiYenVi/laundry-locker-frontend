@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { withLocale } from "@/lib/i18n";
 import type { JSX } from "react/jsx-dev-runtime";
 import { useAuth } from "../context/auth-context";
 
@@ -24,12 +25,12 @@ const ProtectedRoute = ({ children, requiredPermission }: ProtectedRouteProps) =
 
   // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/auth/login" replace />;
+    return <Navigate to={withLocale("/auth/login")} replace />;
   }
 
   // Check specific permission if required
   if (requiredPermission && !hasPermission(requiredPermission)) {
-    return <Navigate to="/403" replace />;
+    return <Navigate to={withLocale("/403")} replace />;
   }
 
   return children ? children : <Outlet />;

@@ -11,10 +11,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* primary: Tailwind blue-900 (#1e3a8a) => hsl(224.4 64.3% 32.9%) */
+    --primary: 224.4 64.3% 32.9%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    /* secondary: Tailwind orange-200 (#fdba74) => hsl(30.6 97.2% 72.4%) */
+    --secondary: 30.6 97.2% 72.4%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;

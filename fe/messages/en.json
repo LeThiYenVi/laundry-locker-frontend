@@ -1,1 +1,61 @@
-{}
+{
+	"brand": {
+		"title": "LockerWash",
+		"subtitle": "Smart laundry lockers, on demand"
+	},
+	"signin": {
+		"title": "Sign in to your account"
+	},
+	"label": {
+		"email": "E-mail",
+		"password": "Password"
+	},
+	"placeholder": {
+		"email": "you@domain.com",
+		"password": "••••••••"
+	},
+	"link": {
+		"forgot": "Forgot Password?"
+	},
+	"info": {
+		"devHint": "Need access? Click Login to use the mock accounts (dev)."
+	},
+	"right": {
+		"title": "Fresh clothes, on your schedule.",
+		"subtitle": "24/7 Smart Locker Access"
+	},
+	"button": {
+		"login": "Login"
+	}
+,
+	"admin": {
+		"orders": {
+			"title": "Orders",
+			"empty": "No orders found",
+			"table": {
+				"id": "Order ID",
+				"customer": "Customer",
+				"status": "Status",
+				"total": "Total"
+			}
+		},
+		"feedback": {
+			"title": "Feedback",
+			"empty": "No feedback yet"
+		},
+		"partners": {
+			"title": "Partners",
+			"empty": "No partners added"
+		}
+	}
+	,
+	"lockers": {
+		"title": "Lockers",
+		"empty": "No lockers found",
+		"table": {
+			"id": "Locker ID",
+			"location": "Location",
+			"status": "Status"
+		}
+	}
+}
