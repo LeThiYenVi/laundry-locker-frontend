@@ -1,14 +1,21 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { withLocale } from "@/lib/i18n";
-import { User } from "lucide-react";
+import { User, Settings, LogOut } from "lucide-react";
 import { ADMIN_NAV_ITEMS, SIDEBAR_BRAND, SIDEBAR_CONFIG } from "../../constants/sidebar";
 import { useAuth } from "../../context/auth-context";
 import LockrIcon from "~/components/ui/LockrIcon";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "~/components/ui/dropdown-menu";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { hasPermission } = useAuth();
+  const { hasPermission, logout } = useAuth();
 
   // Filter nav items based on user permissions
   const visibleNavItems = ADMIN_NAV_ITEMS.filter(item => 
@@ -47,10 +54,25 @@ const AdminLayout = () => {
         </nav>
 
         {/* User Avatar */}
+        {/* User Avatar + Menu */}
         <div className="mt-auto">
-          <div className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform duration-200">
-            <User size={20} />
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button aria-label="User menu" className="w-10 h-10 bg-linear-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform duration-200">
+                <User size={20} />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent  className="bg-blue-950 opacity-100  ">
+              <DropdownMenuItem onSelect={() => navigate(withLocale('/admin/settings'))}>
+                <div className="flex items-center gap-2 text-amber-100 opacity-25 hover:opacity-100"><Settings size={16} /> Settings</div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={async () => { await logout(); navigate(withLocale('/auth/login')); }}>
+                <div className="flex items-center gap-2 text-amber-100 opacity-25 hover:opacity-100"><LogOut size={16} /> Logout</div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 
