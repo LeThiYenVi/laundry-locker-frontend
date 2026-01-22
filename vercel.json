@@ -1,4 +1,0 @@
-{
-  "buildCommand": "cd fe && npm run build",
-  "outputDirectory": "fe/dist"
-}
