@@ -12,6 +12,15 @@ import {
   TableCell,
 } from "~/components/ui";
 import { Avatar, Badge, Switch } from "~/components/ui";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "~/components/ui/pagination";
 import { t } from "@/lib/i18n";
 import { sampleUsers as mockUsers } from "@/mockdata/users.mock";
 
@@ -21,21 +30,33 @@ export type UserRow = {
   avatar?: string;
   role: "Administrator" | "Viewer" | "Moderator";
   status: "Active" | "Inactive";
-  socials: string[]; // names of services
+  socials: string[];
   promoted: boolean;
-  rating: number; // positive = up, negative = down
+  rating: number;
   lastLogin: string;
 };
-const sampleUsers = mockUsers;
+// data loaded into state so it can be replaced by API calls later
 
+const tableHeader = {
+  bg: "bg-blue-950",
+  text: "text-amber-100",
+  radius: "rounded-md",
+};
 export default function UsersPage(): React.JSX.Element {
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
+
+  // users state (initialized from mock data, replace with API call later)
+  const [users, setUsers] = React.useState<UserRow[]>(mockUsers);
+
+  React.useEffect(() => {
+    // TODO: replace with API call and setUsers(response)
+  }, []);
 
   const toggleSelect = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
   const selectAll = (on: boolean) => {
     if (on) {
       const all: Record<string, boolean> = {};
-      sampleUsers.forEach((u) => (all[u.id] = true));
+      users.forEach((u) => (all[u.id] = true));
       setSelected(all);
     } else setSelected({});
   };
@@ -65,7 +86,7 @@ export default function UsersPage(): React.JSX.Element {
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <div className="bg-blue-950 border rounded-2xl flex hover:text-amber-300 px-2 py-1">
+        <div className={`${tableHeader.bg} border rounded-md flex hover:text-amber-300 px-2 py-1`}>
           <Button variant="default" size="icon" className=" text-amber-100 ">
             <Plus size={16} />
           </Button>
@@ -81,15 +102,15 @@ export default function UsersPage(): React.JSX.Element {
       </div>
 
       {/* Table */}
-      <Card >
-        <CardContent>
-          <Table className="p-0">
-            <TableHeader >
-              <TableRow className="bg-blue-950 text-amber-100 w-full">
-                  <TableHead>
+      <Card className="rounded-md overflow-hidden">
+        <CardContent className="p-0">
+          <Table className="w-full p-0">
+            <TableHeader className={`${tableHeader.bg} ${tableHeader.text}`}>
+              <TableRow>
+                  <TableHead className="rounded-tl-md">
                     <input
                       type="checkbox"
-                      checked={Object.keys(selected).length === sampleUsers.length}
+                      checked={Object.keys(selected).length === users.length}
                       onChange={(e) => selectAll(e.target.checked)}
                     />
                   </TableHead>
@@ -100,20 +121,20 @@ export default function UsersPage(): React.JSX.Element {
                   <TableHead>{t('admin.users.table.columns.promote')}</TableHead>
                   <TableHead>{t('admin.users.table.columns.rating')}</TableHead>
                   <TableHead>{t('admin.users.table.columns.lastLogin')}</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead className="rounded-tr-md">{t('admin.orders.table.action')}</TableHead>
                 </TableRow>
             </TableHeader>
 
             <TableBody>
-              {sampleUsers.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>
+              {users.map((u) => (
+                <TableRow key={u.id} className="h-10">
+                  <TableCell className="py-2">
                     <input type="checkbox" checked={!!selected[u.id]} onChange={() => toggleSelect(u.id)} />
                   </TableCell>
 
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-8 h-8 text-sm">
                         {u.name[0]}
                       </Avatar>
                       <div>
@@ -123,42 +144,42 @@ export default function UsersPage(): React.JSX.Element {
                     </div>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="py-2">
                     <Badge variant={u.role === "Administrator" ? "destructive" : u.role === "Moderator" ? "secondary" : "default"}>
                       {u.role}
                     </Badge>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       <span className={`inline-block w-2 h-2 rounded-full ${u.status === "Active" ? "bg-green-500" : "bg-red-500"}`} />
                       <span>{u.status}</span>
                     </div>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       {u.socials.map((s) => (
-                        <div key={s} className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-600">{s[0].toUpperCase()}</div>
+                        <div key={s} className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-600">{s[0].toUpperCase()}</div>
                       ))}
                     </div>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="py-2">
                     <Switch checked={u.promoted} />
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-sm ${u.rating >= 0 ? "text-green-600" : "text-red-600"}`}>{u.rating}</span>
                       <span>{u.rating >= 0 ? "↑" : "↓"}</span>
                     </div>
                   </TableCell>
 
-                  <TableCell>{u.lastLogin}</TableCell>
+                  <TableCell className="py-2">{u.lastLogin}</TableCell>
 
-                  <TableCell>
-                    <button className="p-2 rounded hover:bg-gray-100">
+                  <TableCell className="py-2">
+                    <button className="p-1 rounded hover:bg-gray-100">
                       <MoreHorizontal size={16} />
                     </button>
                   </TableCell>
@@ -168,25 +189,39 @@ export default function UsersPage(): React.JSX.Element {
           </Table>
 
           {/* Footer / Pagination */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between  border-t border-black-200 pt-4 pl-2 pr-2 pb-2">
             <div className="flex items-center gap-4">
               <select className="border rounded px-2 py-1">
                 <option>10</option>
                 <option>25</option>
                 <option>50</option>
               </select>
-              <div className="text-sm text-muted-foreground">1-10 of 100</div>
+            <div className="text-sm text-muted-foreground">1-10 of 100</div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button className="px-2 py-1 border rounded">&lt;</button>
-              <button className="px-2 py-1 rounded bg-gray-100">1</button>
-              <button className="px-2 py-1">2</button>
-              <button className="px-2 py-1">3</button>
-              <div className="px-2">...</div>
-              <button className="px-2 py-1">100</button>
-              <button className="px-2 py-1 border rounded">&gt;</button>
-            </div>
+            <Pagination className="">
+              <PaginationContent>
+                <PaginationPrevious />
+                <PaginationItem>
+                  <PaginationLink href="#" isActive>
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">2</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">3</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink href="#">100</PaginationLink>
+                </PaginationItem>
+                <PaginationNext />
+              </PaginationContent>
+            </Pagination>
           </div>
         </CardContent>
       </Card>
