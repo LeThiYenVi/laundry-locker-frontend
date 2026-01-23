@@ -36,7 +36,27 @@
 				"id": "Order ID",
 				"customer": "Customer",
 				"status": "Status",
-				"total": "Total"
+				"total": "Total",
+				"action": "Actions"
+			}
+			,"status": {
+				"waiting": "Waiting",
+				"reserved": "Reserved",
+				"confirmed": "Confirmed",
+				"inprogress": "In Progress",
+				"collected": "Collected",
+				"processing": "Processing",
+				"ready": "Ready",
+				"returned": "Returned",
+				"completed": "Completed",
+				"canceled": "Canceled",
+				"done": "Done"
+			},
+			"customers": {
+				"alice": "Alice",
+				"bob": "Bob",
+				"carol": "Carol",
+				"dan": "Dan"
 			}
 		},
 		"feedback": {
@@ -45,9 +65,31 @@
 		},
 		"partners": {
 			"title": "Partners",
-			"empty": "No partners added"
+			"empty": "No partners added",
+			"table": {
+				"partner": "Partner",
+				"contact": "Contact",
+				"action": "Actions",
+				"add": "Add Partner"
+			}
 		}
-		,
+			,
+			"settings": {
+				"title": "Settings",
+				"subtitle": "Manage application preferences",
+				"language": "Language",
+				"languageHelp": "Select application language",
+				"theme": "Theme",
+				"themeHelp": "Toggle between light and dark modes",
+				"analytics": "Analytics",
+				"analyticsHelp": "Share anonymous usage data to help improve the product.",
+				"devMode": "Developer mode",
+				"devModeHelp": "Enable developer features and debug tools.",
+				"reset": "Reset",
+				"save": "Save changes",
+				"saving": "Saving..."
+			},
+		
 		"dashboard": {
 			"title": "My Organization",
 			"settings": "Settings",
@@ -94,7 +136,7 @@
 		"users": {
 			"header": {
 				"allUsers": "All Users:",
-				"projects": "Projects:"
+				"projects": "Orders:"
 			},
 			"table": {
 				"settings": "Table settings",

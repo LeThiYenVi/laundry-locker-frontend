@@ -36,7 +36,27 @@
 				"id": "Mã",
 				"customer": "Khách hàng",
 				"status": "Trạng thái",
-				"total": "Tổng"
+				"total": "Tổng",
+				"action": "Thao tác"
+			}
+			,"status": {
+				"waiting": "Chờ",
+				"reserved": "Đã đặt trước",
+				"confirmed": "Xác nhận",
+				"inprogress": "Đang xử lý",
+				"collected": "Đã lấy",
+				"processing": "Đang tiến hành",
+				"ready": "Sẵn sàng",
+				"returned": "Đã trả",
+				"completed": "Hoàn thành",
+				"canceled": "Đã hủy",
+				"done": "Xong"
+			},
+			"customers": {
+				"alice": "Alice",
+				"bob": "Bob",
+				"carol": "Carol",
+				"dan": "Dan"
 			}
 		},
 		"feedback": {
@@ -45,9 +65,31 @@
 		},
 		"partners": {
 			"title": "Đối tác",
-			"empty": "Chưa có đối tác"
+			"empty": "Chưa có đối tác",
+			"table": {
+				"partner": "Đối tác",
+				"contact": "Liên hệ",
+				"action": "Thao tác",
+				"add": "Thêm đối tác"
+			}
 		}
-		,
+			,
+			"settings": {
+				"title": "Cài đặt",
+				"subtitle": "Quản lý tùy chọn ứng dụng",
+				"language": "Ngôn ngữ",
+				"languageHelp": "Chọn ngôn ngữ ứng dụng",
+				"theme": "Giao diện",
+				"themeHelp": "Chuyển giữa chế độ sáng và tối",
+				"analytics": "Phân tích",
+				"analyticsHelp": "Chia sẻ dữ liệu sử dụng ẩn danh để giúp cải thiện sản phẩm.",
+				"devMode": "Chế độ nhà phát triển",
+				"devModeHelp": "Bật tính năng nhà phát triển và công cụ gỡ lỗi.",
+				"reset": "Đặt lại",
+				"save": "Lưu thay đổi",
+				"saving": "Đang lưu..."
+			},
+		
 		"dashboard": {
 			"title": "Tổ chức của tôi",
 			"settings": "Cài đặt",
@@ -94,7 +136,7 @@
 		"users": {
 			"header": {
 				"allUsers": "Tất cả người dùng:",
-				"projects": "Dự án:"
+				"projects": "Đơn hàng:"
 			},
 			"table": {
 				"settings": "Cài đặt bảng",
