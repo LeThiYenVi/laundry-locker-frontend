@@ -4,6 +4,7 @@ import { User, Settings, LogOut } from "lucide-react";
 import { ADMIN_NAV_ITEMS, SIDEBAR_BRAND, SIDEBAR_CONFIG } from "../../constants/sidebar";
 import { useAuth } from "../../context/auth-context";
 import LockrIcon from "~/components/ui/LockrIcon";
+import SettingsModal from "./settings";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -11,16 +12,38 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu";
+import React from "react";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { hasPermission, logout } = useAuth();
+  const [openSettings, setOpenSettings] = React.useState(false);
+  const prevPathRef = React.useRef<string | null>(null);
 
   // Filter nav items based on user permissions
   const visibleNavItems = ADMIN_NAV_ITEMS.filter(item => 
     !item.permission || hasPermission(item.permission)
   );
+
+  // remember previous path so we can restore it when opening modal via URL
+  React.useEffect(() => {
+    // if current path is settings route, open modal and restore previous
+    const isSettingsPath = location.pathname.endsWith('/admin/settings') || location.pathname.includes('/admin/settings');
+    if (isSettingsPath) {
+      setOpenSettings(true);
+      // navigate back to previous path if available
+      if (prevPathRef.current && prevPathRef.current !== location.pathname) {
+        navigate(prevPathRef.current, { replace: true });
+      } else {
+        // fallback to dashboard
+        navigate(withLocale('/admin/dashboard'), { replace: true });
+      }
+    } else {
+      // update previous path when not on settings
+      prevPathRef.current = location.pathname;
+    }
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex">
@@ -64,9 +87,9 @@ const AdminLayout = () => {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent  className="bg-blue-950 opacity-100  ">
-              <DropdownMenuItem onSelect={() => navigate(withLocale('/admin/settings'))}>
-                <div className="flex items-center gap-2 text-amber-100 opacity-25 hover:opacity-100"><Settings size={16} /> Settings</div>
-              </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setOpenSettings(true)}>
+                  <div className="flex items-center gap-2 text-amber-100 opacity-25 hover:opacity-100"><Settings size={16} /> Settings</div>
+                </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={async () => { await logout(); navigate(withLocale('/auth/login')); }}>
                 <div className="flex items-center gap-2 text-amber-100 opacity-25 hover:opacity-100"><LogOut size={16} /> Logout</div>
@@ -74,6 +97,9 @@ const AdminLayout = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        {/* Settings Modal */}
+        <SettingsModal open={openSettings} onOpenChange={setOpenSettings} />
       </aside>
 
       {/* Main Content Area - Dynamic Outlet */}

@@ -36,7 +36,27 @@
 				"id": "注文ID",
 				"customer": "顧客",
 				"status": "ステータス",
-				"total": "合計"
+				"total": "合計",
+				"action": "操作"
+			}
+			,"status": {
+				"waiting": "待機",
+				"reserved": "予約済み",
+				"confirmed": "確認済み",
+				"inprogress": "処理中",
+				"collected": "収集済み",
+				"processing": "進行中",
+				"ready": "準備完了",
+				"returned": "返却済み",
+				"completed": "完了",
+				"canceled": "キャンセル",
+				"done": "完了"
+			},
+			"customers": {
+				"alice": "Alice",
+				"bob": "Bob",
+				"carol": "Carol",
+				"dan": "Dan"
 			}
 		},
 		"feedback": {
@@ -45,9 +65,31 @@
 		},
 		"partners": {
 			"title": "パートナー",
-			"empty": "パートナーがいません"
+			"empty": "パートナーがいません",
+			"table": {
+				"partner": "パートナー",
+				"contact": "連絡先",
+				"action": "操作",
+				"add": "パートナーを追加"
+			}
 		}
-		,
+			,
+			"settings": {
+				"title": "設定",
+				"subtitle": "アプリケーションの設定を管理",
+				"language": "言語",
+				"languageHelp": "アプリの言語を選択してください",
+				"theme": "テーマ",
+				"themeHelp": "ライト/ダークモードを切り替えます",
+				"analytics": "解析",
+				"analyticsHelp": "製品改善のための匿名の利用データを共有します。",
+				"devMode": "開発者モード",
+				"devModeHelp": "開発者向けの機能とデバッグツールを有効にします。",
+				"reset": "リセット",
+				"save": "変更を保存",
+				"saving": "保存中..."
+			},
+		
 		"dashboard": {
 			"title": "私の組織",
 			"settings": "設定",
@@ -94,7 +136,7 @@
 		"users": {
 			"header": {
 				"allUsers": "すべてのユーザー:",
-				"projects": "プロジェクト:"
+				"projects": "注文:"
 			},
 			"table": {
 				"settings": "テーブル設定",
