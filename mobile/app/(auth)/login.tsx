@@ -1,22 +1,23 @@
 import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/user";
-import { VerifyOtpResponse } from "@/types";
+import { PhoneLoginResponse, VerifyOtpResponse } from "@/types";
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { Icon } from "@rneui/themed";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 type LoginMethod = "phone" | "email";
@@ -29,30 +30,124 @@ export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [confirmResult, setConfirmResult] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
-
-  // ==================== PHONE AUTH ====================
   
-  // Phone auth - placeholder (requires Firebase native setup)
+  // Ref for OTP input
+  const otpInputRef = useRef<TextInput>(null);
+
+  // Handle user state changes
+  function onAuthStateChanged(user: FirebaseAuthTypes.User | null) {
+    if (user) {
+      // User is signed in
+      console.log('Firebase User:', user);
+    }
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  // Auto-focus OTP input when OTP screen appears
+  useEffect(() => {
+    if (isOtpSent && otpInputRef.current) {
+      // Small delay to ensure UI is rendered
+      setTimeout(() => {
+        otpInputRef.current?.focus();
+      }, 300);
+    }
+  }, [isOtpSent]);
+
+  // ==================== PHONE AUTH (Native) ====================
+  
   const handleSendPhoneOtp = async () => {
-    if (phoneNumber.length < 9) {
+    let formattedPhone = phoneNumber.trim();
+    
+    // Auto add +84 if missing
+    if (formattedPhone.startsWith("0")) {
+      formattedPhone = "+84" + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith("+")) {
+      formattedPhone = "+84" + formattedPhone;
+    }
+
+    if (formattedPhone.length < 10) {
       Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ");
       return;
     }
 
-    // Show message to use email for now
-    Alert.alert(
-      "Thông báo",
-      "Xác thực số điện thoại yêu cầu cấu hình Firebase native. Vui lòng sử dụng đăng nhập bằng Email.",
-      [{ text: "OK", onPress: () => setLoginMethod("email") }]
-    );
+    setIsLoading(true);
+    try {
+      // Native Firebase Phone Auth
+      const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
+      setConfirmResult(confirmation);
+      setIsOtpSent(true);
+      startCountdown();
+      Alert.alert("Thành công", "Mã OTP đã được gửi đến số điện thoại của bạn");
+    } catch (error: any) {
+      console.error("Phone OTP error:", error);
+      let msg = "Không thể gửi OTP. Vui lòng kiểm tra lại số điện thoại";
+      if (error.code === 'auth/invalid-phone-number') msg = "Số điện thoại không hợp lệ";
+      if (error.code === 'auth/quota-exceeded') msg = "Đã quá giới hạn gửi SMS hôm nay";
+      
+      Alert.alert("Lỗi", msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (otp.length !== 6 || !confirmResult) {
+      Alert.alert("Lỗi", "Vui lòng nhập đủ 6 số OTP");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Debug: Check API URL
+      console.log("📡 API URL:", process.env.EXPO_PUBLIC_API_URL);
+      console.log("🔧 All ENV:", JSON.stringify(process.env, null, 2));
+      
+      // Confirm OTP with Firebase
+      const userCredential = await confirmResult.confirm(otp);
+      
+      if (userCredential && userCredential.user) {
+        // Get ID Token
+        const idToken = await userCredential.user.getIdToken();
+        
+        // Call backend API with Firebase ID Token
+        const response = await authService.phoneLogin(idToken);
+        
+        if (response.success) {
+          const data: PhoneLoginResponse = response.data;
+          
+          if (data.newUser && data.tempToken) {
+            router.push({
+              pathname: "/(auth)/register",
+              params: { tempToken: data.tempToken, method: "phone" },
+            });
+          } else if (data.accessToken && data.refreshToken) {
+            await login({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+            router.replace("/user/(tabs)");
+          }
+        } else {
+          Alert.alert("Lỗi", response.message || "Đăng nhập thất bại");
+        }
+      }
+    } catch (error: any) {
+      console.error("Verify phone OTP error:", error);
+      let msg = "Mã OTP không đúng hoặc đã hết hạn";
+      if (error.code === 'auth/invalid-verification-code') msg = "Mã OTP không đúng";
+      Alert.alert("Lỗi", msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ==================== EMAIL AUTH ====================
   
-  // Send OTP to email
   const handleSendEmailOtp = async () => {
     if (!email.trim() || !email.includes("@")) {
       Alert.alert("Lỗi", "Vui lòng nhập email hợp lệ");
@@ -76,7 +171,6 @@ export default function LoginScreen() {
     }
   };
 
-  // Verify Email OTP
   const handleVerifyEmailOtp = async () => {
     if (otp.length !== 6) {
       Alert.alert("Lỗi", "Vui lòng nhập đủ 6 số OTP");
@@ -90,13 +184,11 @@ export default function LoginScreen() {
         const data: VerifyOtpResponse = response.data;
         
         if (data.newUser && data.tempToken) {
-          // New user - go to registration
           router.push({
             pathname: "/(auth)/register",
             params: { tempToken: data.tempToken, method: "email" },
           });
         } else if (data.accessToken && data.refreshToken) {
-          // Existing user - login directly
           await login({ accessToken: data.accessToken, refreshToken: data.refreshToken });
           router.replace("/user/(tabs)");
         }
@@ -112,7 +204,6 @@ export default function LoginScreen() {
 
   // ==================== COMMON ====================
 
-  // Start countdown for resend
   const startCountdown = () => {
     setCountdown(60);
     const timer = setInterval(() => {
@@ -126,14 +217,17 @@ export default function LoginScreen() {
     }, 1000);
   };
 
-  // Resend OTP
   const handleResendOtp = async () => {
     if (countdown > 0) return;
-    await handleSendEmailOtp();
+    if (loginMethod === "phone") {
+      await handleSendPhoneOtp();
+    } else {
+      await handleSendEmailOtp();
+    }
   };
 
-  // OAuth2 Login
   const handleOAuthLogin = async (provider: string) => {
+    // This assumes OAuth is handled via deep linking or web browser
     const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:8080";
     const oauthUrl = `${baseUrl}/oauth2/authorization/${provider}`;
     
@@ -159,10 +253,13 @@ export default function LoginScreen() {
     }
   };
 
-  // Handle action button
   const handleAction = () => {
     if (loginMethod === "phone") {
-      handleSendPhoneOtp();
+      if (isOtpSent) {
+        handleVerifyPhoneOtp();
+      } else {
+        handleSendPhoneOtp();
+      }
     } else {
       if (isOtpSent) {
         handleVerifyEmailOtp();
@@ -172,11 +269,11 @@ export default function LoginScreen() {
     }
   };
 
-  // Reset state when switching method
   const handleSwitchMethod = (method: LoginMethod) => {
     setLoginMethod(method);
     setIsOtpSent(false);
     setOtp("");
+    setConfirmResult(null);
     setCountdown(0);
   };
 
@@ -198,7 +295,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Login Method Toggle */}
+          {/* Method Toggle */}
           <View style={styles.methodToggle}>
             <TouchableOpacity
               style={[styles.methodButton, loginMethod === "phone" && styles.methodButtonActive]}
@@ -234,7 +331,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Phone Input */}
+          {/* Inputs */}
           {loginMethod === "phone" && (
             <View style={styles.inputGroup}>
               <ThemedText style={styles.inputLabel}>Số điện thoại</ThemedText>
@@ -249,15 +346,12 @@ export default function LoginScreen() {
                   keyboardType="phone-pad"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
+                  editable={!isOtpSent}
                 />
               </View>
-              <ThemedText style={styles.hintText}>
-                * Đăng nhập bằng SĐT đang được phát triển
-              </ThemedText>
             </View>
           )}
 
-          {/* Email Input */}
           {loginMethod === "email" && (
             <View style={styles.inputGroup}>
               <ThemedText style={styles.inputLabel}>Email</ThemedText>
@@ -278,17 +372,23 @@ export default function LoginScreen() {
           )}
 
           {/* OTP Input */}
-          {isOtpSent && loginMethod === "email" && (
+          {isOtpSent && (
             <View style={styles.inputGroup}>
               <ThemedText style={styles.inputLabel}>Mã xác thực (OTP)</ThemedText>
-              <View style={styles.otpContainer}>
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <View key={index} style={[styles.otpBox, otp[index] && styles.otpBoxFilled]}>
-                    <ThemedText style={styles.otpText}>{otp[index] || ""}</ThemedText>
-                  </View>
-                ))}
-              </View>
+              <TouchableOpacity 
+                activeOpacity={1} 
+                onPress={() => otpInputRef.current?.focus()}
+              >
+                <View style={styles.otpContainer}>
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <View key={index} style={[styles.otpBox, otp[index] && styles.otpBoxFilled]}>
+                      <ThemedText style={styles.otpText}>{otp[index] || ""}</ThemedText>
+                    </View>
+                  ))}
+                </View>
+              </TouchableOpacity>
               <TextInput
+                ref={otpInputRef}
                 style={styles.hiddenOtpInput}
                 keyboardType="number-pad"
                 maxLength={6}
@@ -323,14 +423,13 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Divider */}
+          {/* OAuth Buttons */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <ThemedText style={styles.dividerText}>Hoặc đăng nhập với</ThemedText>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* OAuth Buttons */}
           <View style={styles.oauthContainer}>
             <TouchableOpacity
               style={styles.oauthButton}
@@ -352,7 +451,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Terms */}
           <ThemedText style={styles.termsText}>
             Bằng việc đăng nhập, bạn đồng ý với{" "}
             <ThemedText style={styles.termsLink}>Điều khoản sử dụng</ThemedText> và{" "}
@@ -435,12 +533,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     marginBottom: 8,
-  },
-  hintText: {
-    fontSize: 12,
-    color: "#FF9800",
-    marginTop: 8,
-    fontStyle: "italic",
   },
   phoneInputContainer: {
     flexDirection: "row",
