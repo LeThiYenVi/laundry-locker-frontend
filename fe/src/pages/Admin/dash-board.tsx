@@ -8,10 +8,15 @@ import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useGetDashboardOverviewQuery } from '@/stores/apis/adminApi';
 
 function DashboardPage() {
   const [activeTab, setActiveTab] = useState(t(ADMIN_DASHBOARD.TABS.ORGANIZATION));
   const [selectedYear, setSelectedYear] = useState('2025');
+
+  // Fetch dashboard data
+  const { data: dashboardData, isLoading, error } = useGetDashboardOverviewQuery();
+  const overview = dashboardData?.data;
 
   const tabs = [
     t(ADMIN_DASHBOARD.TABS.ORGANIZATION),
@@ -73,67 +78,87 @@ function DashboardPage() {
         </div>
       </div>
 
-      {/* Top Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Operations Card */}
-        <Card className="bg-linear-to-br from-blue-100 to-blue-50 rounded-3xl p-6 border border-blue-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white rounded-xl">
-              <TrendingUp className="text-blue-600" size={24} />
-            </div>
-            <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
-              72% {t(ADMIN_DASHBOARD.USED)}
-            </span>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{t(ADMIN_DASHBOARD.CARDS.OPERATIONS_TITLE)}</h3>
-          <p className="text-sm text-gray-600 mb-4">{t(ADMIN_DASHBOARD.CARDS.OPERATIONS_SUBTITLE)}</p>
-          {/* Progress Bar */}
-          <div className="flex gap-1 h-2">
-            {[...Array(10)].map((_, i) => (
-              <div
-                key={i}
-                className={`flex-1 rounded-full ${
-                  i < 7 ? 'bg-purple-500' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </Card>
+      {/* Loading/Error State */}
+      {isLoading && <div className="text-center py-8">Loading dashboard data...</div>}
+      {error && <div className="text-center py-8 text-red-600">Error loading dashboard</div>}
 
-        {/* Data Transfer Card */}
-        <Card className="bg-linear-to-br from-cyan-100 to-cyan-50 rounded-3xl p-6 border border-cyan-200">
+      {/* Top Cards Grid - Updated with real data */}
+      {overview && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Operations Card - Total Orders */}
+          <Card className="bg-linear-to-br from-blue-100 to-blue-50 rounded-3xl p-6 border border-blue-200">
             <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white rounded-xl">
-              <Database className="text-cyan-600" size={24} />
-            </div>
+              <div className="p-3 bg-white rounded-xl">
+                <TrendingUp className="text-blue-600" size={24} />
+              </div>
               <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
-                32% {t(ADMIN_DASHBOARD.USED)}
+                {overview.ordersToday} today
               </span>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{t(ADMIN_DASHBOARD.CARDS.DATA_TITLE)}</h3>
-          <p className="text-sm text-gray-600 mb-4">{t(ADMIN_DASHBOARD.CARDS.DATA_SUBTITLE)}</p>
-          {/* Progress Bar */}
-          <div className="flex gap-1 h-2">
-            {[...Array(10)].map((_, i) => (
-              <div
-                key={i}
-                className={`flex-1 rounded-full ${
-                  i < 3 ? 'bg-blue-500' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </Card>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Total Orders</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {overview.totalOrders.toLocaleString()} orders · {overview.pendingOrders} pending
+            </p>
+            {/* Progress Bar */}
+            <div className="flex gap-1 h-2">
+              {[...Array(10)].map((_, i) => {
+                const percent = (overview.pendingOrders / overview.totalOrders) * 10;
+                return (
+                  <div
+                    key={i}
+                    className={`flex-1 rounded-full ${
+                      i < percent ? 'bg-purple-500' : 'bg-gray-300'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </Card>
 
-        {/* Promo Card */}
-        <Card className="bg-linear-to-br from-gray-900 to-black rounded-3xl p-6 text-white flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold mb-2">{t(ADMIN_DASHBOARD.CARDS.PROMO_TITLE)}</h3>
-            <p className="text-gray-400 text-sm mb-6">{t(ADMIN_DASHBOARD.CARDS.PROMO_SUBTITLE)}</p>
-          </div>
-          <Button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">{t(ADMIN_DASHBOARD.CARDS.PROMO_CTA)}</Button>
-        </Card>
-      </div>
+          {/* Data Transfer Card - Revenue */}
+          <Card className="bg-linear-to-br from-cyan-100 to-cyan-50 rounded-3xl p-6 border border-cyan-200">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-white rounded-xl">
+                <Database className="text-cyan-600" size={24} />
+              </div>
+              <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
+                ${overview.revenueToday.toLocaleString()}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Total Revenue</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              ${overview.totalRevenue.toLocaleString()} · {overview.activeServices} services
+            </p>
+            {/* Progress Bar */}
+            <div className="flex gap-1 h-2">
+              {[...Array(10)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`flex-1 rounded-full ${
+                    i < 5 ? 'bg-blue-500' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </Card>
+
+          {/* Promo Card - Users & Lockers */}
+          <Card className="bg-linear-to-br from-gray-900 to-black rounded-3xl p-6 text-white flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-bold mb-2">System Overview</h3>
+              <p className="text-gray-400 text-sm mb-2">
+                {overview.totalUsers} users · {overview.totalStores} stores
+              </p>
+              <p className="text-gray-400 text-sm mb-4">
+                {overview.totalLockers} lockers · {overview.availableBoxes}/{overview.availableBoxes + overview.occupiedBoxes} boxes available
+              </p>
+            </div>
+            <Button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
+              View Details
+            </Button>
+          </Card>
+        </div>
+      )}
 
       {/* Statistics Section */}
       <div className="bg-white rounded-3xl p-8 mb-8 border border-gray-200">

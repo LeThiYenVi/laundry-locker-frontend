@@ -28,3 +28,53 @@ export interface AuthResponse {
     user: User;
 }
 
+// ============================================
+// Common API Response Types
+// ============================================
+
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+  status: number;
+  timestamp: string;
+}
+
+// Query params for pagination (used in API calls)
+export interface PageableRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+// Response structure from Spring Boot
+export interface Pageable {
+  pageNumber: number;
+  pageSize: number;
+  sort: {
+    empty: boolean;
+    sorted: boolean;
+    unsorted: boolean;
+  };
+  offset: number;
+  paged: boolean;
+  unpaged: boolean;
+}
+
+export interface Page<T> {
+  content: T[];
+  pageable: Pageable;
+  totalPages: number;
+  totalElements: number;
+  last: boolean;
+  size: number;
+  number: number;
+  sort: {
+    empty: boolean;
+    sorted: boolean;
+    unsorted: boolean;
+  };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
+}
+
