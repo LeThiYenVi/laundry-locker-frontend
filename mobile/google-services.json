@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "1007589685877",
+    "project_id": "laundry-locker-19a9d",
+    "storage_bucket": "laundry-locker-19a9d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1007589685877:android:1afa036d6ef7aba040963c",
+        "android_client_info": {
+          "package_name": "com.laundrylocker.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1007589685877-1t7srs4alkukrm84odjlrf8ms0ea41le.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.laundrylocker.mobile",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqdITzgaApbsPeFn2aAbtKbOEVLIQvYo8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
