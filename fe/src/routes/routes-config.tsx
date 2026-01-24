@@ -12,6 +12,7 @@ import UsersPage from "../pages/Admin/users";
 import { Navigate } from "react-router-dom";
 import LoginPage from "~/pages/auth/Login";
 import RootLayout from "../pages/RootLayout";
+import { MaintenancePage, NotFoundPage, UnauthorizedPage } from "../pages/Error";
 
 const routesConfig: RouteObject[] = [
   {
@@ -57,8 +58,15 @@ const routesConfig: RouteObject[] = [
         ],
       },
 
-      { path: "403", element: <div>403 Forbidden</div> },
-      { path: "*", element: <div>404 Not Found</div> },
+      // Error pages
+      { path: "401", element: <UnauthorizedPage /> },
+      { path: "403", element: <UnauthorizedPage /> },
+      { path: "404", element: <NotFoundPage /> },
+      { path: "503", element: <MaintenancePage /> },
+      { path: "maintenance", element: <MaintenancePage /> },
+      
+      // Catch-all 404
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ];

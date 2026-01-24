@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChartBar, MoreHorizontal, Plus } from "lucide-react";
+import { ChartBar, MoreHorizontal, Plus, MapPin, Phone, Clock } from "lucide-react";
 import {
   Button,
   Card,
@@ -11,6 +11,10 @@ import {
   TableBody,
   TableCell,
   Avatar,
+  Badge,
+  PageLoading,
+  ErrorState,
+  EmptyData,
 } from "~/components/ui";
 import {
   Pagination,
@@ -22,13 +26,7 @@ import {
   PaginationEllipsis,
 } from "~/components/ui/pagination";
 import { t } from "@/lib/i18n";
-
-const samplePartners: Array<{ id: string; name: string; contact: string }> = [
-  { id: "P-1001", name: "Laundry Co.", contact: "owner@laundry.co" },
-  { id: "P-1002", name: "QuickWash", contact: "hello@quickwash.com" },
-  { id: "P-1003", name: "SpinCycle", contact: "info@spincycle.io" },
-  { id: "P-1004", name: "CleanHub", contact: "contact@cleanhub.vn" },
-];
+import { useGetAllStoresQuery } from "@/stores/apis/adminApi";
 
 const tableHeader = {
   bg: "bg-blue-950",
@@ -36,24 +34,46 @@ const tableHeader = {
 };
 
 export default function PartnersPage(): React.JSX.Element {
-  // partners state so we can swap in API data later
-  const [partners, setPartners] = React.useState(samplePartners);
+  const [page, setPage] = React.useState(0);
+  const [size, setSize] = React.useState(10);
 
-  React.useEffect(() => {
-    // TODO: fetch partners from API and call setPartners(data)
-  }, []);
+  const { data: storesData, isLoading, error } = useGetAllStoresQuery({ pageNumber: page, pageSize: size });
+  const stores = storesData?.data?.content || [];
+  const totalPages = storesData?.data?.totalPages || 0;
+  const totalElements = storesData?.data?.totalElements || 0;
+
+  if (isLoading) {
+    return <PageLoading message="Đang tải danh sách cửa hàng..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        variant="server"
+        title="Không thể tải dữ liệu cửa hàng"
+        error={error}
+        onRetry={() => window.location.reload()}
+        onClose={() => window.history.back()}
+      />
+    );
+  }
+
+  if (stores.length === 0) {
+    return (
+      <EmptyData
+        title="Chưa có cửa hàng"
+        message="Danh sách cửa hàng đang trống."
+      />
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="text-sm text-muted-foreground">{t('admin.partners.title')}</div>
-            <div className="font-semibold">{partners.length}</div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-muted-foreground">{t('admin.users.header.projects')}</div>
-            <div className="font-semibold">--</div>
-            <ChartBar className="text-gray-400" size={16} />
+            <div className="text-sm text-muted-foreground">{t('admin.partners.title') || 'All Stores'}</div>
+            <div className="font-semibold">{totalElements}</div>
           </div>
         </div>
 
@@ -61,7 +81,7 @@ export default function PartnersPage(): React.JSX.Element {
           <Button variant="default" size="icon" className="mr-2">
             <Plus size={16} />
           </Button>
-          <Button variant="ghost" size="sm">{t('admin.partners.table.add') || 'Add'}</Button>
+          <Button variant="ghost" size="sm">{t('admin.partners.table.add') || 'Add Store'}</Button>
         </div>
       </div>
 
@@ -70,26 +90,67 @@ export default function PartnersPage(): React.JSX.Element {
           <Table className="w-full p-0">
             <TableHeader className={`${tableHeader.bg} ${tableHeader.text}`}>
               <TableRow>
-                <TableHead className="rounded-tl-md">{t('admin.partners.table.partner') || 'Partner'}</TableHead>
+                <TableHead className="rounded-tl-md">{t('admin.partners.table.partner') || 'Store'}</TableHead>
                 <TableHead>{t('admin.partners.table.contact') || 'Contact'}</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Hours</TableHead>
+                <TableHead>Lockers</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="rounded-tr-md">{t('admin.partners.table.action') || 'Actions'}</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {partners.map((p) => (
-                <TableRow key={p.id} className="h-10">
+              {stores.map((store) => (
+                <TableRow key={store.id} className="h-10">
                   <TableCell className="py-2">
                     <div className="flex items-center gap-2">
-                      <Avatar className="w-8 h-8 text-sm">{p.name[0]}</Avatar>
+                      <Avatar className="w-8 h-8 text-sm">
+                        {store.name[0]}
+                      </Avatar>
                       <div>
-                        <div className="font-medium">{p.name}</div>
-                        <div className="text-sm text-muted-foreground">{p.id}</div>
+                        <div className="font-medium">{store.name}</div>
+                        <div className="text-sm text-muted-foreground">ID: {store.id}</div>
                       </div>
                     </div>
                   </TableCell>
 
-                  <TableCell className="py-2">{p.contact}</TableCell>
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-1 text-sm">
+                      <Phone size={14} className="text-gray-400" />
+                      {store.phone || 'N/A'}
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-1 text-sm">
+                      <MapPin size={14} className="text-gray-400" />
+                      <span className="truncate max-w-[200px]" title={store.address}>
+                        {store.address || 'N/A'}
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-1 text-sm">
+                      <Clock size={14} className="text-gray-400" />
+                      {store.openTime && store.closeTime 
+                        ? `${store.openTime} - ${store.closeTime}`
+                        : 'N/A'
+                      }
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="py-2">
+                    <Badge variant="outline">{store.lockerCount || 0}</Badge>
+                  </TableCell>
+
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${store.active ? "bg-green-500" : "bg-red-500"}`} />
+                      <span className="text-sm">{store.active ? "Active" : "Inactive"}</span>
+                    </div>
+                  </TableCell>
 
                   <TableCell className="py-2">
                     <button className="p-1 rounded hover:bg-gray-100">
@@ -102,37 +163,70 @@ export default function PartnersPage(): React.JSX.Element {
           </Table>
 
           {/* Footer / Pagination */}
-          <div className="flex items-center justify-between  border-t border-black-200 pt-4 pl-2 pr-2 pb-2">
+          <div className="flex items-center justify-between border-t border-black-200 pt-4 pl-2 pr-2 pb-2">
             <div className="flex items-center gap-4">
-              <select className="border rounded px-2 py-1">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
+              <select 
+                className="border rounded px-2 py-1"
+                value={size}
+                onChange={(e) => {
+                  setSize(Number(e.target.value));
+                  setPage(0);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
               </select>
-              <div className="text-sm text-muted-foreground">1-10 of {partners.length}</div>
+              <div className="text-sm text-muted-foreground">
+                {totalElements === 0 ? '0-0 of 0' : `${page * size + 1}-${Math.min((page + 1) * size, totalElements)} of ${totalElements}`}
+              </div>
             </div>
 
             <Pagination>
               <PaginationContent>
-                <PaginationPrevious />
-                <PaginationItem>
-                  <PaginationLink href="#" isActive>
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">2</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">3</PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink href="#">100</PaginationLink>
-                </PaginationItem>
-                <PaginationNext />
+                <PaginationPrevious 
+                  onClick={() => setPage(Math.max(0, page - 1))}
+                  className={page === 0 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  const pageNum = i;
+                  return (
+                    <PaginationItem key={i}>
+                      <PaginationLink 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage(pageNum);
+                        }}
+                        isActive={page === pageNum}
+                        className="cursor-pointer"
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                {totalPages > 5 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage(totalPages - 1);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+                <PaginationNext 
+                  onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                  className={page >= totalPages - 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
               </PaginationContent>
             </Pagination>
           </div>
