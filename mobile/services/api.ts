@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 // Configure base URL - update this for production
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8080/api';
 
 // Create axios instance
 const api = axios.create({

@@ -2,8 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/user";
 import { PhoneLoginResponse, VerifyOtpResponse } from "@/types";
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { Icon } from "@rneui/themed";
+import { FirebaseAuthTypes, getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
@@ -47,7 +46,7 @@ export default function LoginScreen() {
   }
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    const subscriber = getAuth().onAuthStateChanged(onAuthStateChanged);
     return subscriber; // unsubscribe on unmount
   }, []);
 
@@ -81,7 +80,8 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       // Native Firebase Phone Auth
-      const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
+      const confirmation = await signInWithPhoneNumber(getAuth(), formattedPhone);
+      console.log("Firebase confirmation result:", confirmation);
       setConfirmResult(confirmation);
       setIsOtpSent(true);
       startCountdown();
@@ -106,23 +106,20 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      // Debug: Check API URL
-      console.log("📡 API URL:", process.env.EXPO_PUBLIC_API_URL);
-      console.log("🔧 All ENV:", JSON.stringify(process.env, null, 2));
-      
-      // Confirm OTP with Firebase
+
+
       const userCredential = await confirmResult.confirm(otp);
       
-      if (userCredential && userCredential.user) {
+      if (userCredential) {
         // Get ID Token
         const idToken = await userCredential.user.getIdToken();
-        
+        console.log("Firebase ID Token:", idToken);
         // Call backend API with Firebase ID Token
         const response = await authService.phoneLogin(idToken);
         
         if (response.success) {
           const data: PhoneLoginResponse = response.data;
-          
+          console.log("Phone login response:", data);
           if (data.newUser && data.tempToken) {
             router.push({
               pathname: "/(auth)/register",
@@ -228,7 +225,7 @@ export default function LoginScreen() {
 
   const handleOAuthLogin = async (provider: string) => {
     // This assumes OAuth is handled via deep linking or web browser
-    const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:8080";
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace("/api", "") || "http://10.0.2.2:8080";
     const oauthUrl = `${baseUrl}/oauth2/authorization/${provider}`;
     
     try {
@@ -284,7 +281,7 @@ export default function LoginScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Icon name="local-laundry-service" type="material" size={60} color="#fff" />
+          
         </View>
         <ThemedText style={styles.appName}>Laundry Locker</ThemedText>
         <ThemedText style={styles.tagline}>Giặt ủi thông minh, tiện lợi</ThemedText>
@@ -301,12 +298,7 @@ export default function LoginScreen() {
               style={[styles.methodButton, loginMethod === "phone" && styles.methodButtonActive]}
               onPress={() => handleSwitchMethod("phone")}
             >
-              <Icon
-                name="phone"
-                type="material"
-                size={20}
-                color={loginMethod === "phone" ? "#fff" : "#003D5B"}
-              />
+             
               <ThemedText
                 style={[styles.methodText, loginMethod === "phone" && styles.methodTextActive]}
               >
@@ -317,12 +309,7 @@ export default function LoginScreen() {
               style={[styles.methodButton, loginMethod === "email" && styles.methodButtonActive]}
               onPress={() => handleSwitchMethod("email")}
             >
-              <Icon
-                name="email"
-                type="material"
-                size={20}
-                color={loginMethod === "email" ? "#fff" : "#003D5B"}
-              />
+              
               <ThemedText
                 style={[styles.methodText, loginMethod === "email" && styles.methodTextActive]}
               >
@@ -356,7 +343,6 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <ThemedText style={styles.inputLabel}>Email</ThemedText>
               <View style={styles.inputContainer}>
-                <Icon name="email" type="material" size={20} color="#666" />
                 <TextInput
                   style={styles.textInput}
                   placeholder="example@email.com"
@@ -435,19 +421,16 @@ export default function LoginScreen() {
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("google")}
             >
-              <Icon name="google" type="font-awesome" size={24} color="#DB4437" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("facebook")}
             >
-              <Icon name="facebook" type="font-awesome" size={24} color="#4267B2" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("zalo")}
             >
-              <Icon name="message" type="material" size={24} color="#0068FF" />
             </TouchableOpacity>
           </View>
 

@@ -3,7 +3,7 @@
  * Tests if the backend server is reachable and tests basic endpoints
  */
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api';
+const baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8080/api';
 
 console.log('🔍 Testing API Connectivity...');
 console.log(`Base URL: ${baseURL}\n`);

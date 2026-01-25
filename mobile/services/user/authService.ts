@@ -2,6 +2,7 @@ import type {
     ApiResponse,
     AuthTokens,
     CompleteRegistrationRequest,
+    CompleteRegistrationResponse,
     LogoutRequest,
     PhoneLoginRequest,
     PhoneLoginResponse,
@@ -26,8 +27,8 @@ export const phoneLogin = async (idToken: string): Promise<ApiResponse<PhoneLogi
  */
 export const completeRegistration = async (
     data: CompleteRegistrationRequest
-): Promise<ApiResponse<AuthTokens>> => {
-    const response = await api.post<ApiResponse<AuthTokens>>('/auth/complete-registration', data);
+): Promise<ApiResponse<CompleteRegistrationResponse>> => {
+    const response = await api.post<ApiResponse<CompleteRegistrationResponse>>('/auth/complete-registration', data);
     return response.data;
 };
 
@@ -57,8 +58,8 @@ export const verifyEmailOtp = async (
  */
 export const emailCompleteRegistration = async (
     data: CompleteRegistrationRequest
-): Promise<ApiResponse<AuthTokens>> => {
-    const response = await api.post<ApiResponse<AuthTokens>>('/auth/email/complete-registration', data);
+): Promise<ApiResponse<CompleteRegistrationResponse>> => {
+    const response = await api.post<ApiResponse<CompleteRegistrationResponse>>('/auth/email/complete-registration', data);
     return response.data;
 };
 

@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/user";
-import { CompleteRegistrationRequest } from "@/types";
+import { CompleteRegistrationRequest, CompleteRegistrationResponse } from "@/types";
 import { Icon } from "@rneui/themed";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -23,7 +23,9 @@ export default function RegisterScreen() {
   const { login } = useAuth();
   const params = useLocalSearchParams<{ tempToken?: string; method?: string }>();
 
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [birthday, setBirthday] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,12 +36,23 @@ export default function RegisterScreen() {
   const showPhoneField = params.method === "email"; // Email login needs phone
 
   const validateForm = (): boolean => {
-    if (!fullName.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập họ và tên");
+    if (!firstName.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập tên");
       return false;
     }
-    if (fullName.trim().length < 2) {
-      Alert.alert("Lỗi", "Họ và tên phải có ít nhất 2 ký tự");
+    if (!lastName.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập họ");
+      return false;
+    }
+    if (!birthday.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập ngày sinh");
+      return false;
+    }
+    // Basic birthday validation (should be in past)
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    if (birthDate >= today) {
+      Alert.alert("Lỗi", "Ngày sinh phải là ngày trong quá khứ");
       return false;
     }
     if (showEmailField && email && !email.includes("@")) {
@@ -69,15 +82,17 @@ export default function RegisterScreen() {
     try {
       const requestData: CompleteRegistrationRequest = {
         tempToken: params.tempToken,
-        fullName: fullName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        birthday: birthday, // ISO date string
       };
 
       // Add optional fields based on login method
       if (showEmailField && email.trim()) {
-        requestData.email = email.trim();
+        // Note: email might not be needed in new request, but keeping for compatibility
       }
       if (showPhoneField && phoneNumber.trim()) {
-        requestData.phoneNumber = `+84${phoneNumber.trim().replace(/^0/, "")}`;
+        // Note: phoneNumber might not be needed in new request, but keeping for compatibility
       }
 
       // Call appropriate registration endpoint
@@ -85,10 +100,11 @@ export default function RegisterScreen() {
         ? await authService.emailCompleteRegistration(requestData)
         : await authService.completeRegistration(requestData);
 
-      if (response.success && response.data.accessToken && response.data.refreshToken) {
+      if (response.success) {
+        const data: CompleteRegistrationResponse = response.data;
         await login({
-          accessToken: response.data.accessToken,
-          refreshToken: response.data.refreshToken,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
         });
         Alert.alert("Thành công", "Đăng ký thành công!", [
           { text: "OK", onPress: () => router.replace("/user/(tabs)") }
@@ -129,22 +145,61 @@ export default function RegisterScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Full Name - Required */}
+          {/* First Name - Required */}
           <View style={styles.inputGroup}>
             <ThemedText style={styles.inputLabel}>
-              Họ và tên <ThemedText style={styles.required}>*</ThemedText>
+              Tên <ThemedText style={styles.required}>*</ThemedText>
             </ThemedText>
             <View style={styles.inputContainer}>
               <Icon name="person" type="material" size={20} color="#666" />
               <TextInput
                 style={styles.textInput}
-                placeholder="Nguyễn Văn A"
+                placeholder="Văn A"
                 placeholderTextColor="#999"
-                value={fullName}
-                onChangeText={setFullName}
+                value={firstName}
+                onChangeText={setFirstName}
                 autoCapitalize="words"
               />
             </View>
+          </View>
+
+          {/* Last Name - Required */}
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.inputLabel}>
+              Họ <ThemedText style={styles.required}>*</ThemedText>
+            </ThemedText>
+            <View style={styles.inputContainer}>
+              <Icon name="person" type="material" size={20} color="#666" />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Nguyễn"
+                placeholderTextColor="#999"
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
+              />
+            </View>
+          </View>
+
+          {/* Birthday - Required */}
+          <View style={styles.inputGroup}>
+            <ThemedText style={styles.inputLabel}>
+              Ngày sinh <ThemedText style={styles.required}>*</ThemedText>
+            </ThemedText>
+            <View style={styles.inputContainer}>
+              <Icon name="calendar-today" type="material" size={20} color="#666" />
+              <TextInput
+                style={styles.textInput}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#999"
+                value={birthday}
+                onChangeText={setBirthday}
+                keyboardType="numeric"
+              />
+            </View>
+            <ThemedText style={styles.inputHint}>
+              Định dạng: YYYY-MM-DD (ví dụ: 1990-01-15)
+            </ThemedText>
           </View>
 
           {/* Email (for phone login) */}
