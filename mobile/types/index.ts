@@ -196,17 +196,28 @@ export interface PhoneLoginRequest {
 }
 
 export interface PhoneLoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType?: string;
+  expiresIn?: number;
   newUser: boolean;
+  phoneNumber?: string;
   tempToken?: string;
-  accessToken?: string;
-  refreshToken?: string;
 }
 
 export interface CompleteRegistrationRequest {
-  tempToken: string;
-  fullName: string;
-  email?: string;
-  phoneNumber?: string;
+  idToken?: string;
+  tempToken?: string;
+  firstName: string;
+  lastName: string;
+  birthday: string; // ISO date string
+}
+
+export interface CompleteRegistrationResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType?: string;
+  expiresIn: number;
 }
 
 export interface SendOtpRequest {
@@ -219,10 +230,13 @@ export interface VerifyOtpRequest {
 }
 
 export interface VerifyOtpResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType?: string;
+  expiresIn?: number;
   newUser: boolean;
+  phoneNumber?: string;
   tempToken?: string;
-  accessToken?: string;
-  refreshToken?: string;
 }
 
 export interface RefreshTokenRequest {
