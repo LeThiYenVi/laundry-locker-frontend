@@ -107,9 +107,12 @@ export interface OrderItem {
 }
 
 export interface CreateOrderRequest {
+  type: 'LAUNDRY';
   lockerId: number;
-  boxId: number;
-  items: { serviceId: number; quantity: number }[];
+  boxId?: number; // Single box (backward compatible)
+  boxIds?: number[]; // Multiple boxes (new)
+  serviceIds: number[];
+  customerNote?: string;
 }
 
 export type OrderStatus =

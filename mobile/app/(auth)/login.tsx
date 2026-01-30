@@ -2,21 +2,25 @@ import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/user";
 import { PhoneLoginResponse, VerifyOtpResponse } from "@/types";
-import { FirebaseAuthTypes, getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
+import {
+  FirebaseAuthTypes,
+  getAuth,
+  signInWithPhoneNumber,
+} from "@react-native-firebase/auth";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type LoginMethod = "phone" | "email";
@@ -24,16 +28,17 @@ type LoginMethod = "phone" | "email";
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  
+
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("email");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [confirmResult, setConfirmResult] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
+  const [confirmResult, setConfirmResult] =
+    useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  
+
   // Ref for OTP input
   const otpInputRef = useRef<TextInput>(null);
 
@@ -41,7 +46,7 @@ export default function LoginScreen() {
   function onAuthStateChanged(user: FirebaseAuthTypes.User | null) {
     if (user) {
       // User is signed in
-      console.log('Firebase User:', user);
+      console.log("Firebase User:", user);
     }
   }
 
@@ -61,10 +66,10 @@ export default function LoginScreen() {
   }, [isOtpSent]);
 
   // ==================== PHONE AUTH (Native) ====================
-  
+
   const handleSendPhoneOtp = async () => {
     let formattedPhone = phoneNumber.trim();
-    
+
     // Auto add +84 if missing
     if (formattedPhone.startsWith("0")) {
       formattedPhone = "+84" + formattedPhone.substring(1);
@@ -72,15 +77,18 @@ export default function LoginScreen() {
       formattedPhone = "+84" + formattedPhone;
     }
 
-    if (formattedPhone.length < 10) {
-      Alert.alert("Lỗi", "Vui lòng nhập số điện thoại hợp lệ");
+    if (!/^\+84\d{9}$/.test(formattedPhone)) {
+      Alert.alert("Lỗi", "Số điện thoại không hợp lệ");
       return;
     }
 
     setIsLoading(true);
     try {
       // Native Firebase Phone Auth
-      const confirmation = await signInWithPhoneNumber(getAuth(), formattedPhone);
+      const confirmation = await signInWithPhoneNumber(
+        getAuth(),
+        formattedPhone,
+      );
       console.log("Firebase confirmation result:", confirmation);
       setConfirmResult(confirmation);
       setIsOtpSent(true);
@@ -89,9 +97,11 @@ export default function LoginScreen() {
     } catch (error: any) {
       console.error("Phone OTP error:", error);
       let msg = "Không thể gửi OTP. Vui lòng kiểm tra lại số điện thoại";
-      if (error.code === 'auth/invalid-phone-number') msg = "Số điện thoại không hợp lệ";
-      if (error.code === 'auth/quota-exceeded') msg = "Đã quá giới hạn gửi SMS hôm nay";
-      
+      if (error.code === "auth/invalid-phone-number")
+        msg = "Số điện thoại không hợp lệ";
+      if (error.code === "auth/quota-exceeded")
+        msg = "Đã quá giới hạn gửi SMS hôm nay";
+
       Alert.alert("Lỗi", msg);
     } finally {
       setIsLoading(false);
@@ -106,28 +116,61 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-
-
       const userCredential = await confirmResult.confirm(otp);
-      
+
       if (userCredential) {
         // Get ID Token
         const idToken = await userCredential.user.getIdToken();
         console.log("Firebase ID Token:", idToken);
+        console.log("Calling backend API at:", process.env.EXPO_PUBLIC_API_URL);
+
         // Call backend API with Firebase ID Token
         const response = await authService.phoneLogin(idToken);
-        
+
         if (response.success) {
           const data: PhoneLoginResponse = response.data;
           console.log("Phone login response:", data);
-          if (data.newUser && data.tempToken) {
-            router.push({
-              pathname: "/(auth)/register",
-              params: { tempToken: data.tempToken, method: "phone" },
+
+          // New user - needs registration
+          if (data.newUser) {
+            // Show success message first
+            Alert.alert(
+              "Xác thực thành công! ✓",
+              "Vui lòng hoàn tất thông tin đăng ký để tiếp tục.",
+              [
+                {
+                  text: "Tiếp tục",
+                  onPress: () => {
+                    // Pass both idToken (Firebase) and tempToken (backend)
+                    router.push({
+                      pathname: "/(auth)/register",
+                      params: {
+                        idToken: idToken, // Firebase ID token
+                        tempToken: data.tempToken || "", // Backend temp token
+                        method: "phone",
+                      },
+                    });
+                  },
+                },
+              ],
+            );
+          }
+          // Existing user - has tokens
+          else if (data.accessToken && data.refreshToken) {
+            await login({
+              accessToken: data.accessToken,
+              refreshToken: data.refreshToken,
             });
-          } else if (data.accessToken && data.refreshToken) {
-            await login({ accessToken: data.accessToken, refreshToken: data.refreshToken });
-            router.replace("/user/(tabs)");
+            console.log("token", data.accessToken);
+
+            Alert.alert("Đăng nhập thành công!", "Chào mừng bạn trở lại.", [
+              { text: "OK", onPress: () => router.replace("/user/(tabs)/") },
+            ]);
+          }
+          // Unexpected response
+          else {
+            console.error("Unexpected response format:", data);
+            Alert.alert("Lỗi", "Phản hồi từ server không đúng định dạng");
           }
         } else {
           Alert.alert("Lỗi", response.message || "Đăng nhập thất bại");
@@ -135,8 +178,43 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error("Verify phone OTP error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config
+          ? {
+              url: error.config.url,
+              baseURL: error.config.baseURL,
+              method: error.config.method,
+            }
+          : null,
+      });
+
       let msg = "Mã OTP không đúng hoặc đã hết hạn";
-      if (error.code === 'auth/invalid-verification-code') msg = "Mã OTP không đúng";
+
+      // Check for Firebase auth errors
+      if (error.code === "auth/invalid-verification-code") {
+        msg = "Mã OTP không đúng";
+      }
+      // Check for network errors
+      else if (
+        error.message === "Network Error" ||
+        error.code === "ERR_NETWORK"
+      ) {
+        msg =
+          "Không thể kết nối đến máy chủ. Vui lòng kiểm tra:\n\n1. Backend đang chạy tại " +
+          (process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:8082/api") +
+          "\n" +
+          "2. Kiểm tra port có đúng không\n" +
+          "3. Kiểm tra firewall/antivirus";
+      }
+      // Check for timeout
+      else if (error.code === "ECONNABORTED") {
+        msg = "Kết nối quá lâu. Vui lòng kiểm tra backend và thử lại";
+      }
+
       Alert.alert("Lỗi", msg);
     } finally {
       setIsLoading(false);
@@ -144,7 +222,7 @@ export default function LoginScreen() {
   };
 
   // ==================== EMAIL AUTH ====================
-  
+
   const handleSendEmailOtp = async () => {
     if (!email.trim() || !email.includes("@")) {
       Alert.alert("Lỗi", "Vui lòng nhập email hợp lệ");
@@ -162,7 +240,10 @@ export default function LoginScreen() {
         Alert.alert("Lỗi", response.message || "Không thể gửi OTP");
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại");
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -179,21 +260,62 @@ export default function LoginScreen() {
       const response = await authService.verifyEmailOtp(email, otp);
       if (response.success) {
         const data: VerifyOtpResponse = response.data;
-        
-        if (data.newUser && data.tempToken) {
-          router.push({
-            pathname: "/(auth)/register",
-            params: { tempToken: data.tempToken, method: "email" },
+        console.log("Email OTP verify response:", data);
+
+        // New user - needs registration
+        if (data.newUser) {
+          // Show success message first
+          Alert.alert(
+            "Xác thực thành công! ✓",
+            "Vui lòng hoàn tất thông tin đăng ký để tiếp tục.",
+            [
+              {
+                text: "Tiếp tục",
+                onPress: () => {
+                  if (data.tempToken) {
+                    // Has tempToken from backend
+                    router.push({
+                      pathname: "/(auth)/register",
+                      params: { tempToken: data.tempToken, method: "email" },
+                    });
+                  } else {
+                    // Fallback: create a temporary token identifier
+                    console.warn(
+                      "No tempToken from backend, using email as identifier",
+                    );
+                    router.push({
+                      pathname: "/(auth)/register",
+                      params: { tempToken: `email:${email}`, method: "email" },
+                    });
+                  }
+                },
+              },
+            ],
+          );
+        }
+        // Existing user - has tokens
+        else if (data.accessToken && data.refreshToken) {
+          await login({
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
           });
-        } else if (data.accessToken && data.refreshToken) {
-          await login({ accessToken: data.accessToken, refreshToken: data.refreshToken });
-          router.replace("/user/(tabs)");
+          Alert.alert("Đăng nhập thành công!", "Chào mừng bạn trở lại.", [
+            { text: "OK", onPress: () => router.replace("/user/(tabs)/") },
+          ]);
+        }
+        // Unexpected response
+        else {
+          console.error("Unexpected response format:", data);
+          Alert.alert("Lỗi", "Phản hồi từ server không đúng định dạng");
         }
       } else {
         Alert.alert("Lỗi", response.message || "Mã OTP không đúng");
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.response?.data?.message || "Xác thực thất bại. Vui lòng thử lại");
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Xác thực thất bại. Vui lòng thử lại",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -225,20 +347,22 @@ export default function LoginScreen() {
 
   const handleOAuthLogin = async (provider: string) => {
     // This assumes OAuth is handled via deep linking or web browser
-    const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace("/api", "") || "http://10.0.2.2:8080";
+    const baseUrl =
+      process.env.EXPO_PUBLIC_API_URL?.replace("/api", "") ||
+      "http://10.0.2.2:8080";
     const oauthUrl = `${baseUrl}/oauth2/authorization/${provider}`;
-    
+
     try {
       const result = await WebBrowser.openAuthSessionAsync(
-        oauthUrl, 
-        "laundrylocker://auth/callback"
+        oauthUrl,
+        "laundrylocker://auth/callback",
       );
-      
+
       if (result.type === "success" && result.url) {
         const url = new URL(result.url);
         const accessToken = url.searchParams.get("accessToken");
         const refreshToken = url.searchParams.get("refreshToken");
-        
+
         if (accessToken && refreshToken) {
           await login({ accessToken, refreshToken });
           router.replace("/user/(tabs)");
@@ -280,11 +404,11 @@ export default function LoginScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          
-        </View>
+        <View style={styles.logoContainer}></View>
         <ThemedText style={styles.appName}>Laundry Locker</ThemedText>
-        <ThemedText style={styles.tagline}>Giặt ủi thông minh, tiện lợi</ThemedText>
+        <ThemedText style={styles.tagline}>
+          Giặt ủi thông minh, tiện lợi
+        </ThemedText>
       </View>
 
       <KeyboardAvoidingView
@@ -295,23 +419,33 @@ export default function LoginScreen() {
           {/* Method Toggle */}
           <View style={styles.methodToggle}>
             <TouchableOpacity
-              style={[styles.methodButton, loginMethod === "phone" && styles.methodButtonActive]}
+              style={[
+                styles.methodButton,
+                loginMethod === "phone" && styles.methodButtonActive,
+              ]}
               onPress={() => handleSwitchMethod("phone")}
             >
-             
               <ThemedText
-                style={[styles.methodText, loginMethod === "phone" && styles.methodTextActive]}
+                style={[
+                  styles.methodText,
+                  loginMethod === "phone" && styles.methodTextActive,
+                ]}
               >
                 Số điện thoại
               </ThemedText>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.methodButton, loginMethod === "email" && styles.methodButtonActive]}
+              style={[
+                styles.methodButton,
+                loginMethod === "email" && styles.methodButtonActive,
+              ]}
               onPress={() => handleSwitchMethod("email")}
             >
-              
               <ThemedText
-                style={[styles.methodText, loginMethod === "email" && styles.methodTextActive]}
+                style={[
+                  styles.methodText,
+                  loginMethod === "email" && styles.methodTextActive,
+                ]}
               >
                 Email
               </ThemedText>
@@ -360,15 +494,22 @@ export default function LoginScreen() {
           {/* OTP Input */}
           {isOtpSent && (
             <View style={styles.inputGroup}>
-              <ThemedText style={styles.inputLabel}>Mã xác thực (OTP)</ThemedText>
-              <TouchableOpacity 
-                activeOpacity={1} 
+              <ThemedText style={styles.inputLabel}>
+                Mã xác thực (OTP)
+              </ThemedText>
+              <TouchableOpacity
+                activeOpacity={1}
                 onPress={() => otpInputRef.current?.focus()}
               >
                 <View style={styles.otpContainer}>
                   {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <View key={index} style={[styles.otpBox, otp[index] && styles.otpBoxFilled]}>
-                      <ThemedText style={styles.otpText}>{otp[index] || ""}</ThemedText>
+                    <View
+                      key={index}
+                      style={[styles.otpBox, otp[index] && styles.otpBoxFilled]}
+                    >
+                      <ThemedText style={styles.otpText}>
+                        {otp[index] || ""}
+                      </ThemedText>
                     </View>
                   ))}
                 </View>
@@ -382,12 +523,17 @@ export default function LoginScreen() {
                 onChangeText={setOtp}
                 autoFocus
               />
-              <TouchableOpacity 
-                style={styles.resendButton} 
+              <TouchableOpacity
+                style={styles.resendButton}
                 onPress={handleResendOtp}
                 disabled={countdown > 0}
               >
-                <ThemedText style={[styles.resendText, countdown > 0 && styles.resendTextDisabled]}>
+                <ThemedText
+                  style={[
+                    styles.resendText,
+                    countdown > 0 && styles.resendTextDisabled,
+                  ]}
+                >
                   {countdown > 0 ? `Gửi lại mã (${countdown}s)` : "Gửi lại mã"}
                 </ThemedText>
               </TouchableOpacity>
@@ -396,7 +542,10 @@ export default function LoginScreen() {
 
           {/* Action Button */}
           <TouchableOpacity
-            style={[styles.actionButton, isLoading && styles.actionButtonDisabled]}
+            style={[
+              styles.actionButton,
+              isLoading && styles.actionButtonDisabled,
+            ]}
             onPress={handleAction}
             disabled={isLoading}
           >
@@ -412,7 +561,9 @@ export default function LoginScreen() {
           {/* OAuth Buttons */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
-            <ThemedText style={styles.dividerText}>Hoặc đăng nhập với</ThemedText>
+            <ThemedText style={styles.dividerText}>
+              Hoặc đăng nhập với
+            </ThemedText>
             <View style={styles.dividerLine} />
           </View>
 
@@ -420,23 +571,21 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("google")}
-            >
-            </TouchableOpacity>
+            ></TouchableOpacity>
             <TouchableOpacity
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("facebook")}
-            >
-            </TouchableOpacity>
+            ></TouchableOpacity>
             <TouchableOpacity
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("zalo")}
-            >
-            </TouchableOpacity>
+            ></TouchableOpacity>
           </View>
 
           <ThemedText style={styles.termsText}>
             Bằng việc đăng nhập, bạn đồng ý với{" "}
-            <ThemedText style={styles.termsLink}>Điều khoản sử dụng</ThemedText> và{" "}
+            <ThemedText style={styles.termsLink}>Điều khoản sử dụng</ThemedText>{" "}
+            và{" "}
             <ThemedText style={styles.termsLink}>Chính sách bảo mật</ThemedText>
           </ThemedText>
         </ScrollView>

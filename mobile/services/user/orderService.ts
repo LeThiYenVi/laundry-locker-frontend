@@ -17,7 +17,7 @@ export const getOrders = async (
     size: number = 10
 ): Promise<ApiResponse<PaginatedResponse<Order>>> => {
     const response = await api.get<ApiResponse<PaginatedResponse<Order>>>(
-        `/orders?page=${page}&size=${size}`
+        `/orders/my-orders?page=${page}&size=${size}`
     );
     return response.data;
 };
@@ -65,7 +65,8 @@ export const checkoutOrder = async (
  */
 export const cancelOrder = async (id: number, reason: string): Promise<ApiResponse<Order>> => {
     const response = await api.put<ApiResponse<Order>>(
-        `/orders/${id}/cancel?reason=${encodeURIComponent(reason)}`
+        `/orders/${id}/cancel`,
+        { reason }
     );
     return response.data;
 };
