@@ -9,6 +9,10 @@ import FeedbackPage from "../pages/Admin/feedback";
 import PartnersPage from "../pages/Admin/partners";
 import LockersPage from "../pages/Admin/lockers";
 import UsersPage from "../pages/Admin/users";
+import StoresPage from "../pages/Admin/stores";
+import ServicesPage from "../pages/Admin/services";
+import PaymentsPage from "../pages/Admin/payments";
+import LoyaltyPage from "../pages/Admin/loyalty";
 import { Navigate } from "react-router-dom";
 import LoginPage from "~/pages/auth/Login";
 import RootLayout from "../pages/RootLayout";
@@ -42,19 +46,15 @@ const routesConfig: RouteObject[] = [
         ),
         children: [
           { path: "dashboard", element: <DashboardPage /> },
-          { path: "lockers", element: <LockersPage /> },
           { path: "users", element: <UsersPage /> },
+          { path: "stores", element: <StoresPage /> },
+          { path: "lockers", element: <LockersPage /> },
+          { path: "services", element: <ServicesPage /> },
           { path: "orders", element: <OrdersPage /> },
-          { path: "feedback", element: <FeedbackPage /> },
+          { path: "payments", element: <PaymentsPage /> },
+          { path: "loyalty", element: <LoyaltyPage /> },
           { path: "partners", element: <PartnersPage /> },
-          {
-            path: "users",
-            element: (
-              <ProtectedRoute requiredPermission="manage_users">
-                <div>User List</div>
-              </ProtectedRoute>
-            ),
-          },
+          { path: "feedback", element: <FeedbackPage /> },
         ],
       },
 

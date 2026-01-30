@@ -1,36 +1,30 @@
-export const OrderStatus= {
-  INITIALIZED : "INITIALIZED",
-  RESERVED : "RESERVED",
-  WAITING : "WAITING",
-  COLLECTED : "COLLECTED",
-  PROCESSING : "PROCESSING",
-  READY : "READY",
-  RETURNED : "RETURNED",
-  COMPLETED : "COMPLETED",
-  CANCELED : "CANCELED",
-} as const;
-export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
+// Legacy Order types - OrderStatus enum moved to admin/enums.ts
+// Use OrderStatus from '@/types/admin' instead
+
 export type OrderItem = {
   id: string;
   sku?: string;
   name?: string;
   qty: number;
-  price?: number; // per-item price
+  price?: number;
 };
 
 export interface Order {
   id: string;
   customerId?: string;
   customerName?: string;
-  status: OrderStatus;
+  // Use OrderStatus type from admin/enums.ts
+  status: import('./admin/enums').OrderStatus;
   items?: OrderItem[];
-  total?: number; // total in cents or number depending on app conventions
-  createdAt?: string; // ISO date
-  updatedAt?: string; // ISO date
+  total?: number;
+  createdAt?: string;
+  updatedAt?: string;
   notes?: string;
 }
 
 export type OrderSummary = Pick<Order, "id" | "customerName" | "status" | "total" | "createdAt">;
 
+// Import OrderStatus from admin/enums for this helper
+import { OrderStatus } from './admin/enums';
 export const isTerminalStatus = (s: OrderStatus) =>
   s === OrderStatus.COMPLETED || s === OrderStatus.CANCELED || s === OrderStatus.RETURNED;

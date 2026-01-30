@@ -25,12 +25,12 @@ import {
   PaginationEllipsis,
 } from "~/components/ui/pagination";
 import { t } from "@/lib/i18n";
+import type { FeedbackItem } from "@/types";
 import { 
   getPaginatedFeedbacks, 
   getFeedbackTypeColor, 
   getFeedbackStatusColor, 
-  getFeedbackPriorityColor,
-  type FeedbackItem 
+  getFeedbackPriorityColor
 } from "@/mockdata";
 
 const tableHeader = {

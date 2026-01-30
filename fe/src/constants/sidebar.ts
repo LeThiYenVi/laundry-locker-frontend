@@ -1,12 +1,5 @@
-import { Home, Network, Truck, Link2, Globe, Users, Package, BarChart3, Calendar, ListOrdered, Users2, UserCog } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
-export interface NavItem {
-  icon: LucideIcon;
-  path: string;
-  label: string;
-  permission?: string; // Optional permission required to access
-}
+import { Home, Truck, Users, Package, ListOrdered, UserCog, Store, Sparkles, CreditCard, Gift, Handshake } from "lucide-react";
+import type { NavItem } from "@/types";
 
 // Sidebar Navigation Items
 export const ADMIN_NAV_ITEMS: NavItem[] = [
@@ -16,16 +9,28 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "Dashboard" 
   },
   { 
+    icon: UserCog, 
+    path: "/admin/users", 
+    label: "Users",
+    permission: "manage_users"
+  },
+  { 
+    icon: Store, 
+    path: "/admin/stores", 
+    label: "Stores",
+    permission: "manage_stores"
+  },
+  { 
     icon: Truck, 
     path: "/admin/lockers", 
     label: "Lockers",
     permission: "manage_lockers"
   },
   { 
-    icon: UserCog, 
-    path: "/admin/users", 
-    label: "Users",
-    permission: "manage_users"
+    icon: Sparkles, 
+    path: "/admin/services", 
+    label: "Services",
+    permission: "manage_services"
   },
   { 
     icon: Package, 
@@ -33,19 +38,29 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "Orders",
     permission: "view_orders"
   },
-
-
+  { 
+    icon: CreditCard, 
+    path: "/admin/payments", 
+    label: "Payments",
+    permission: "view_payments"
+  },
+  { 
+    icon: Gift, 
+    path: "/admin/loyalty", 
+    label: "Loyalty",
+    permission: "manage_loyalty"
+  },
+  { 
+    icon: Handshake, 
+    path: "/admin/partners", 
+    label: "Partners",
+    permission: "manage_partners"
+  },
   { 
     icon: ListOrdered, 
     path: "/admin/feedback", 
     label: "Feedback",
     permission: "manage_feedback"
-  },
-  { 
-    icon: Users, 
-    path: "/admin/partners", 
-    label: "Partners",
-    permission: "manage_partners"
   },
 ];
 

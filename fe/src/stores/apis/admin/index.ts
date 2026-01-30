@@ -7,3 +7,5 @@ export * from './lockers';
 export * from './orders';
 export * from './payments';
 export * from './scheduler';
+export * from './loyalty';
+export * from './partners';

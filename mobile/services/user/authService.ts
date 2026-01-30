@@ -18,7 +18,7 @@ import api from '../api';
  */
 export const phoneLogin = async (idToken: string): Promise<ApiResponse<PhoneLoginResponse>> => {
     const payload: PhoneLoginRequest = { idToken };
-    const response = await api.post<ApiResponse<PhoneLoginResponse>>('/auth/phone-login', payload);
+const response = await api.post<ApiResponse<PhoneLoginResponse>>('/auth/phone-login', payload);
     return response.data;
 };
 
