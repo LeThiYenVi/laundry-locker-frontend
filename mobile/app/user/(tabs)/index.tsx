@@ -3,11 +3,16 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { storeService } from "@/services/user";
+import { Store } from "@/types";
 import { Avatar, Icon, SearchBar } from "@rneui/themed";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,10 +21,48 @@ import {
 } from "react-native";
 
 export default function HomeScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const backgroundColor = Colors[colorScheme ?? "light"].background;
   const textColor = Colors[colorScheme ?? "light"].text;
   const [search, setSearch] = useState("");
+  const [stores, setStores] = useState<Store[]>([]);
+  const [isLoadingStores, setIsLoadingStores] = useState(true);
+  const [storeError, setStoreError] = useState<string | null>(null);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStores = async () => {
+    try {
+      setIsLoadingStores(true);
+      setStoreError(null);
+      const response = await storeService.getAllStores();
+      if (response.success && response.data) {
+        setStores(response.data);
+      } else {
+        setStoreError("Không thể tải danh sách cửa hàng");
+      }
+    } catch (error) {
+      console.error("Error fetching stores:", error);
+      setStoreError("Đã xảy ra lỗi khi tải danh sách cửa hàng");
+    } finally {
+      setIsLoadingStores(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch stores on mount
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchStores();
+  };
+
+  // Get the first store or use default data
+  const firstStore = stores.length > 0 ? stores[0] : null;
 
   return (
     <View style={styles.wrapper}>
@@ -27,14 +70,10 @@ export default function HomeScreen() {
       <ScrollView
         style={[styles.container, { backgroundColor }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#003D5B"]} />
+        }
       >
-        {/* Header */}
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Lock.R
-          </ThemedText>
-        </ThemedView>
-
         {/* Greeting Section */}
         <ThemedView style={styles.greetingSection}>
           <View style={styles.greetingRow}>
@@ -52,10 +91,16 @@ export default function HomeScreen() {
             </View>
           </View>
           <ThemedView style={styles.locationRow}>
+            <View style={styles.brandContainer}>
+              <IconSymbol size={20} name="lock.fill" color="#003D5B" />
+              <ThemedText type="title" style={styles.brandText}>
+                Lock.R
+              </ThemedText>
+            </View>
             <View style={styles.locationBadge}>
               <IconSymbol size={14} name="mappin.circle.fill" color="#003D5B" />
               <ThemedText style={styles.locationText}>
-                9 District, HCMC
+                Quận Bình Tân, TP.HCM
               </ThemedText>
             </View>
           </ThemedView>
@@ -64,7 +109,7 @@ export default function HomeScreen() {
         {/* Search Bar */}
         <View style={styles.searchWrapper}>
           <SearchBar
-            placeholder="Search stores, services..."
+            placeholder="Tìm kiếm cửa hàng, dịch vụ..."
             onChangeText={setSearch}
             value={search}
             platform="default"
@@ -88,7 +133,7 @@ export default function HomeScreen() {
           >
             <ThemedText style={styles.welcomeTitle}>Welcome!</ThemedText>
             <ThemedText style={styles.welcomeSubtitle}>
-              Let us be your safe haven.
+              Hãy để chúng tôi là nơi an toàn của bạn.
             </ThemedText>
           </LinearGradient>
           <View style={styles.welcomeRight}>
@@ -106,52 +151,119 @@ export default function HomeScreen() {
             <View style={styles.iconWrapper}>
               <IconSymbol size={18} name="building.2.fill" color="#003D5B" />
             </View>
-            <ThemedText style={styles.sectionTitle}>Our Store</ThemedText>
+            <ThemedText style={styles.sectionTitle}>Các nơi đặt locker</ThemedText>
           </View>
-          <TouchableOpacity style={styles.seeAllButton}>
-            <ThemedText style={styles.seeAllText}>SEE ALL</ThemedText>
+          <TouchableOpacity
+            style={styles.seeAllButton}
+            onPress={() => router.push("/user/stores")}
+          >
+            <ThemedText style={styles.seeAllText}>XEM TẤT CẢ</ThemedText>
             <IconSymbol size={14} name="chevron.right" color="#003D5B" />
           </TouchableOpacity>
         </ThemedView>
 
         {/* Store Card */}
-        <View style={styles.storeCard}>
-          <View style={styles.storeCardHeader}>
-            <View style={styles.activeBadge}>
-              <View style={styles.activeDot} />
-              <ThemedText style={styles.activeBadgeText}>ACTIVE</ThemedText>
+        {isLoadingStores ? (
+          <View style={styles.storeCard}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#003D5B" />
+              <ThemedText style={styles.loadingText}>Đang tải cửa hàng...</ThemedText>
             </View>
-            <TouchableOpacity style={styles.chevronButton}>
-              <IconSymbol size={18} name="chevron.right" color="#666" />
-            </TouchableOpacity>
           </View>
-
-          <View style={styles.storeImagePlaceholder}>
-            {/* Map will be imported here later */}
-            <IconSymbol size={70} name="map.fill" color="#B0B0B0" />
-            <ThemedText style={styles.mapPlaceholderText}>Map View</ThemedText>
+        ) : storeError ? (
+          <View style={styles.storeCard}>
+            <View style={styles.errorContainer}>
+              <IconSymbol size={48} name="exclamationmark.triangle" color="#FF6B6B" />
+              <ThemedText style={styles.errorText}>{storeError}</ThemedText>
+            </View>
           </View>
-
-          <View style={styles.storeInfo}>
-            <View style={styles.storeNameRow}>
-              <ThemedText style={styles.storeName}>STORE A</ThemedText>
-              <View style={styles.distanceBadge}>
-                <IconSymbol size={12} name="location.fill" color="#003D5B" />
-                <ThemedText style={styles.distanceText}>2.5 km</ThemedText>
+        ) : firstStore ? (
+          <View style={styles.storeCard}>
+            <View style={styles.storeCardHeader}>
+              <View style={styles.activeBadge}>
+                <View style={styles.activeDot} />
+                <ThemedText style={styles.activeBadgeText}>Hoạt động</ThemedText>
               </View>
+              <TouchableOpacity 
+                style={styles.chevronButton}
+                onPress={() => router.push("/user/stores")}
+              >
+                <IconSymbol size={18} name="chevron.right" color="#666" />
+              </TouchableOpacity>
             </View>
-            <ThemedText style={styles.storeAddress}>
-              Tower D - Masteri Centre Point, Long Binh, Quận 9, TP.HCM
-            </ThemedText>
-          </View>
-        </View>
 
-        {/* Pagination Dots */}
+            {firstStore.latitude && firstStore.longitude ? (
+              <MapView
+                style={styles.storeImagePlaceholder}
+                initialRegion={{
+                  latitude: firstStore.latitude,
+                  longitude: firstStore.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+                scrollEnabled={false}
+                zoomEnabled={false}
+              >
+                <Marker
+                  coordinate={{
+                    latitude: firstStore.latitude,
+                    longitude: firstStore.longitude,
+                  }}
+                  title={firstStore.name}
+                  description={firstStore.address}
+                />
+              </MapView>
+            ) : (
+              <View style={styles.storeImagePlaceholder}>
+                <IconSymbol size={70} name="map.fill" color="#B0B0B0" />
+                <ThemedText style={styles.mapPlaceholderText}>Map View</ThemedText>
+              </View>
+            )}
+
+            <View style={styles.storeInfo}>
+              <View style={styles.storeNameRow}>
+                <ThemedText style={styles.storeName}>{firstStore.name}</ThemedText>
+                {firstStore.latitude && firstStore.longitude && (
+                  <View style={styles.distanceBadge}>
+                    <IconSymbol size={12} name="location.fill" color="#003D5B" />
+                    <ThemedText style={styles.distanceText}>-</ThemedText>
+                  </View>
+                )}
+              </View>
+              <ThemedText style={styles.storeAddress}>
+                {firstStore.address}
+              </ThemedText>
+              {firstStore.phone && (
+                <View style={styles.phoneRow}>
+                  <IconSymbol size={14} name="phone.fill" color="#666" />
+                  <ThemedText style={styles.phoneText}>{firstStore.phone}</ThemedText>
+                </View>
+              )}
+              {firstStore.openTime && firstStore.closeTime && (
+                <View style={styles.timeRow}>
+                  <IconSymbol size={14} name="clock.fill" color="#666" />
+                  <ThemedText style={styles.timeText}>
+                    {firstStore.openTime} - {firstStore.closeTime}
+                  </ThemedText>
+                </View>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.storeCard}>
+            <View style={styles.emptyContainer}>
+              <IconSymbol size={48} name="building.2" color="#CCC" />
+              <ThemedText style={styles.emptyText}>Chưa có nơi đặt locker nào</ThemedText>
+            </View>
+          </View>
+        )}
+
+        {/* Pagination Dots
         <View style={styles.paginationContainer}>
           <View style={[styles.dot, styles.dotActive]} />
           <View style={styles.dot} />
           <View style={styles.dot} />
-        </View>
+        </View> */}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -178,6 +290,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   greetingSection: {
+    paddingTop: 60,
     paddingHorizontal: 24,
     marginBottom: 20,
   },
@@ -211,6 +324,12 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  brandText: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 2,
   },
   locationBadge: {
     flexDirection: "row",
@@ -245,6 +364,11 @@ const styles = StyleSheet.create({
   searchBarInput: {
     color: "#fff",
     fontSize: 15,
+  },
+  brandContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   welcomeCard: {
     flexDirection: "row",
@@ -284,10 +408,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
   },
   welcomeImage: {
     width: "100%",
     height: "100%",
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
   },
   storeSectionHeader: {
     flexDirection: "row",
@@ -443,5 +573,55 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 30,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  errorContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+  },
+  phoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+  },
+  phoneText: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "500",
+  },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  timeText: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "500",
   },
 });

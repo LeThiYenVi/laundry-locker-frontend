@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
-import { userService } from "@/services/user";
-import { User } from "@/types";
+import { orderService, userService } from "@/services/user";
+import { Order, User } from "@/types";
 import { Icon } from "@rneui/themed";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -23,7 +23,7 @@ export default function ProfileScreen() {
   const [stats, setStats] = useState({
     totalOrders: 0,
     activeOrders: 0,
-    points: 0,
+    completedOrders: 0,
   });
 
   const fetchProfile = useCallback(async () => {
@@ -39,9 +39,34 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const fetchOrderStats = useCallback(async () => {
+    try {
+      // Fetch all orders to calculate stats
+      const response = await orderService.getOrders();
+      if (response.success && response.data) {
+        // API returns PaginatedResponse<Order>, so orders are in content array
+        const orders = response.data.content || [];
+        const total = orders.length;
+        const completed = orders.filter((o: Order) => o.status === "COMPLETED").length;
+        const active = orders.filter((o: Order) => 
+          ["INITIALIZED", "WAITING", "COLLECTED", "PROCESSING", "READY", "RETURNED"].includes(o.status)
+        ).length;
+
+        setStats({
+          totalOrders: total,
+          completedOrders: completed,
+          activeOrders: active,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch order stats:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+    fetchOrderStats();
+  }, [fetchProfile, fetchOrderStats]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -132,10 +157,10 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
-              <Icon name="stars" type="material" size={24} color="#FFD700" />
+              <Icon name="check-circle" type="material" size={24} color="#4CAF50" />
             </View>
-            <ThemedText style={styles.statValue}>{stats.points}</ThemedText>
-            <ThemedText style={styles.statLabel}>Điểm</ThemedText>
+            <ThemedText style={styles.statValue}>{stats.completedOrders}</ThemedText>
+            <ThemedText style={styles.statLabel}>Hoàn thành</ThemedText>
           </View>
         </View>
 
@@ -201,7 +226,10 @@ export default function ProfileScreen() {
           <ThemedText style={styles.sectionTitle}>Tiện ích</ThemedText>
 
           <View style={styles.quickActionsGrid}>
-            <TouchableOpacity style={styles.quickActionCard}>
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => router.push("/user/(tabs)/orders")}
+            >
               <View style={styles.quickActionIcon}>
                 <Icon name="history" type="material" size={28} color="#003D5B" />
               </View>

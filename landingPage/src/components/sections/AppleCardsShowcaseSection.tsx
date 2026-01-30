@@ -33,7 +33,7 @@ export function AppleCardsShowcaseSection() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-7xl mx-auto"
         >
-          {[
+          {/* {[
             { icon: "🚀", label: "Triển khai nhanh", desc: "Chỉ trong 24h" },
             { icon: "🔧", label: "Tùy chỉnh linh hoạt", desc: "Theo nhu cầu" },
             { icon: "💡", label: "Hỗ trợ tận tình", desc: "Mọi lúc mọi nơi" },
@@ -48,7 +48,7 @@ export function AppleCardsShowcaseSection() {
               </div>
               <div className="text-neutral-400">{feature.desc}</div>
             </div>
-          ))}
+          ))} */}
         </motion.div>
       </div>
     </section>
