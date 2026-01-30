@@ -1,4 +1,3 @@
-
 import type { RouteObject } from "react-router-dom";
 import ProtectedRoute from "./protected-route";
 import AuthLayout from "../pages/auth/layout";
@@ -12,7 +11,23 @@ import UsersPage from "../pages/Admin/users";
 import { Navigate } from "react-router-dom";
 import LoginPage from "~/pages/auth/Login";
 import RootLayout from "../pages/RootLayout";
-import { MaintenancePage, NotFoundPage, UnauthorizedPage } from "../pages/Error";
+import {
+  MaintenancePage,
+  NotFoundPage,
+  UnauthorizedPage,
+} from "../pages/Error";
+
+// Partner Pages
+import PartnerLayout from "../pages/Partner/layout";
+import PartnerDashboard from "../pages/Partner/dashboard";
+import PartnerOrders from "../pages/Partner/orders";
+import PartnerProfile from "../pages/Partner/profile";
+import PartnerStaff from "../pages/Partner/staff";
+import PartnerRevenue from "../pages/Partner/revenue";
+import PartnerLockers from "../pages/Partner/lockers";
+import PartnerServices from "../pages/Partner/services";
+import PartnerNotifications from "../pages/Partner/notifications";
+import PartnerSettings from "../pages/Partner/settings";
 
 const routesConfig: RouteObject[] = [
   {
@@ -58,13 +73,33 @@ const routesConfig: RouteObject[] = [
         ],
       },
 
+      {
+        path: "partner",
+        element: (
+          <ProtectedRoute requiredPermission="partner_access">
+            <PartnerLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: "dashboard", element: <PartnerDashboard /> },
+          { path: "orders", element: <PartnerOrders /> },
+          { path: "staff", element: <PartnerStaff /> },
+          { path: "revenue", element: <PartnerRevenue /> },
+          { path: "lockers", element: <PartnerLockers /> },
+          { path: "services", element: <PartnerServices /> },
+          { path: "notifications", element: <PartnerNotifications /> },
+          { path: "settings", element: <PartnerSettings /> },
+          { path: "profile", element: <PartnerProfile /> },
+        ],
+      },
+
       // Error pages
       { path: "401", element: <UnauthorizedPage /> },
       { path: "403", element: <UnauthorizedPage /> },
       { path: "404", element: <NotFoundPage /> },
       { path: "503", element: <MaintenancePage /> },
       { path: "maintenance", element: <MaintenancePage /> },
-      
+
       // Catch-all 404
       { path: "*", element: <NotFoundPage /> },
     ],
