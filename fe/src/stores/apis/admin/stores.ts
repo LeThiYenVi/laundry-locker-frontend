@@ -1,5 +1,5 @@
-import { baseApi } from "../../baseAPi";
-import { ADMIN_ENDPOINTS } from "../../../constants";
+import { baseApi } from '../../baseAPi';
+import { ADMIN_ENDPOINTS } from '../../../constants';
 import type {
   ApiResponse,
   Page,
@@ -7,11 +7,20 @@ import type {
   AdminStoreResponse,
   CreateStoreRequest,
   UpdateUserStatusRequest,
-} from "../../../types";
+} from '../../../types';
+import {
+  CreateStoreRequestSchema,
+  UpdateStoreStatusRequestSchema,
+  createValidator,
+} from '../../../schemas';
 
 const TAGS = {
-  STORES: "Stores",
+  STORES: 'Stores',
 } as const;
+
+// Create validators
+const createStoreValidator = createValidator(CreateStoreRequestSchema);
+const updateStoreStatusValidator = createValidator(UpdateStoreStatusRequestSchema);
 
 export const storeManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -29,11 +38,15 @@ export const storeManagementApi = baseApi.injectEndpoints({
     }),
 
     createStore: builder.mutation<ApiResponse<AdminStoreResponse>, CreateStoreRequest>({
-      query: (storeData) => ({
-        url: ADMIN_ENDPOINTS.STORES,
-        method: "POST",
-        body: storeData,
-      }),
+      query: (storeData) => {
+        // Validate with Zod before sending
+        createStoreValidator.validateRequestBody(storeData);
+        return {
+          url: ADMIN_ENDPOINTS.STORES,
+          method: 'POST',
+          body: storeData,
+        };
+      },
       invalidatesTags: [TAGS.STORES],
     }),
 
@@ -41,11 +54,15 @@ export const storeManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminStoreResponse>,
       { id: number; data: CreateStoreRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.STORE_BY_ID(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        createStoreValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.STORE_BY_ID(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.STORES, id }, TAGS.STORES],
     }),
 
@@ -53,18 +70,22 @@ export const storeManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminStoreResponse>,
       { id: number; data: UpdateUserStatusRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.STORE_STATUS(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        updateStoreStatusValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.STORE_STATUS(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.STORES, id }, TAGS.STORES],
     }),
 
     deleteStore: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
         url: ADMIN_ENDPOINTS.STORE_BY_ID(id),
-        method: "DELETE",
+        method: 'DELETE',
       }),
       invalidatesTags: [TAGS.STORES],
     }),

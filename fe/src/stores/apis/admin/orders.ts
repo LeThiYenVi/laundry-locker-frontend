@@ -1,5 +1,5 @@
-import { baseApi } from "../../baseAPi";
-import { ADMIN_ENDPOINTS } from "../../../constants";
+import { baseApi } from '../../baseAPi';
+import { ADMIN_ENDPOINTS } from '../../../constants';
 import type {
   ApiResponse,
   Page,
@@ -8,12 +8,16 @@ import type {
   OrderStatus,
   OrderStatisticsResponse,
   RevenueReportResponse,
-} from "../../../types";
+} from '../../../types';
+import { UpdateOrderStatusRequestSchema, createValidator } from '../../../schemas';
 
 const TAGS = {
-  ORDERS: "Orders",
-  DASHBOARD: "Dashboard",
+  ORDERS: 'Orders',
+  DASHBOARD: 'Dashboard',
 } as const;
+
+// Create validator
+const updateOrderStatusValidator = createValidator(UpdateOrderStatusRequestSchema);
 
 export const orderManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -37,11 +41,15 @@ export const orderManagementApi = baseApi.injectEndpoints({
       ApiResponse<OrderResponse>,
       { id: number; status: OrderStatus }
     >({
-      query: ({ id, status }) => ({
-        url: ADMIN_ENDPOINTS.ORDER_STATUS(id),
-        method: "PUT",
-        params: { status },
-      }),
+      query: ({ id, status }) => {
+        // Validate with Zod before sending
+        updateOrderStatusValidator.validateRequestBody({ status });
+        return {
+          url: ADMIN_ENDPOINTS.ORDER_STATUS(id),
+          method: 'PUT',
+          params: { status },
+        };
+      },
       invalidatesTags: (result, error, { id }) => [
         { type: TAGS.ORDERS, id },
         TAGS.ORDERS,

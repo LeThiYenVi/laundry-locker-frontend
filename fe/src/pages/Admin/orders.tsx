@@ -105,8 +105,8 @@ export default function OrdersPage(): React.JSX.Element {
                     <TableCell className="py-2">
                       <Badge variant={
                         order.status === "COMPLETED" ? "default" :
-                        order.status === "PENDING" ? "secondary" :
-                        order.status === "CANCELLED" ? "destructive" :
+                        order.status === "WAITING" || order.status === "RESERVED" ? "secondary" :
+                        order.status === "CANCELED" ? "destructive" :
                         "outline"
                       }>
                         {order.status}
