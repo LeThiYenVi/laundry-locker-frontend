@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreHorizontal, Plus, Building2, Phone, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Plus, Building2, Phone, CheckCircle, XCircle, Clock, AlertCircle, Check, X, Ban, Eye } from "lucide-react";
 import {
   Button,
   Card,
@@ -15,7 +15,18 @@ import {
   PageLoading,
   ErrorState,
   EmptyData,
+  Input,
+  Textarea,
+  Label,
 } from "~/components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Pagination,
   PaginationContent,
@@ -24,11 +35,20 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationEllipsis,
-} from "~/components/ui/pagination";
+} from "@/components/ui/pagination";
 import { t } from "@/lib/i18n";
-import { useGetAllPartnersQuery, useGetPartnerStatisticsQuery } from "@/stores/apis/adminApi";
-import type { PartnerStatus } from "@/types";
+import {
+  useGetAllPartnersQuery,
+  useGetPartnerByIdQuery,
+  useGetPartnerStatisticsQuery,
+  useApprovePartnerMutation,
+  useRejectPartnerMutation,
+  useSuspendPartnerMutation,
+} from "@/stores/apis/admin";
+import { ActionMenu } from "@/components/admin";
+import type { PartnerResponse, PartnerStatus } from "@/types";
 import StatusCard from "~/components/ui/status-card";
+import { useToast } from "@/hooks/use-toast";
 
 const tableHeader = {
   bg: "bg-blue-950",
@@ -68,14 +88,109 @@ const getStatusIcon = (status: PartnerStatus) => {
 export default function PartnersPage(): React.JSX.Element {
   const [page, setPage] = React.useState(0);
   const [size, setSize] = React.useState(10);
+  const [isViewOpen, setIsViewOpen] = React.useState(false);
+  const [isRejectOpen, setIsRejectOpen] = React.useState(false);
+  const [selectedPartner, setSelectedPartner] = React.useState<PartnerResponse | null>(null);
+  const [rejectReason, setRejectReason] = React.useState("");
+  
+  const { toast } = useToast();
 
   const { data: partnersData, isLoading, error } = useGetAllPartnersQuery({ pageNumber: page, pageSize: size });
   const { data: statsData } = useGetPartnerStatisticsQuery();
+  const { data: partnerDetail } = useGetPartnerByIdQuery(selectedPartner?.id || 0, {
+    skip: !selectedPartner || !isViewOpen,
+  });
   
+  const [approvePartner, { isLoading: isApproving }] = useApprovePartnerMutation();
+  const [rejectPartner, { isLoading: isRejecting }] = useRejectPartnerMutation();
+  const [suspendPartner, { isLoading: isSuspending }] = useSuspendPartnerMutation();
+
   const partners = partnersData?.data?.content || [];
   const totalPages = partnersData?.data?.totalPages || 0;
   const totalElements = partnersData?.data?.totalElements || 0;
   const stats = statsData?.data;
+
+  const handleApprove = async (partnerId: number) => {
+    try {
+      await approvePartner(partnerId).unwrap();
+      toast({ title: "Thành công", description: "Đã phê duyệt đối tác" });
+    } catch (error) {
+      toast({ 
+        title: "Lỗi", 
+        description: "Không thể phê duyệt đối tác. Vui lòng thử lại.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedPartner) return;
+    try {
+      await rejectPartner({ partnerId: selectedPartner.id, reason: rejectReason }).unwrap();
+      toast({ title: "Thành công", description: "Đã từ chối đối tác" });
+      setIsRejectOpen(false);
+      setRejectReason("");
+      setSelectedPartner(null);
+    } catch (error) {
+      toast({ 
+        title: "Lỗi", 
+        description: "Không thể từ chối đối tác. Vui lòng thử lại.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSuspend = async (partnerId: number) => {
+    try {
+      await suspendPartner(partnerId).unwrap();
+      toast({ title: "Thành công", description: "Đã tạm ngưng đối tác" });
+    } catch (error) {
+      toast({ 
+        title: "Lỗi", 
+        description: "Không thể tạm ngưng đối tác. Vui lòng thử lại.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openViewDialog = (partner: PartnerResponse) => {
+    setSelectedPartner(partner);
+    setIsViewOpen(true);
+  };
+
+  const openRejectDialog = (partner: PartnerResponse) => {
+    setSelectedPartner(partner);
+    setRejectReason("");
+    setIsRejectOpen(true);
+  };
+
+  const getPartnerActions = (partner: PartnerResponse) => {
+    const actions = [];
+    
+    if (partner.status === 'PENDING') {
+      actions.push({
+        label: "Phê duyệt",
+        icon: <Check size={14} className="text-green-500" />,
+        onClick: () => handleApprove(partner.id),
+      });
+      actions.push({
+        label: "Từ chối",
+        icon: <X size={14} className="text-red-500" />,
+        onClick: () => openRejectDialog(partner),
+        variant: "destructive" as const,
+      });
+    }
+    
+    if (partner.status === 'APPROVED') {
+      actions.push({
+        label: "Tạm ngưng",
+        icon: <Ban size={14} className="text-amber-500" />,
+        onClick: () => handleSuspend(partner.id),
+      });
+    }
+    
+    return actions;
+  };
 
   if (isLoading) {
     return <PageLoading message="Đang tải danh sách đối tác..." />;
@@ -134,13 +249,6 @@ export default function PartnersPage(): React.JSX.Element {
             <div className="text-sm text-muted-foreground">Tất cả đối tác</div>
             <div className="font-semibold">{totalElements}</div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button variant="default" size="icon" className="mr-2">
-            <Plus size={16} />
-          </Button>
-          <Button variant="ghost" size="sm">Thêm đối tác</Button>
         </div>
       </div>
 
@@ -214,9 +322,10 @@ export default function PartnersPage(): React.JSX.Element {
                       </TableCell>
 
                       <TableCell className="py-2">
-                        <button className="p-1 rounded hover:bg-gray-100">
-                          <MoreHorizontal size={16} />
-                        </button>
+                        <ActionMenu
+                          onView={() => openViewDialog(partner)}
+                          customActions={getPartnerActions(partner)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -295,6 +404,139 @@ export default function PartnersPage(): React.JSX.Element {
           )}
         </CardContent>
       </Card>
+
+      {/* View Partner Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chi tiết đối tác</DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về đối tác.
+            </DialogDescription>
+          </DialogHeader>
+          {partnerDetail?.data && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Tên doanh nghiệp</Label>
+                  <p className="font-medium">{partnerDetail.data.businessName}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Ngườii đại diện</Label>
+                  <p className="font-medium">{partnerDetail.data.userName}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Mã số thuế</Label>
+                  <p className="font-medium">{partnerDetail.data.taxId || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Mã ĐKKD</Label>
+                  <p className="font-medium">{partnerDetail.data.businessRegistrationNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Điện thoại</Label>
+                  <p className="font-medium">{partnerDetail.data.contactPhone}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Email</Label>
+                  <p className="font-medium">{partnerDetail.data.contactEmail}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Chiết khấu</Label>
+                  <p className="font-medium">{partnerDetail.data.revenueSharePercent}%</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Trạng thái</Label>
+                  <Badge variant={getStatusBadgeVariant(partnerDetail.data.status)}>
+                    {partnerDetail.data.status}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Địa chỉ</Label>
+                <p className="font-medium">{partnerDetail.data.businessAddress || 'N/A'}</p>
+              </div>
+              {partnerDetail.data.rejectionReason && (
+                <div>
+                  <Label className="text-muted-foreground">Lý do từ chối</Label>
+                  <p className="text-red-600">{partnerDetail.data.rejectionReason}</p>
+                </div>
+              )}
+              <div className="flex gap-2 pt-4">
+                {partnerDetail.data.status === 'PENDING' && (
+                  <>
+                    <Button 
+                      onClick={() => handleApprove(partnerDetail.data.id)}
+                      disabled={isApproving}
+                      className="flex-1"
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Phê duyệt
+                    </Button>
+                    <Button 
+                      onClick={() => openRejectDialog(partnerDetail.data)}
+                      disabled={isRejecting}
+                      variant="destructive"
+                      className="flex-1"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Từ chối
+                    </Button>
+                  </>
+                )}
+                {partnerDetail.data.status === 'APPROVED' && (
+                  <Button 
+                    onClick={() => handleSuspend(partnerDetail.data.id)}
+                    disabled={isSuspending}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Tạm ngưng
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Từ chối đối tác</DialogTitle>
+            <DialogDescription>
+              Vui lòng nhập lý do từ chối đối tác <strong>{selectedPartner?.businessName}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="reason">Lý do</Label>
+              <Textarea
+                id="reason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Nhập lý do từ chối..."
+                className="mt-2"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRejectOpen(false)}>
+                Hủy
+              </Button>
+              <Button 
+                onClick={handleReject} 
+                disabled={!rejectReason.trim() || isRejecting}
+                variant="destructive"
+              >
+                {isRejecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Từ chối
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

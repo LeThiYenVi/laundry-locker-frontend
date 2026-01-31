@@ -1,37 +1,400 @@
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import { t, withLocale } from "@/lib/i18n";
 
-import { Button, Card, CardContent, Input } from "~/components/ui";
+import { Button, Card, CardContent, Input, Tabs, TabsList, TabsTrigger } from "~/components/ui";
 import { LOCKER_IMAGE, LOGIN_IMAGE } from "~/constants/login-page.constants";
 import Logo from "~/assets/images/logo/Logo.svg";
+import { Mail, Phone, ArrowLeft, User, Shield } from "lucide-react";
+
+type LoginMode = 'ADMIN' | 'PARTNER';
+type PartnerLoginStep = 'INPUT' | 'OTP';
 
 export default function LoginPage(): React.JSX.Element {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { 
+    isWaitingFor2FA, 
+    maskedEmail, 
+    isWaitingForOTP,
+    partnerContactInfo,
+    adminLoginStep1, 
+    adminLoginStep2, 
+    cancelAdmin2FA,
+    partnerSendOTP,
+    partnerVerifyOTP,
+    cancelPartnerOTP,
+  } = useAuth();
 
-  const [email, setEmail] = React.useState<string>("admin@laundry.com");
-  const [password, setPassword] = React.useState<string>("admin123");
+  const [loginMode, setLoginMode] = React.useState<LoginMode>('ADMIN');
+  const [partnerStep, setPartnerStep] = React.useState<PartnerLoginStep>('INPUT');
+  
+  // Admin form state
+  const [email, setEmail] = React.useState<string>("");
+  const [password, setPassword] = React.useState<string>("");
+  
+  // Partner form state
+  const [partnerContact, setPartnerContact] = React.useState<string>("");
+  const [partnerContactType, setPartnerContactType] = React.useState<'EMAIL' | 'PHONE'>('EMAIL');
+  const [otpCode, setOtpCode] = React.useState<string>("");
+  
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  // Get redirect path based on role
+  const getRedirectPath = (userRoles: string[]) => {
+    const from = location.state?.from?.pathname;
+    if (from) return from;
+    
+    const isAdmin = userRoles.some(role => 
+      role.toUpperCase() === 'SUPER_ADMIN' || role.toUpperCase() === 'ADMIN'
+    );
+    const isPartner = userRoles.some(role => 
+      role.toUpperCase() === 'PARTNER' || role.toUpperCase() === 'PARTNER_STAFF'
+    );
+    
+    if (isAdmin) return "/admin/dashboard";
+    if (isPartner) return "/partner/dashboard";
+    return "/admin/dashboard";
+  };
+
+  // ============================================
+  // ADMIN LOGIN HANDLERS
+  // ============================================
+
+  const handleAdminStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
-      navigate(withLocale("/admin/dashboard"));
+      await adminLoginStep1(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const handleAdminStep2 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await adminLoginStep2(otpCode);
+      setTimeout(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          navigate(withLocale(getRedirectPath(parsedUser.role || [])));
+        }
+      }, 100);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Xác thực OTP thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================
+  // PARTNER LOGIN HANDLERS
+  // ============================================
+
+  const handlePartnerSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await partnerSendOTP(partnerContact, partnerContactType);
+      setPartnerStep('OTP');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể gửi OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePartnerVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await partnerVerifyOTP(otpCode);
+      setTimeout(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          navigate(withLocale(getRedirectPath(parsedUser.role || [])));
+        }
+      }, 100);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Mã OTP không đúng");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackToInput = () => {
+    setPartnerStep('INPUT');
+    setOtpCode('');
+    setError(null);
+    cancelPartnerOTP();
+  };
+
+  const handleModeChange = (mode: LoginMode) => {
+    setLoginMode(mode);
+    setError(null);
+    // Reset forms
+    setEmail('');
+    setPassword('');
+    setPartnerContact('');
+    setOtpCode('');
+    setPartnerStep('INPUT');
+    cancelAdmin2FA();
+    cancelPartnerOTP();
+  };
+
+  // ============================================
+  // RENDER HELPERS
+  // ============================================
+
+  const renderAdminLogin = () => {
+    if (isWaitingFor2FA) {
+      return (
+        <>
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-2">Xác thực 2FA</h2>
+            <p className="text-sm text-gray-600">
+              Mã OTP đã được gửi đến <strong>{maskedEmail}</strong>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Vui lòng kiểm tra email và nhập mã OTP 6 chữ số
+            </p>
+          </div>
+          
+          <form onSubmit={handleAdminStep2} className="grid gap-4 w-full max-w-md">
+            <label className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">Mã OTP</span>
+              <Input 
+                value={otpCode} 
+                onChange={(e) => setOtpCode(e.target.value)} 
+                type="text" 
+                placeholder="123456" 
+                className="mt-2 text-center text-2xl tracking-widest" 
+                maxLength={6}
+                required
+                autoFocus
+              />
+            </label>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>
+            )}
+
+            <div className="flex items-center gap-3 mt-2">
+              <Button 
+                type="button" 
+                variant="outline"
+                size="lg" 
+                disabled={loading} 
+                onClick={cancelAdmin2FA}
+                className="flex-1 rounded-2xl"
+              >
+                Quay lại
+              </Button>
+              <Button 
+                type="submit" 
+                size="lg" 
+                disabled={loading || otpCode.length < 6} 
+                className="flex-1 rounded-2xl bg-blue-900 hover:bg-blue-400"
+              >
+                {loading ? 'Verifying...' : 'Xác nhận'}
+              </Button>
+            </div>
+          </form>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <h2 className="text-2xl font-semibold">{t("signin.title")}</h2>
+        
+        <form onSubmit={handleAdminStep1} className="grid gap-4 w-full max-w-md">
+          <label className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">Email</span>
+            <Input 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              type="email" 
+              placeholder="admin@example.com" 
+              className="mt-2" 
+              required
+            />
+          </label>
+
+          <label className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">{t("label.password")}</span>
+            <Input 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              type="password" 
+              placeholder="••••••••" 
+              className="mt-2" 
+              required
+            />
+          </label>
+
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>
+          )}
+
+          <div className="flex items-center justify-between mt-2">
+            <Button 
+              type="submit" 
+              size="lg" 
+              disabled={loading} 
+              className="rounded-2xl bg-blue-900 hover:bg-blue-400"
+            >
+              {loading ? 'Signing in...' : 'Login'}
+            </Button>
+            <Link to={withLocale("/auth/forgot")} className="text-sm text-blue-800 hover:underline">
+              {t("link.forgot")}
+            </Link>
+          </div>
+        </form>
+      </>
+    );
+  };
+
+  const renderPartnerLogin = () => {
+    if (partnerStep === 'OTP') {
+      return (
+        <>
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-2">Nhập mã OTP</h2>
+            <p className="text-sm text-gray-600">
+              Mã OTP đã được gửi đến <strong>{partnerContactInfo}</strong>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Vui lòng nhập mã OTP 6 chữ số để đăng nhập
+            </p>
+          </div>
+          
+          <form onSubmit={handlePartnerVerifyOTP} className="grid gap-4 w-full max-w-md">
+            <label className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">Mã OTP</span>
+              <Input 
+                value={otpCode} 
+                onChange={(e) => setOtpCode(e.target.value)} 
+                type="text" 
+                placeholder="123456" 
+                className="mt-2 text-center text-2xl tracking-widest" 
+                maxLength={6}
+                required
+                autoFocus
+              />
+            </label>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>
+            )}
+
+            <div className="flex items-center gap-3 mt-2">
+              <Button 
+                type="button" 
+                variant="outline"
+                size="lg" 
+                disabled={loading} 
+                onClick={handleBackToInput}
+                className="flex-1 rounded-2xl"
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                Quay lại
+              </Button>
+              <Button 
+                type="submit" 
+                size="lg" 
+                disabled={loading || otpCode.length < 6} 
+                className="flex-1 rounded-2xl bg-blue-900 hover:bg-blue-400"
+              >
+                {loading ? 'Verifying...' : 'Đăng nhập'}
+              </Button>
+            </div>
+          </form>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <h2 className="text-2xl font-semibold">Đăng nhập Partner</h2>
+        <p className="text-sm text-gray-600">
+          Nhập email hoặc số điện thoại để nhận mã OTP
+        </p>
+        
+        <form onSubmit={handlePartnerSendOTP} className="grid gap-4 w-full max-w-md">
+          {/* Contact Type Toggle */}
+          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setPartnerContactType('EMAIL')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all ${
+                partnerContactType === 'EMAIL' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Mail size={16} />
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => setPartnerContactType('PHONE')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all ${
+                partnerContactType === 'PHONE' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Phone size={16} />
+              Số điện thoại
+            </button>
+          </div>
+
+          <label className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">
+              {partnerContactType === 'EMAIL' ? 'Email' : 'Số điện thoại'}
+            </span>
+            <Input 
+              value={partnerContact} 
+              onChange={(e) => setPartnerContact(e.target.value)} 
+              type={partnerContactType === 'EMAIL' ? 'email' : 'tel'}
+              placeholder={partnerContactType === 'EMAIL' ? 'partner@example.com' : '0912345678'}
+              className="mt-2" 
+              required
+            />
+          </label>
+
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>
+          )}
+
+          <Button 
+            type="submit" 
+            size="lg" 
+            disabled={loading || !partnerContact} 
+            className="rounded-2xl bg-blue-900 hover:bg-blue-400"
+          >
+            {loading ? 'Đang gửi...' : 'Gửi mã OTP'}
+          </Button>
+        </form>
+      </>
+    );
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-900 via-transparent to-orange-200  relative overflow-hidden w-full">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-900 via-transparent to-orange-200 relative overflow-hidden w-full">
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="g1" x1="0" x2="1">
@@ -56,28 +419,24 @@ export default function LoginPage(): React.JSX.Element {
               </div>
             </div>
 
-            <h2 className="text-2xl font-semibold">{t("signin.title")}</h2>
+            {/* Login Mode Selector */}
+            {!isWaitingFor2FA && partnerStep === 'INPUT' && (
+              <Tabs value={loginMode} onValueChange={(v) => handleModeChange(v as LoginMode)}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="ADMIN" className="flex items-center gap-2">
+                    <Shield size={16} />
+                    Admin
+                  </TabsTrigger>
+                  <TabsTrigger value="PARTNER" className="flex items-center gap-2">
+                    <User size={16} />
+                    Partner
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
 
-            <form onSubmit={handleSubmit} className="grid gap-4 w-full max-w-md">
-              <label className="flex flex-col">
-                <span className="text-sm font-medium text-gray-700">{t("label.email")}</span>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder={t("placeholder.email")} className="mt-2" />
-              </label>
-
-              <label className="flex flex-col">
-                <span className="text-sm font-medium text-gray-700">{t("label.password")}</span>
-                <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={t("placeholder.password")} className="mt-2" />
-              </label>
-
-              <div className="flex items-center justify-between mt-2">
-                <Button type="submit" size="lg" disabled={loading} className="rounded-2xl bg-blue-900 hover:bg-blue-400">{loading ? 'Signing in...' : 'Login'}</Button>
-                <Link to={withLocale("/auth/forgot")} className="text-sm text-blue-800 hover:underline">{t("link.forgot")}</Link>
-              </div>
-            </form>
-
-            {error && <div className="text-sm text-red-600">{error}</div>}
-
-            <p className="text-sm text-gray-500">{t("info.devHint")}</p>
+            {/* Login Forms */}
+            {loginMode === 'ADMIN' ? renderAdminLogin() : renderPartnerLogin()}
           </CardContent>
         </Card>
 

@@ -6,6 +6,8 @@ import {
   Boxes,
   AlertCircle,
   Clock,
+  Store,
+  Users,
 } from "lucide-react";
 import {
   Card,
@@ -18,193 +20,311 @@ import {
   PageLoading,
   ErrorState,
 } from "~/components/ui";
+import { 
+  useGetPartnerDashboardQuery,
+  useGetPartnerOrderStatisticsQuery,
+  useGetPendingOrdersQuery,
+} from "@/stores/apis/partner";
 import { t } from "@/lib/i18n";
-import { PARTNER_DASHBOARD } from "@/constants/partner-page.constants";
-import type { PartnerDashboardOverview } from "@/types";
+import { useNavigate } from "react-router-dom";
+import { withLocale } from "@/lib/i18n";
 
 export default function PartnerDashboard(): React.JSX.Element {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<any>(null);
-  const [dashboardData, setDashboardData] =
-    React.useState<PartnerDashboardOverview | null>(null);
+  const navigate = useNavigate();
+  
+  const { 
+    data: dashboardData, 
+    isLoading: isLoadingDashboard, 
+    error: dashboardError,
+    refetch: refetchDashboard 
+  } = useGetPartnerDashboardQuery();
 
-  // TODO: Replace with actual API call
-  React.useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        // Simulated API call
-        await new Promise((resolve) => setTimeout(resolve, 800));
+  const { 
+    data: statsData,
+    isLoading: isLoadingStats 
+  } = useGetPartnerOrderStatisticsQuery();
 
-        // Mock data
-        setDashboardData({
-          todayOrders: 12,
-          processingOrders: 5,
-          monthlyRevenue: 45000000,
-          activeLockers: 3,
-          pendingCollections: 8,
-          overdueOrders: 2,
-          avgProcessingTime: "24h",
-          completionRate: 95.5,
-          revenueChart: [],
-          ordersByStatus: [],
-          topServices: [],
-        });
-      } catch (err) {
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const {
+    data: pendingOrdersData,
+    isLoading: isLoadingPending
+  } = useGetPendingOrdersQuery({ page: 0, size: 10 });
 
-    fetchDashboard();
-  }, []);
+  const isLoading = isLoadingDashboard || isLoadingStats || isLoadingPending;
+  const error = dashboardError;
+
+  const dashboard = dashboardData?.data;
+  const stats = statsData?.data;
+  const pendingOrders = pendingOrdersData?.data?.content || [];
+
+  const handleNavigateToOrders = (status?: string) => {
+    if (status) {
+      navigate(withLocale(`/partner/orders?status=${status}`));
+    } else {
+      navigate(withLocale("/partner/orders"));
+    }
+  };
 
   if (isLoading) {
     return <PageLoading message="Đang tải dashboard..." />;
   }
 
-  if (error || !dashboardData) {
+  if (error || !dashboard) {
     return (
       <ErrorState
         variant="server"
         title="Không thể tải dữ liệu dashboard"
         error={error}
-        onRetry={() => window.location.reload()}
+        onRetry={refetchDashboard}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900">Partner Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Quản lý đơn hàng và dịch vụ giặt ủi
+      <div>
+        <h1 className="text-2xl font-semibold">{t("partner.dashboard.title")}</h1>
+        <p className="text-gray-600 mt-1">
+          {dashboard.businessName}
         </p>
       </div>
 
       {/* Alert Section */}
-      {(dashboardData.pendingCollections > 0 ||
-        dashboardData.overdueOrders > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {dashboardData.pendingCollections > 0 && (
+      {(dashboard.pendingOrders > 0 || stats?.waitingOrders > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(stats?.waitingOrders || 0) > 0 && (
             <Card className="border-l-4 border-l-yellow-500">
               <CardContent className="flex items-center gap-3 p-4">
                 <AlertCircle className="text-yellow-600" size={24} />
-                <div>
+                <div className="flex-1">
                   <p className="font-semibold text-gray-900">
-                    {dashboardData.pendingCollections} đơn chờ lấy đồ
+                    {stats?.waitingOrders} đơn chờ lấy đồ
                   </p>
                   <p className="text-sm text-gray-600">
                     Cần xử lý ngay hôm nay
                   </p>
                 </div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleNavigateToOrders("WAITING")}
+                >
+                  {t("partner.common.view")}
+                </Button>
               </CardContent>
             </Card>
           )}
 
-          {dashboardData.overdueOrders > 0 && (
-            <Card className="border-l-4 border-l-red-500">
+          {dashboard.pendingOrders > 0 && (
+            <Card className="border-l-4 border-l-blue-500">
               <CardContent className="flex items-center gap-3 p-4">
-                <Clock className="text-red-600" size={24} />
-                <div>
+                <Clock className="text-blue-600" size={24} />
+                <div className="flex-1">
                   <p className="font-semibold text-gray-900">
-                    {dashboardData.overdueOrders} đơn quá hạn
+                    {dashboard.pendingOrders} đơn đang xử lý
                   </p>
-                  <p className="text-sm text-gray-600">Cần xử lý gấp</p>
+                  <p className="text-sm text-gray-600">Đang trong quy trình</p>
                 </div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleNavigateToOrders("PROCESSING")}
+                >
+                  {t("partner.common.view")}
+                </Button>
               </CardContent>
             </Card>
           )}
         </div>
       )}
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Today Orders */}
-        <Card className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-3xl p-6 border border-blue-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white rounded-xl">
-              <Package className="text-blue-600" size={24} />
+      {/* Overview Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Orders */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Tổng đơn hàng</p>
+                <p className="text-3xl font-bold mt-1">{dashboard.totalOrders}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Package className="text-blue-600" size={24} />
+              </div>
             </div>
-            <Badge className="bg-blue-600 text-white">Hôm nay</Badge>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Đơn hàng mới</h3>
-          <p className="text-3xl font-bold text-blue-600">
-            {dashboardData.todayOrders}
-          </p>
+          </CardContent>
         </Card>
 
         {/* Processing Orders */}
-        <Card className="bg-gradient-to-br from-orange-100 to-orange-50 rounded-3xl p-6 border border-orange-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white rounded-xl">
-              <TrendingUp className="text-orange-600" size={24} />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Đang xử lý</p>
+                <p className="text-3xl font-bold mt-1">{dashboard.pendingOrders}</p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <TrendingUp className="text-orange-600" size={24} />
+              </div>
             </div>
-            <Badge className="bg-orange-600 text-white">Đang xử lý</Badge>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Đang giặt</h3>
-          <p className="text-3xl font-bold text-orange-600">
-            {dashboardData.processingOrders}
-          </p>
+          </CardContent>
         </Card>
 
         {/* Monthly Revenue */}
-        <Card className="bg-gradient-to-br from-green-100 to-green-50 rounded-3xl p-6 border border-green-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white rounded-xl">
-              <DollarSign className="text-green-600" size={24} />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Doanh thu tháng</p>
+                <p className="text-2xl font-bold mt-1">
+                  {(dashboard.monthRevenue / 1000000).toFixed(1)}M
+                </p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg">
+                <DollarSign className="text-green-600" size={24} />
+              </div>
             </div>
-            <Badge className="bg-green-600 text-white">Tháng này</Badge>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Doanh thu</h3>
-          <p className="text-3xl font-bold text-green-600">
-            {(dashboardData.monthlyRevenue / 1000000).toFixed(1)}M
-          </p>
+          </CardContent>
         </Card>
 
-        {/* Active Lockers */}
-        <Card className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-3xl p-6 border border-purple-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-3 bg-white rounded-xl">
-              <Boxes className="text-purple-600" size={24} />
+        {/* Today's Revenue */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Doanh thu hôm nay</p>
+                <p className="text-2xl font-bold mt-1">
+                  {(dashboard.todayRevenue / 1000000).toFixed(1)}M
+                </p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <DollarSign className="text-purple-600" size={24} />
+              </div>
             </div>
-            <Badge className="bg-purple-600 text-white">Hoạt động</Badge>
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Tủ locker</h3>
-          <p className="text-3xl font-bold text-purple-600">
-            {dashboardData.activeLockers}
-          </p>
+          </CardContent>
         </Card>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stores */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Cửa hàng</p>
+                <p className="text-2xl font-bold mt-1">{dashboard.totalStores}</p>
+                <p className="text-xs text-green-600">
+                  {dashboard.activeStores} đang hoạt động
+                </p>
+              </div>
+              <div className="p-3 bg-indigo-100 rounded-lg">
+                <Store className="text-indigo-600" size={24} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Staff */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Nhân viên</p>
+                <p className="text-2xl font-bold mt-1">{dashboard.totalStaff}</p>
+              </div>
+              <div className="p-3 bg-pink-100 rounded-lg">
+                <Users className="text-pink-600" size={24} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Completed Orders */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Hoàn thành</p>
+                <p className="text-2xl font-bold mt-1">{dashboard.completedOrders}</p>
+              </div>
+              <div className="p-3 bg-teal-100 rounded-lg">
+                <Package className="text-teal-600" size={24} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cancelled Orders */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Đã hủy</p>
+                <p className="text-2xl font-bold mt-1">{dashboard.canceledOrders}</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-lg">
+                <Package className="text-red-600" size={24} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Revenue Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Thời gian xử lý trung bình</CardTitle>
+            <CardTitle>Tổng doanh thu</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-gray-900">
-              {dashboardData.avgProcessingTime}
+            <div className="text-3xl font-bold text-gray-900">
+              {(dashboard.totalRevenue / 1000000).toFixed(1)}M đ
             </div>
-            <p className="text-sm text-gray-600 mt-2">
-              Từ lúc lấy đồ đến trả khách
-            </p>
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Doanh thu đối tác:</span>
+                <span className="font-medium">
+                  {(dashboard.partnerRevenue / 1000000).toFixed(1)}M đ
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Phí nền tảng:</span>
+                <span className="font-medium">
+                  {(dashboard.platformFee / 1000000).toFixed(1)}M đ
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Tỷ lệ hoàn thành</CardTitle>
+            <CardTitle>Thống kê đơn hàng</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold text-green-600">
-              {dashboardData.completionRate}%
-            </div>
-            <p className="text-sm text-gray-600 mt-2">Đúng hạn cam kết</p>
+          <CardContent className="space-y-3">
+            {stats && (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Đơn hôm nay</span>
+                  <Badge variant="outline">{stats.todayOrders}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Đơn tuần này</span>
+                  <Badge variant="outline">{stats.weekOrders}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Đơn tháng này</span>
+                  <Badge variant="outline">{stats.monthOrders}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Giá trị TB/đơn</span>
+                  <Badge variant="outline">
+                    {(stats.averageOrderValue / 1000).toFixed(0)}k
+                  </Badge>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -213,42 +333,73 @@ export default function PartnerDashboard(): React.JSX.Element {
             <CardTitle>Hành động nhanh</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button size="sm" className="w-full" variant="outline">
-              Xem đơn chờ lấy ({dashboardData.pendingCollections})
+            <Button 
+              size="sm" 
+              className="w-full justify-between"
+              variant="outline"
+              onClick={() => handleNavigateToOrders("WAITING")}
+            >
+              <span>Đơn chờ lấy</span>
+              <Badge>{stats?.waitingOrders || 0}</Badge>
             </Button>
-            <Button size="sm" className="w-full" variant="outline">
-              Đơn cần trả hôm nay
+            <Button 
+              size="sm" 
+              className="w-full justify-between"
+              variant="outline"
+              onClick={() => handleNavigateToOrders("PROCESSING")}
+            >
+              <span>Đang giặt</span>
+              <Badge>{stats?.processingOrders || 0}</Badge>
+            </Button>
+            <Button 
+              size="sm" 
+              className="w-full justify-between"
+              variant="outline"
+              onClick={() => handleNavigateToOrders("READY")}
+            >
+              <span>Sẵn sàng trả</span>
+              <Badge>{stats?.readyOrders || 0}</Badge>
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Placeholder */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Pending Orders Preview */}
+      {pendingOrders.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Doanh thu 7 ngày qua</CardTitle>
-            <CardDescription>Biểu đồ doanh thu theo ngày</CardDescription>
+            <CardTitle>Đơn hàng chờ xử lý gần đây</CardTitle>
+            <CardDescription>
+              {pendingOrders.length} đơn hàng đang chờ lấy đồ
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-              <p className="text-gray-500">Chart sẽ được thêm sau</p>
+            <div className="space-y-3">
+              {pendingOrders.slice(0, 5).map((order) => (
+                <div 
+                  key={order.id} 
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">#{order.id} - {order.senderName}</p>
+                    <p className="text-sm text-gray-600">
+                      {order.lockerName} - Box {order.sendBoxNumber}
+                    </p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleNavigateToOrders()}
+                  >
+                    Xem chi tiết
+                  </Button>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Trạng thái đơn hàng</CardTitle>
-            <CardDescription>Phân bố theo trạng thái</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-              <p className="text-gray-500">Chart sẽ được thêm sau</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      )}
     </div>
   );
 }
+

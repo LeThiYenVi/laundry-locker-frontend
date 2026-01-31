@@ -5,9 +5,7 @@ import {
   DollarSign,
   Boxes,
   Settings,
-  Bell,
   Briefcase,
-  UserCircle,
 } from "lucide-react";
 
 export const PARTNER_NAV_ITEMS = [
@@ -42,16 +40,6 @@ export const PARTNER_NAV_ITEMS = [
     icon: Briefcase,
   },
   {
-    path: "/partner/notifications",
-    label: "Notifications",
-    icon: Bell,
-  },
-  {
-    path: "/partner/profile",
-    label: "Profile",
-    icon: UserCircle,
-  },
-  {
     path: "/partner/settings",
     label: "Settings",
     icon: Settings,
@@ -60,10 +48,11 @@ export const PARTNER_NAV_ITEMS = [
 
 export const PARTNER_SIDEBAR_CONFIG = {
   width: "w-20",
-  bgColor: "bg-gradient-to-b from-blue-900 to-blue-950",
+  expandedWidth: "w-64",
+  bgColor: "bg-blue-950 opacity-90",
+  hoverBgColor: "hover:bg-orange-600",
+  activeBgColor: "bg-orange-600",
   textColor: "text-white",
-  hoverBgColor: "hover:bg-white/10",
-  activeBgColor: "bg-white/20",
   inactiveTextColor: "text-gray-400",
 } as const;
 

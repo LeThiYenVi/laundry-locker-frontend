@@ -25,7 +25,8 @@
 		"subtitle": "Truy cập tủ 24/7"
 	},
 	"button": {
-		"login": "Đăng nhập"
+		"login": "Đăng nhập",
+		"logout": "Đăng xuất"
 	}
 ,
 	"admin": {
@@ -211,6 +212,111 @@
 			"id": "Mã tủ",
 			"location": "Vị trí",
 			"status": "Trạng thái"
+		}
+	}
+,
+	"partner": {
+		"nav": {
+			"dashboard": "Tổng quan",
+			"orders": "Đơn hàng",
+			"staff": "Nhân viên",
+			"revenue": "Doanh thu",
+			"lockers": "Locker",
+			"services": "Dịch vụ",
+			"settings": "Cài đặt"
+		},
+		"dashboard": {
+			"title": "T?ng quan Partner",
+			"totalOrders": "T?ng don h�ng",
+			"processing": "�ang x? l�",
+			"revenue": "Doanh thu",
+			"todayRevenue": "Doanh thu h�m nay",
+			"stores": "C?a h�ng",
+			"staff": "Nh�n vi�n",
+			"completed": "Ho�n th�nh",
+			"cancelled": "�� h?y",
+			"pendingOrders": "�on dang ch?",
+			"waitingOrders": "�on ch? l?y",
+			"quickActions": "Thao t�c nhanh"
+		},
+		"orders": {
+			"title": "Qu?n l� don h�ng",
+			"search": "T�m ki?m theo m� don, kh�ch h�ng...",
+			"filter": "B? l?c",
+			"all": "T?t c?",
+			"waiting": "Ch? l?y",
+			"collected": "�� l?y",
+			"processing": "�ang x? l�",
+			"ready": "S?n s�ng",
+			"completed": "Ho�n th�nh",
+			"orderCode": "M� don",
+			"customer": "Kh�ch h�ng",
+			"locker": "Locker",
+			"status": "Tr?ng th�i",
+			"value": "Gi� tr?",
+			"createdAt": "Ng�y t?o",
+			"actions": "Thao t�c",
+			"view": "Xem",
+			"empty": "Chua c� don h�ng"
+		},
+		"staff": {
+			"title": "Qu?n l� nh�n vi�n",
+			"addStaff": "Th�m nh�n vi�n",
+			"search": "T�m ki?m theo t�n, email...",
+			"name": "T�n",
+			"email": "Email",
+			"provider": "Nh� cung c?p",
+			"status": "Tr?ng th�i",
+			"verified": "�� x�c th?c",
+			"pending": "Ch? x�c th?c",
+			"empty": "Chua c� nh�n vi�n",
+			"remove": "X�a nh�n vi�n"
+		},
+		"lockers": {
+			"title": "Qu?n l� Locker",
+			"total": "T?ng",
+			"available": "Tr?ng",
+			"occupied": "�� d�ng",
+			"boxLegend": "Tr?ng th�i t?",
+			"availableBox": "Tr?ng",
+			"occupiedBox": "�� d�ng",
+			"reservedBox": "�� d?t",
+			"maintenanceBox": "B?o tr�"
+		},
+		"revenue": {
+			"title": "Doanh thu",
+			"totalRevenue": "T?ng doanh thu",
+			"netRevenue": "Doanh thu th?c",
+			"platformFee": "Ph� n?n t?ng",
+			"growth": "Tang tru?ng",
+			"orders": "�on h�ng",
+			"completed": "Ho�n th�nh",
+			"cancelled": "�� h?y",
+			"periodInfo": "Th�ng tin k?",
+			"from": "T?",
+			"to": "�?n",
+			"revenueShare": "Chia s? doanh thu"
+		},
+		"services": {
+			"title": "D?ch v?",
+			"info": "D?ch v? du?c qu?n l� b?i Admin. Partner ch? c� th? xem th�ng tin d?ch v?."
+		},
+		"settings": {
+			"title": "C�i d?t",
+			"profile": "H? so",
+			"language": "Ng�n ng?",
+			"notifications": "Th�ng b�o"
+		},
+		"common": {
+			"save": "Luu",
+			"cancel": "H?y",
+			"delete": "X�a",
+			"edit": "S?a",
+			"view": "Xem",
+			"close": "��ng",
+			"back": "Quay l?i",
+			"confirm": "X�c nh?n",
+			"loading": "�ang t?i..."
 		}
 	}
 }

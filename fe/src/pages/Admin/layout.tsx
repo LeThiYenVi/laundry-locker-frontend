@@ -20,6 +20,7 @@ const AdminLayout = () => {
   const { hasPermission, logout } = useAuth();
   const [openSettings, setOpenSettings] = React.useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const prevPathRef = React.useRef<string | null>(null);
 
   const visibleNavItems = ADMIN_NAV_ITEMS.filter(item => 
@@ -40,13 +41,20 @@ const AdminLayout = () => {
     }
   }, [location.pathname]);
 
+  // Close sidebar when dropdown opens
+  React.useEffect(() => {
+    if (isDropdownOpen) {
+      setIsSidebarExpanded(false);
+    }
+  }, [isDropdownOpen]);
+
   return (
     <div className="min-h-screen flex">
       <aside 
         className={`${SIDEBAR_CONFIG.bgColor} ${SIDEBAR_CONFIG.textColor} flex flex-col items-center py-6 fixed h-full z-50 transition-all duration-300 ease-in-out ${
           isSidebarExpanded ? 'w-64' : SIDEBAR_CONFIG.width
         }`}
-        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseEnter={() => !isDropdownOpen && setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
         <div className={`mb-8 transition-all duration-300 ${isSidebarExpanded ? 'self-start px-4' : 'flex justify-center'}`}>
@@ -93,7 +101,7 @@ const AdminLayout = () => {
         </nav>
 
         <div className={`mt-auto w-full px-2`}>
-          <DropdownMenu>
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <button 
                 aria-label="User menu" 
@@ -114,16 +122,29 @@ const AdminLayout = () => {
               </button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="bg-blue-950 border-blue-800">
-              <DropdownMenuItem onSelect={() => setOpenSettings(true)}>
-                <div className="flex items-center gap-2 text-amber-100 hover:text-amber-50">
-                  <Settings size={16} /> Settings
+            <DropdownMenuContent 
+              className="w-56 bg-white border-slate-200 shadow-lg shadow-slate-200/50 rounded-xl p-1 z-[100]"
+              side="right"
+              align="end"
+              sideOffset={8}
+            >
+              <DropdownMenuItem 
+                onSelect={() => setOpenSettings(true)}
+                className="rounded-lg hover:bg-orange-50 cursor-pointer focus:bg-orange-50"
+              >
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Settings size={16} className="text-orange-500" /> 
+                  <span>Settings</span>
                 </div>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-blue-800" />
-              <DropdownMenuItem onSelect={async () => { await logout(); navigate(withLocale('/auth/login')); }}>
-                <div className="flex items-center gap-2 text-amber-100 hover:text-amber-50">
-                  <LogOut size={16} /> Logout
+              <DropdownMenuSeparator className="bg-slate-100 my-1" />
+              <DropdownMenuItem 
+                onSelect={async () => { await logout(); navigate(withLocale('/auth/login')); }}
+                className="rounded-lg hover:bg-orange-50 cursor-pointer focus:bg-orange-50"
+              >
+                <div className="flex items-center gap-2 text-slate-700">
+                  <LogOut size={16} className="text-orange-500" /> 
+                  <span>Logout</span>
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>

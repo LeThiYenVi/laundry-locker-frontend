@@ -25,7 +25,8 @@
 		"subtitle": "24/7 Smart Locker Access"
 	},
 	"button": {
-		"login": "Login"
+		"login": "Login",
+		"logout": "Logout"
 	}
 ,
 	"admin": {
@@ -211,6 +212,111 @@
 			"id": "Locker ID",
 			"location": "Location",
 			"status": "Status"
+		}
+	}
+,
+	"partner": {
+		"nav": {
+			"dashboard": "Dashboard",
+			"orders": "Orders",
+			"staff": "Staff",
+			"revenue": "Revenue",
+			"lockers": "Lockers",
+			"services": "Services",
+			"settings": "Settings"
+		},
+		"dashboard": {
+			"title": "Partner Dashboard",
+			"totalOrders": "Total Orders",
+			"processing": "Processing",
+			"revenue": "Revenue",
+			"todayRevenue": "Today's Revenue",
+			"stores": "Stores",
+			"staff": "Staff",
+			"completed": "Completed",
+			"cancelled": "Cancelled",
+			"pendingOrders": "Pending Orders",
+			"waitingOrders": "Waiting for Collection",
+			"quickActions": "Quick Actions"
+		},
+		"orders": {
+			"title": "Order Management",
+			"search": "Search by order code, customer...",
+			"filter": "Filter",
+			"all": "All",
+			"waiting": "Waiting",
+			"collected": "Collected",
+			"processing": "Processing",
+			"ready": "Ready",
+			"completed": "Completed",
+			"orderCode": "Order Code",
+			"customer": "Customer",
+			"locker": "Locker",
+			"status": "Status",
+			"value": "Value",
+			"createdAt": "Created At",
+			"actions": "Actions",
+			"view": "View",
+			"empty": "No orders found"
+		},
+		"staff": {
+			"title": "Staff Management",
+			"addStaff": "Add Staff",
+			"search": "Search by name, email...",
+			"name": "Name",
+			"email": "Email",
+			"provider": "Provider",
+			"status": "Status",
+			"verified": "Verified",
+			"pending": "Pending",
+			"empty": "No staff members yet",
+			"remove": "Remove Staff"
+		},
+		"lockers": {
+			"title": "Locker Management",
+			"total": "Total",
+			"available": "Available",
+			"occupied": "Occupied",
+			"boxLegend": "Box Status",
+			"availableBox": "Available",
+			"occupiedBox": "Occupied",
+			"reservedBox": "Reserved",
+			"maintenanceBox": "Maintenance"
+		},
+		"revenue": {
+			"title": "Revenue",
+			"totalRevenue": "Total Revenue",
+			"netRevenue": "Net Revenue",
+			"platformFee": "Platform Fee",
+			"growth": "Growth",
+			"orders": "Orders",
+			"completed": "Completed",
+			"cancelled": "Cancelled",
+			"periodInfo": "Period Information",
+			"from": "From",
+			"to": "To",
+			"revenueShare": "Revenue Share"
+		},
+		"services": {
+			"title": "Services",
+			"info": "Services are managed by Admin. Partners can view service information only."
+		},
+		"settings": {
+			"title": "Settings",
+			"profile": "Profile",
+			"language": "Language",
+			"notifications": "Notifications"
+		},
+		"common": {
+			"save": "Save",
+			"cancel": "Cancel",
+			"delete": "Delete",
+			"edit": "Edit",
+			"view": "View",
+			"close": "Close",
+			"back": "Back",
+			"confirm": "Confirm",
+			"loading": "Loading..."
 		}
 	}
 }

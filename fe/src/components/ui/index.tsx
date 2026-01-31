@@ -43,11 +43,13 @@ export * from "./steps";
 export * from "./switch";
 export * from "./table";
 export * from "./textarea";
+export * from "./empty";
 export * from "./toast";
 export * from "./toaster";
 export * from "./use-toast";
 export * from "./LockrIcon";
 export * from "./loading";
 export * from "./error-state";
+export { EmptyData } from "./error-state";
 export * from "./server-error-card";
 

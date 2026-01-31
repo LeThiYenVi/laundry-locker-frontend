@@ -6,6 +6,7 @@ export const ROOT_URI = {
   AUTH: '/api/auth',
   USERS: '/api/user',
   ADMIN: '/api/admin',
+  PARTNER: '/api/partner',
 } as const;
 
 // Authentication Endpoints
@@ -34,6 +35,23 @@ export const USER_ENDPOINTS = {
   DASHBOARD: `${ROOT_URI.USERS}/dashboard`,
   READ: `${ROOT_URI.USERS}/read`,
   SECURED: `${ROOT_URI.USERS}/secured`,
+} as const;
+
+// Admin Auth Endpoints
+export const ADMIN_AUTH_ENDPOINTS = {
+  LOGIN: `${ROOT_URI.ADMIN}/auth/login`,
+  VERIFY_2FA: `${ROOT_URI.ADMIN}/auth/verify-2fa`,
+  REFRESH: `${ROOT_URI.ADMIN}/auth/refresh`,
+  LOGOUT: `${ROOT_URI.ADMIN}/auth/logout`,
+} as const;
+
+// Partner Auth Endpoints (Uses same as User Auth)
+export const PARTNER_AUTH_ENDPOINTS = {
+  PHONE_LOGIN: `${ROOT_URI.AUTH}/phone-login`,
+  EMAIL_SEND_OTP: `${ROOT_URI.AUTH}/email/send-otp`,
+  EMAIL_VERIFY_OTP: `${ROOT_URI.AUTH}/email/verify-otp`,
+  REFRESH: `${ROOT_URI.AUTH}/refresh-token`,
+  LOGOUT: `${ROOT_URI.AUTH}/logout`,
 } as const;
 
 // Admin Endpoints
@@ -104,11 +122,56 @@ export const ADMIN_ENDPOINTS = {
   SETTINGS: `${ROOT_URI.ADMIN}/settings`,
 } as const;
 
+// Partner Endpoints
+export const PARTNER_ENDPOINTS = {
+  // Profile
+  PARTNER_PROFILE: `${ROOT_URI.PARTNER}`,
+  PARTNER_REGISTER: `${ROOT_URI.PARTNER}`,
+  PARTNER_UPDATE: `${ROOT_URI.PARTNER}`,
+  
+  // Dashboard
+  PARTNER_DASHBOARD: `${ROOT_URI.PARTNER}/dashboard`,
+  
+  // Orders
+  PARTNER_ORDERS_PENDING: `${ROOT_URI.PARTNER}/orders/pending`,
+  PARTNER_ORDERS: `${ROOT_URI.PARTNER}/orders`,
+  PARTNER_ORDER_BY_ID: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}`,
+  PARTNER_ORDER_ACCEPT: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/accept`,
+  PARTNER_ORDER_PROCESS: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/process`,
+  PARTNER_ORDER_READY: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/ready`,
+  PARTNER_ORDER_WEIGHT: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/weight`,
+  
+  // Access Codes
+  PARTNER_ACCESS_CODES_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
+  PARTNER_ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
+  PARTNER_ACCESS_CODES_BY_ORDER: (orderId: number) => `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
+  PARTNER_ACCESS_CODE_CANCEL: (codeId: number) => `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
+  
+  // Stores
+  PARTNER_STORES: `${ROOT_URI.PARTNER}/stores`,
+  
+  // Staff
+  PARTNER_STAFF: `${ROOT_URI.PARTNER}/staff`,
+  PARTNER_STAFF_ADD: (staffId: number) => `${ROOT_URI.PARTNER}/staff/${staffId}`,
+  PARTNER_STAFF_REMOVE: (staffId: number) => `${ROOT_URI.PARTNER}/staff/${staffId}`,
+  
+  // Lockers
+  PARTNER_LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
+  PARTNER_LOCKER_AVAILABLE_BOXES: (lockerId: number) => `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+  
+  // Revenue & Statistics
+  PARTNER_REVENUE: `${ROOT_URI.PARTNER}/revenue`,
+  PARTNER_ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
+} as const;
+
 // Combined API Paths for RTK Query
 export const API_PATHS = {
   ...AUTH_ENDPOINTS,
   ...USER_ENDPOINTS,
+  ...ADMIN_AUTH_ENDPOINTS,
   ...ADMIN_ENDPOINTS,
+  ...PARTNER_AUTH_ENDPOINTS,
+  ...PARTNER_ENDPOINTS,
 } as const;
 
 // HTTP Methods

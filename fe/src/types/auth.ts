@@ -6,6 +6,20 @@ export interface AuthContextType {
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
     hasPermission: (permission: string) => boolean;
+    refreshToken: () => Promise<boolean>;
+    // Admin 2FA
+    isWaitingFor2FA: boolean;
+    maskedEmail: string | null;
+    adminLoginStep1: (email: string, password: string) => Promise<void>;
+    adminLoginStep2: (otpCode: string) => Promise<void>;
+    cancelAdmin2FA: () => void;
+    // Partner OTP (Simple)
+    isWaitingForOTP: boolean;
+    partnerContactInfo: string | null;
+    partnerContactType: 'EMAIL' | 'PHONE' | null;
+    partnerSendOTP: (contact: string, type: 'EMAIL' | 'PHONE') => Promise<void>;
+    partnerVerifyOTP: (otpCode: string) => Promise<void>;
+    cancelPartnerOTP: () => void;
 }
 
 export interface User {

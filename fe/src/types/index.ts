@@ -8,6 +8,9 @@ export * from './auth';
 // Admin Types (enums + all domain types)
 export * from './admin';
 
+// Partner Types (enums + api types + domain types)
+export * from './partner';
+
 // Common Types
 export * from './common';
 
