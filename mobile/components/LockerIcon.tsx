@@ -1,0 +1,32 @@
+import React from 'react';
+import Svg, { Path, SvgProps } from 'react-native-svg';
+
+interface LockerIconProps extends SvgProps {
+  color?: string;
+  width?: number | string;
+  height?: number | string;
+}
+
+export default function LockerIcon({
+  color = '#10B981', // Default green
+  width = 60,
+  height = 102,
+  style,
+  ...props
+}: LockerIconProps) {
+  return (
+    <Svg
+      width={width}
+      height={height}
+      viewBox="0 0 20 34"
+      fill="none"
+      style={style}
+      {...props}
+    >
+      <Path
+        d="M3.30435 0H16.5217C17.3981 0 18.2386 0.348135 18.8583 0.967821C19.478 1.58751 19.8261 2.42798 19.8261 3.30435V29.7391C19.8261 30.6155 19.478 31.456 18.8583 32.0757C18.2386 32.6953 17.3981 33.0435 16.5217 33.0435H3.30435C2.42798 33.0435 1.58751 32.6953 0.967821 32.0757C0.348136 31.456 0 30.6155 0 29.7391V3.30435C0 2.42798 0.348136 1.58751 0.967821 0.967821C1.58751 0.348135 2.42798 0 3.30435 0ZM3.30435 3.30435V29.7391H16.5217V3.30435H3.30435ZM6.6087 18.1739H9.91304V24.7826H6.6087V18.1739ZM6.6087 6.6087H13.2174V9.08696H6.6087V6.6087ZM6.6087 11.5652H13.2174V14.0435H6.6087V11.5652Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}

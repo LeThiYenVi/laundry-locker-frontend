@@ -1,7 +1,10 @@
 import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/user";
-import { CompleteRegistrationRequest, CompleteRegistrationResponse } from "@/types";
+import {
+  CompleteRegistrationRequest,
+  CompleteRegistrationResponse,
+} from "@/types";
 import { Icon } from "@rneui/themed";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
@@ -21,7 +24,11 @@ import {
 export default function RegisterScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const params = useLocalSearchParams<{ tempToken?: string; method?: string }>();
+  const params = useLocalSearchParams<{
+    idToken?: string;
+    tempToken?: string;
+    method?: string;
+  }>();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -72,20 +79,40 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!validateForm()) return;
-    if (!params.tempToken) {
-      Alert.alert("Lỗi", "Phiên đăng ký không hợp lệ. Vui lòng thử lại.");
-      router.back();
+
+    console.log("Registration params:", {
+      hasIdToken: !!params.idToken,
+      hasTempToken: !!params.tempToken,
+      method: params.method,
+    });
+
+    if (!params.idToken && !params.tempToken) {
+      console.error("No tokens found in params");
+      Alert.alert(
+        "Lỗi",
+        "Phiên đăng ký không hợp lệ. Vui lòng đăng nhập lại.",
+        [{ text: "OK", onPress: () => router.replace("/(auth)/login") }],
+      );
       return;
     }
 
     setIsLoading(true);
     try {
       const requestData: CompleteRegistrationRequest = {
-        tempToken: params.tempToken,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         birthday: birthday, // ISO date string
       };
+
+      // Add both idToken (Firebase) and tempToken (backend) if available
+      if (params.idToken) {
+        requestData.idToken = params.idToken;
+        console.log("Added Firebase ID token to registration request");
+      }
+      if (params.tempToken) {
+        requestData.tempToken = params.tempToken;
+        console.log("Added backend temp token to registration request");
+      }
 
       // Add optional fields based on login method
       if (showEmailField && email.trim()) {
@@ -96,9 +123,25 @@ export default function RegisterScreen() {
       }
 
       // Call appropriate registration endpoint
-      const response = params.method === "email" 
-        ? await authService.emailCompleteRegistration(requestData)
-        : await authService.completeRegistration(requestData);
+      console.log("Calling registration API with:", {
+        method: params.method,
+        endpoint:
+          params.method === "email"
+            ? "emailCompleteRegistration"
+            : "completeRegistration",
+        hasIdToken: !!requestData.idToken,
+        hasTempToken: !!requestData.tempToken,
+        firstName: requestData.firstName,
+        lastName: requestData.lastName,
+        birthday: requestData.birthday,
+      });
+
+      const response =
+        params.method === "email"
+          ? await authService.emailCompleteRegistration(requestData)
+          : await authService.completeRegistration(requestData);
+
+      console.log("Registration response:", response);
 
       if (response.success) {
         const data: CompleteRegistrationResponse = response.data;
@@ -107,16 +150,61 @@ export default function RegisterScreen() {
           refreshToken: data.refreshToken,
         });
         Alert.alert("Thành công", "Đăng ký thành công!", [
-          { text: "OK", onPress: () => router.replace("/user/(tabs)") }
+          { text: "OK", onPress: () => router.replace("/user/(tabs)/") },
         ]);
       } else {
         Alert.alert("Lỗi", response.message || "Đăng ký thất bại");
       }
     } catch (error: any) {
-      Alert.alert(
-        "Lỗi", 
-        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại"
-      );
+      console.error("Registration error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config
+          ? {
+              url: error.config.url,
+              method: error.config.method,
+              data: error.config.data,
+            }
+          : null,
+      });
+
+      let errorMsg = "Đăng ký thất bại. Vui lòng thử lại";
+
+      // Extract backend error message if available
+      const backendMessage = error.response?.data?.message;
+      const backendCode = error.response?.data?.code;
+
+      console.log("Backend error:", {
+        code: backendCode,
+        message: backendMessage,
+      });
+
+      // Specific error handling based on status code
+      if (error.response?.status === 400) {
+        errorMsg =
+          backendMessage || "Thông tin không hợp lệ. Vui lòng kiểm tra lại.";
+      } else if (error.response?.status === 401) {
+        errorMsg = "Phiên đăng ký đã hết hạn. Vui lòng đăng nhập lại.";
+        setTimeout(() => router.replace("/(auth)/login"), 2000);
+      } else if (error.response?.status === 500) {
+        // Server error - could be token issue or backend bug
+        if (backendCode === "E_COM001") {
+          errorMsg =
+            "Lỗi máy chủ. Token có thể không hợp lệ hoặc đã hết hạn.\n\nVui lòng thử đăng nhập lại.";
+          setTimeout(() => router.replace("/(auth)/login"), 3000);
+        } else {
+          errorMsg = backendMessage || "Lỗi máy chủ. Vui lòng thử lại sau.";
+        }
+      } else if (error.message === "Network Error") {
+        errorMsg =
+          "Không thể kết nối đến máy chủ.\n\nKiểm tra:\n- Backend đang chạy?\n- Kết nối mạng ổn định?";
+      } else if (backendMessage) {
+        errorMsg = backendMessage;
+      }
+
+      Alert.alert("Lỗi đăng ký", errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +216,10 @@ export default function RegisterScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Icon name="arrow-back" type="material" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -187,7 +278,12 @@ export default function RegisterScreen() {
               Ngày sinh <ThemedText style={styles.required}>*</ThemedText>
             </ThemedText>
             <View style={styles.inputContainer}>
-              <Icon name="calendar-today" type="material" size={20} color="#666" />
+              <Icon
+                name="calendar-today"
+                type="material"
+                size={20}
+                color="#666"
+              />
               <TextInput
                 style={styles.textInput}
                 placeholder="YYYY-MM-DD"
@@ -248,28 +344,33 @@ export default function RegisterScreen() {
           )}
 
           {/* Terms Agreement */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.termsContainer}
             onPress={() => setAgreeTerms(!agreeTerms)}
             activeOpacity={0.7}
           >
-            <Icon 
-              name={agreeTerms ? "check-box" : "check-box-outline-blank"} 
-              type="material" 
-              size={24} 
-              color={agreeTerms ? "#003D5B" : "#999"} 
+            <Icon
+              name={agreeTerms ? "check-box" : "check-box-outline-blank"}
+              type="material"
+              size={24}
+              color={agreeTerms ? "#003D5B" : "#999"}
             />
             <ThemedText style={styles.termsText}>
               Tôi đồng ý với{" "}
-              <ThemedText style={styles.termsLink}>Điều khoản sử dụng</ThemedText> và{" "}
-              <ThemedText style={styles.termsLink}>Chính sách bảo mật</ThemedText>
+              <ThemedText style={styles.termsLink}>
+                Điều khoản sử dụng
+              </ThemedText>{" "}
+              và{" "}
+              <ThemedText style={styles.termsLink}>
+                Chính sách bảo mật
+              </ThemedText>
             </ThemedText>
           </TouchableOpacity>
 
           {/* Register Button */}
           <TouchableOpacity
             style={[
-              styles.actionButton, 
+              styles.actionButton,
               isLoading && styles.actionButtonDisabled,
               !agreeTerms && styles.actionButtonInactive,
             ]}
@@ -279,24 +380,44 @@ export default function RegisterScreen() {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <ThemedText style={styles.actionButtonText}>Hoàn tất đăng ký</ThemedText>
+              <ThemedText style={styles.actionButtonText}>
+                Hoàn tất đăng ký
+              </ThemedText>
             )}
           </TouchableOpacity>
 
           {/* Benefits */}
           <View style={styles.benefitsContainer}>
-            <ThemedText style={styles.benefitsTitle}>Quyền lợi thành viên</ThemedText>
+            <ThemedText style={styles.benefitsTitle}>
+              Quyền lợi thành viên
+            </ThemedText>
             <View style={styles.benefitItem}>
-              <Icon name="local-offer" type="material" size={20} color="#4CAF50" />
-              <ThemedText style={styles.benefitText}>Giảm giá 10% đơn hàng đầu tiên</ThemedText>
+              <Icon
+                name="local-offer"
+                type="material"
+                size={20}
+                color="#4CAF50"
+              />
+              <ThemedText style={styles.benefitText}>
+                Giảm giá 10% đơn hàng đầu tiên
+              </ThemedText>
             </View>
             <View style={styles.benefitItem}>
               <Icon name="stars" type="material" size={20} color="#FFD700" />
-              <ThemedText style={styles.benefitText}>Tích điểm đổi quà hấp dẫn</ThemedText>
+              <ThemedText style={styles.benefitText}>
+                Tích điểm đổi quà hấp dẫn
+              </ThemedText>
             </View>
             <View style={styles.benefitItem}>
-              <Icon name="notifications-active" type="material" size={20} color="#2196F3" />
-              <ThemedText style={styles.benefitText}>Thông báo theo dõi đơn hàng</ThemedText>
+              <Icon
+                name="notifications-active"
+                type="material"
+                size={20}
+                color="#2196F3"
+              />
+              <ThemedText style={styles.benefitText}>
+                Thông báo theo dõi đơn hàng
+              </ThemedText>
             </View>
           </View>
         </ScrollView>
