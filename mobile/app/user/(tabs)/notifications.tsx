@@ -2,16 +2,17 @@ import { ThemedText } from "@/components/themed-text";
 import { notificationService } from "@/services/user";
 import { Notification, NotificationType } from "@/types";
 import { Icon } from "@rneui/themed";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
-  StatusBar,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    RefreshControl,
+    StatusBar,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const getNotificationIcon = (type: NotificationType): { name: string; color: string } => {
@@ -190,10 +191,15 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <View style={styles.headerContent}>
           <ThemedText style={styles.headerTitle}>Thông báo</ThemedText>
           {unreadCount > 0 && (
@@ -207,7 +213,7 @@ export default function NotificationsScreen() {
             <ThemedText style={styles.markAllText}>Đánh dấu tất cả đã đọc</ThemedText>
           </TouchableOpacity>
         )}
-      </View>
+      </LinearGradient>
 
       {/* Notifications List */}
       <FlatList
@@ -245,23 +251,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
   },
   header: {
-    backgroundColor: "#003D5B",
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 24,
     paddingHorizontal: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "900",
-    color: "#fff",
+    color: "#003D5B",
   },
   badge: {
     backgroundColor: "#FF5722",
@@ -279,7 +291,8 @@ const styles = StyleSheet.create({
   },
   markAllText: {
     fontSize: 13,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: "#003D5B",
+    opacity: 0.8,
     fontWeight: "600",
   },
   listContainer: {

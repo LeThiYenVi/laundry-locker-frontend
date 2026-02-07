@@ -1,0 +1,133 @@
+﻿Processing esp32dev (platform: espressif32@6.4.0; board: esp32dev; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.4.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20011.230801 (2.0.11) 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- ArduinoJson @ 6.21.5
+|-- HTTPClient @ 2.0.0
+|-- WiFi @ 2.0.0
+|-- WebServer @ 2.0.0
+Building in release mode
+Linking .pio\build\esp32dev\firmware.elf
+python : c:/users/pc/.
+platformio/packages/to
+olchain-xtensa-esp32/b
+in/../lib/gcc/xtensa-e
+sp32-elf/8.4.0/../../.
+./../xtensa-esp32-elf/
+bin/ld.exe: .pio\build
+\esp32dev\src\main.cpp
+.o:D:\capstone-laundry
+-locker\laundry-locker
+-frontend\iot/include/
+config.h:15: multiple 
+definition of 
+`WIFI_SSID'; .pio\buil
+d\esp32dev\src\locker_
+controller.cpp.o:D:\ca
+pstone-laundry-locker\
+laundry-locker-fronten
+d\iot/include/config.h
+:15: first defined 
+here
+At line:1 char:1
++ python -m 
+platformio run 2>&1 | 
+Out-File -Encoding 
+utf8 build_log.txt ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (c:/users/p   
+ c/.pl...st define    
+d here:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+c:/users/pc/.platformi
+o/packages/toolchain-x
+tensa-esp32/bin/../lib
+/gcc/xtensa-esp32-elf/
+8.4.0/../../../../xten
+sa-esp32-elf/bin/ld.ex
+e: .pio\build\esp32dev
+\src\main.cpp.o:D:\cap
+stone-laundry-locker\l
+aundry-locker-frontend
+\iot/include/config.h:
+16: multiple 
+definition of 
+`WIFI_PASSWORD'; .pio\
+build\esp32dev\src\loc
+ker_controller.cpp.o:D
+:\capstone-laundry-loc
+ker\laundry-locker-fro
+ntend\iot/include/conf
+ig.h:16: first 
+defined here
+c:/users/pc/.platformi
+o/packages/toolchain-x
+tensa-esp32/bin/../lib
+/gcc/xtensa-esp32-elf/
+8.4.0/../../../../xten
+sa-esp32-elf/bin/ld.ex
+e: .pio\build\esp32dev
+\src\main.cpp.o:D:\cap
+stone-laundry-locker\l
+aundry-locker-frontend
+\iot/include/config.h:
+28: multiple 
+definition of 
+`DEVICE_ID'; .pio\buil
+d\esp32dev\src\locker_
+controller.cpp.o:D:\ca
+pstone-laundry-locker\
+laundry-locker-fronten
+d\iot/include/config.h
+:28: first defined 
+here
+c:/users/pc/.platformi
+o/packages/toolchain-x
+tensa-esp32/bin/../lib
+/gcc/xtensa-esp32-elf/
+8.4.0/../../../../xten
+sa-esp32-elf/bin/ld.ex
+e: .pio\build\esp32dev
+\src\main.cpp.o:D:\cap
+stone-laundry-locker\l
+aundry-locker-frontend
+\iot/include/config.h:
+21: multiple 
+definition of 
+`BACKEND_URL'; .pio\bu
+ild\esp32dev\src\locke
+r_controller.cpp.o:D:\
+capstone-laundry-locke
+r\laundry-locker-front
+end\iot/include/config
+.h:21: first defined 
+here
+collect2.exe: error: 
+ld returned 1 exit 
+status
+*** [.pio\build\esp32d
+ev\firmware.elf] 
+Error 1
+======================
+==== [FAILED] Took 
+8.99 seconds =========
+=================

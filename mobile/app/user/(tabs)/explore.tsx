@@ -2,6 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { serviceService } from "@/services/user";
 import { LaundryService } from "@/types";
 import { Icon } from "@rneui/themed";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -147,20 +148,25 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <View style={styles.headerContent}>
           <View>
             <ThemedText style={styles.headerGreeting}>Khám phá</ThemedText>
             <ThemedText style={styles.headerTitle}>Dịch vụ & Ưu đãi</ThemedText>
           </View>
           <TouchableOpacity style={styles.searchButton}>
-            <Icon name="search" type="material" size={24} color="#fff" />
+            <Icon name="search" type="material" size={24} color="#003D5B" />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollContent}
@@ -461,9 +467,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
   },
   header: {
-    backgroundColor: "#003D5B",
     paddingTop: 60,
     paddingBottom: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: "row",
@@ -473,21 +486,28 @@ const styles = StyleSheet.create({
   },
   headerGreeting: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: "#003D5B",
+    opacity: 0.8,
     marginBottom: 4,
+    fontWeight: "500",
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#fff",
+    color: "#003D5B",
   },
   searchButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollContent: {
     flex: 1,

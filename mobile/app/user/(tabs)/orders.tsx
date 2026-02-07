@@ -2,9 +2,12 @@ import { ThemedText } from "@/components/themed-text";
 import { orderService } from "@/services/user";
 import { Order } from "@/types";
 import { Icon } from "@rneui/themed";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StatusBar,
@@ -22,6 +25,11 @@ export default function OrdersScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Order detail modal state
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const filters: { value: OrderFilter; label: string }[] = [
     { value: "ALL", label: "Tất cả" },
@@ -44,6 +52,7 @@ export default function OrdersScreen() {
       if (response.success && response.data) {
         // API returns PaginatedResponse<Order>
         const ordersList = response.data.content || [];
+        console.log("Orders Data:", JSON.stringify(ordersList, null, 2));
         setOrders(ordersList);
       }
     } catch (err: any) {
@@ -148,11 +157,31 @@ export default function OrdersScreen() {
     });
   };
 
-  const formatPrice = (price: number): string => {
+  const formatPrice = (price: number | undefined | null): string => {
+    if (price === undefined || price === null || isNaN(price)) return "0 ₫";
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(price);
+  };
+
+  const handleOrderPress = async (orderId: number) => {
+    try {
+      setIsLoadingDetail(true);
+      setShowDetailModal(true);
+      
+      const response = await orderService.getOrderById(orderId);
+      if (response.success && response.data) {
+        setSelectedOrder(response.data);
+        console.log('[OrderDetail] Full order:', JSON.stringify(response.data, null, 2));
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch order details:', err);
+      Alert.alert('Lỗi', 'Không thể tải chi tiết đơn hàng');
+      setShowDetailModal(false);
+    } finally {
+      setIsLoadingDetail(false);
+    }
   };
 
   const handleConfirmOrder = async (orderId: number) => {
@@ -179,6 +208,109 @@ export default function OrdersScreen() {
     }
   };
 
+  // State for Tracking Modal
+  const [trackingModalVisible, setTrackingModalVisible] = useState(false);
+  const [trackingData, setTrackingData] = useState<any>(null); // Using any temporarily to avoid import issue if type not refreshed, but will cast to OrderTrackingDetail
+  const [isLoadingTracking, setIsLoadingTracking] = useState(false);
+
+  const handleTrackOrder = async (orderId: number) => {
+    setIsLoadingTracking(true);
+    setTrackingModalVisible(true); // Show modal immediately with loading state
+    try {
+        const response = await orderService.getOrderStatus(orderId);
+        if (response.success) {
+            setTrackingData(response.data);
+        } else {
+             // Fallback to local data if API fails
+             throw new Error("API returned failure");
+        }
+    } catch (error: any) {
+        // Log as warning since this is expected if backend is not fully ready
+        console.warn("Tracking API not available (404/Error), using fallback data for order:", orderId);
+        
+        // Fallback Logic
+        const localOrder = orders.find(o => o.id === orderId);
+        if (localOrder) {
+             console.log("Found local order data:", localOrder.id);
+             const fallbackData = {
+                 orderId: localOrder.id,
+                 status: localOrder.status,
+                 statusDescription: getStatusText(localOrder.status), 
+                 pinCode: localOrder.pin,
+                 lockerName: localOrder.locker?.name || "Tủ gửi đồ",
+                 boxNumber: localOrder.boxId,
+                 createdAt: localOrder.createdAt || new Date().toISOString(),
+                 updatedAt: localOrder.updatedAt || new Date().toISOString(),
+                 isPaid: false, 
+                 nextAction: "Vui lòng làm mới để cập nhật chi tiết" 
+             };
+             
+             if (localOrder.status === 'INITIALIZED') fallbackData.nextAction = "Mang đồ đến tủ và nhập mã PIN";
+             else if (localOrder.status === 'RETURNED') fallbackData.nextAction = "Thanh toán để lấy đồ";
+             
+             setTrackingData(fallbackData);
+        } else {
+             console.error("No local order found for fallback with ID:", orderId);
+             Alert.alert("Lỗi", "Không thể lấy thông tin vận đơn");
+             setTrackingModalVisible(false);
+        }
+    } finally {
+        setIsLoadingTracking(false);
+    }
+  };
+
+  const renderTimeline = (currentStatus: string) => {
+      const steps = [
+          { status: 'INITIALIZED', label: 'Đã đặt' },
+          { status: 'WAITING', label: 'Chờ gửi' },
+          { status: 'COLLECTED', label: 'Đã thu' },
+          { status: 'PROCESSING', label: 'Đang giặt' },
+          { status: 'READY', label: 'Sẵn sàng' },
+          { status: 'COMPLETED', label: 'Xong' },
+      ];
+
+      const currentIndex = steps.findIndex(s => s.status === currentStatus);
+      // If status is RETURNED, mapped to COMPLETED logic or specific? Let's treat RETURNED/COMPLETED similar or add RETURNED step.
+      // If CANCELED, plain red text.
+
+      if (currentStatus === 'CANCELED') {
+           return <ThemedText style={{color: 'red', textAlign: 'center', marginTop: 10}}>Đơn hàng đã bị hủy</ThemedText>;
+      }
+
+      return (
+          <View style={styles.timelineContainer}>
+              {steps.map((step, index) => {
+                  const isActive = index <= (currentIndex === -1 ? 0 : currentIndex);
+                  const isCurrent = index === currentIndex;
+                  
+                  return (
+                      <View key={step.status} style={styles.timelineStep}>
+                          <View style={[
+                              styles.timelineDot, 
+                              isActive && styles.timelineDotActive,
+                              isCurrent && styles.timelineDotCurrent
+                          ]}>
+                              {isActive && <Icon name="check" size={10} color="#fff" />}
+                          </View>
+                          <ThemedText style={[
+                              styles.timelineLabel, 
+                              isActive && styles.timelineLabelActive
+                          ]}>
+                              {step.label}
+                          </ThemedText>
+                          {index < steps.length - 1 && (
+                              <View style={[
+                                  styles.timelineLine,
+                                  isActive && index < currentIndex && styles.timelineLineActive
+                              ]} />
+                          )}
+                      </View>
+                  );
+              })}
+          </View>
+      );
+  };
+  
   if (isLoading && !isRefreshing) {
     return (
       <View style={styles.centerContainer}>
@@ -202,15 +334,28 @@ export default function OrdersScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <ThemedText style={styles.headerTitle}>Đơn hàng</ThemedText>
         <ThemedText style={styles.headerSubtitle}>
           {orders.length} đơn hàng
         </ThemedText>
-      </View>
+
+        {/* DEBUG JSON */}
+        {/* {orders.length > 0 && (
+          <ThemedText style={{ fontSize: 10, color: 'red', marginTop: 10 }}>
+            DEBUG JSON: {JSON.stringify(orders[0])}
+          </ThemedText>
+        )} */}
+
+      </LinearGradient>
 
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
@@ -278,7 +423,12 @@ export default function OrdersScreen() {
           </View>
         ) : (
           filteredOrders.map((order) => (
-            <View key={order.id} style={styles.ticketContainer}>
+            <TouchableOpacity 
+              key={order.id} 
+              style={styles.ticketContainer}
+              onPress={() => handleOrderPress(order.id)}
+              activeOpacity={0.8}
+            >
               {/* Blue Accent Line */}
               <View style={styles.ticketAccent} />
               
@@ -292,14 +442,83 @@ export default function OrdersScreen() {
               <View style={styles.ticketContent}>
                 {/* Left Section */}
                 <View style={styles.ticketLeft}>
-                  <ThemedText style={styles.ticketOrderNumber}>Đơn #{order.id}</ThemedText>
+                  {/* Order Code/ID with Type Badge */}
+                  <View style={styles.orderHeaderRow}>
+                    <ThemedText style={styles.ticketOrderNumber}>
+                      {order.orderCode || `Đơn #${order.id}`}
+                    </ThemedText>
+                    {order.type && (
+                      <View style={[
+                        styles.typeBadge, 
+                        { backgroundColor: order.type === 'LAUNDRY' ? '#E3F2FD' : '#FFF3E0' }
+                      ]}>
+                        <ThemedText style={[
+                          styles.typeBadgeText,
+                          { color: order.type === 'LAUNDRY' ? '#1976D2' : '#E65100' }
+                        ]}>
+                          {order.type === 'LAUNDRY' ? '🧺' : '📦'}
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
                   
+                  {/* Locker Info */}
+                  {(order.locker?.name || order.lockerName) && (
+                    <View style={styles.ticketLocationRow}>
+                      <Icon name="location-on" type="material" size={11} color="#666" />
+                      <ThemedText style={styles.ticketLocationText} numberOfLines={1}>
+                        {order.locker?.name || order.lockerName}
+                      </ThemedText>
+                    </View>
+                  )}
+                  
+                  {/* Items/Services Count */}
+                  {(order.items?.length || order.services?.length) ? (
+                    <View style={styles.ticketItemsRow}>
+                      <Icon name="list" type="material" size={11} color="#666" />
+                      <ThemedText style={styles.ticketItemsText}>
+                        {order.items?.length || order.services?.length} dịch vụ
+                      </ThemedText>
+                    </View>
+                  ) : null}
+                  
+                  {/* Sender Info */}
+                  {order.senderName && (
+                    <View style={styles.ticketPersonRow}>
+                      <Icon name="person" type="material" size={11} color="#666" />
+                      <ThemedText style={styles.ticketPersonText} numberOfLines={1}>
+                        Gửi: {order.senderName}
+                      </ThemedText>
+                    </View>
+                  )}
+                  
+                  {/* Receiver Info */}
+                  {order.receiverName && (
+                    <View style={styles.ticketPersonRow}>
+                      <Icon name="person-outline" type="material" size={11} color="#666" />
+                      <ThemedText style={styles.ticketPersonText} numberOfLines={1}>
+                        Nhận: {order.receiverName}
+                      </ThemedText>
+                    </View>
+                  )}
+                  
+                  {/* Price Display */}
                   <View style={styles.ticketTotal}>
                     <ThemedText style={styles.ticketTotalLabel}>Tổng:</ThemedText>
                     <ThemedText style={styles.ticketTotalValue}>
-                      {formatPrice(order.totalAmount)}
+                      {formatPrice(order.totalAmount || order.actualPrice || order.totalPrice || (typeof order.estimatedPrice === 'number' ? order.estimatedPrice : 0))}
                     </ThemedText>
                   </View>
+                  
+                  {/* Discount Info */}
+                  {(order.discountAmount || order.promotionDiscount) ? (
+                    <View style={styles.discountRow}>
+                      <Icon name="local-offer" type="material" size={10} color="#4CAF50" />
+                      <ThemedText style={styles.discountText}>
+                        -{formatPrice(order.discountAmount || order.promotionDiscount)}
+                      </ThemedText>
+                    </View>
+                  ) : null}
                   
                   <View style={styles.ticketTime}>
                     <Icon name="schedule" type="material" size={11} color="#9CA3AF" />
@@ -326,6 +545,16 @@ export default function OrdersScreen() {
                       <ThemedText style={styles.ticketPinText}>{order.pin}</ThemedText>
                     </View>
                   )}
+
+                  {/* Track Button (Always visible logic or specific states? Let's show for active) */}
+                  {order.status !== "CANCELED" && (
+                      <TouchableOpacity
+                        style={[styles.ticketButton, { backgroundColor: '#2196F3' }]}
+                        onPress={() => handleTrackOrder(order.id)}
+                      >
+                         <ThemedText style={styles.ticketButtonText}>Theo dõi</ThemedText>
+                      </TouchableOpacity>
+                  )}
                   
                   {order.status === "INITIALIZED" && (
                     <TouchableOpacity
@@ -346,12 +575,235 @@ export default function OrdersScreen() {
                   )}
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))
         )}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Tracking Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={trackingModalVisible}
+        onRequestClose={() => setTrackingModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+            <View style={styles.trackingModalView}>
+                <View style={styles.modalHeader}>
+                    <ThemedText style={styles.modalTitle}>Theo dõi đơn hàng</ThemedText>
+                    <TouchableOpacity onPress={() => setTrackingModalVisible(false)}>
+                        <Icon name="close" size={24} color="#000" />
+                    </TouchableOpacity>
+                </View>
+                
+                {isLoadingTracking ? (
+                    <ActivityIndicator size="large" color="#003D5B" style={{marginVertical: 40}} />
+                ) : trackingData ? (
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <View style={styles.trackingInfoContainer}>
+                            <View style={styles.trackingRow}>
+                                <ThemedText style={styles.trackingLabel}>Mã đơn:</ThemedText>
+                                <ThemedText style={styles.trackingValue}>#{trackingData.orderId}</ThemedText>
+                            </View>
+                            <View style={styles.trackingRow}>
+                                <ThemedText style={styles.trackingLabel}>Locker:</ThemedText>
+                                <ThemedText style={styles.trackingValue}>{trackingData.lockerName || "N/A"}</ThemedText>
+                            </View>
+                            <View style={styles.trackingRow}>
+                                <ThemedText style={styles.trackingLabel}>Ô số:</ThemedText>
+                                <ThemedText style={styles.trackingValue}>{trackingData.boxNumber || "N/A"}</ThemedText>
+                            </View> 
+                             <View style={styles.trackingRow}>
+                                <ThemedText style={styles.trackingLabel}>Mã PIN:</ThemedText>
+                                <ThemedText style={[styles.trackingValue, {color: '#F59E0B', fontWeight: 'bold'}]}>{trackingData.pinCode || "******"}</ThemedText>
+                            </View>
+                        </View>
+                        
+                        <View style={styles.timelineWrapper}>
+                             {renderTimeline(trackingData.status)}
+                        </View>
+                        
+                        <View style={styles.statusDescriptionBox}>
+                             <ThemedText style={styles.statusDescTitle}>Trạng thái hiện tại</ThemedText>
+                             <ThemedText style={styles.statusDescText}>{trackingData.statusDescription}</ThemedText>
+                             <ThemedText style={styles.nextActionText}>👉 {trackingData.nextAction}</ThemedText>
+                        </View>
+                    </ScrollView>
+                ) : (
+                    <ThemedText style={{textAlign: 'center', margin: 20}}>Không có dữ liệu</ThemedText>
+                )}
+            </View>
+        </View>
+      </Modal>
+
+      {/* Order Detail Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showDetailModal}
+        onRequestClose={() => setShowDetailModal(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.detailModalView}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Chi tiết đơn hàng</ThemedText>
+              <TouchableOpacity onPress={() => setShowDetailModal(false)}>
+                <Icon name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+            
+            {isLoadingDetail ? (
+              <ActivityIndicator size="large" color="#003D5B" style={{marginVertical: 40}} />
+            ) : selectedOrder ? (
+              <ScrollView showsVerticalScrollIndicator={false} style={styles.detailScrollView}>
+                {/* Order Code & Status */}
+                <View style={styles.detailSection}>
+                  <ThemedText style={styles.detailOrderCode}>
+                    {selectedOrder.orderCode || `Đơn #${selectedOrder.id}`}
+                  </ThemedText>
+                  <View style={[styles.detailStatusBadge, { backgroundColor: getStatusColor(selectedOrder.status) }]}>
+                    <ThemedText style={styles.detailStatusText}>{getStatusText(selectedOrder.status)}</ThemedText>
+                  </View>
+                </View>
+
+                {/* Type Badge */}
+                {selectedOrder.type && (
+                  <View style={styles.detailTypeBadge}>
+                    <ThemedText style={styles.detailTypeText}>
+                      {selectedOrder.type === 'LAUNDRY' ? '🧺 Giặt đồ' : '📦 Lưu trữ'}
+                    </ThemedText>
+                  </View>
+                )}
+
+                {/* Customer Info */}
+                {selectedOrder.customer && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={styles.detailInfoTitle}>Khách hàng</ThemedText>
+                    <ThemedText style={styles.detailInfoText}>{selectedOrder.customer.fullName}</ThemedText>
+                    <ThemedText style={styles.detailInfoSubtext}>{selectedOrder.customer.phoneNumber}</ThemedText>
+                  </View>
+                )}
+
+                {/* Sender Info */}
+                {selectedOrder.senderName && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={styles.detailInfoTitle}>Người gửi</ThemedText>
+                    <ThemedText style={styles.detailInfoText}>{selectedOrder.senderName}</ThemedText>
+                    {selectedOrder.senderPhone && (
+                      <ThemedText style={styles.detailInfoSubtext}>{selectedOrder.senderPhone}</ThemedText>
+                    )}
+                  </View>
+                )}
+
+                {/* Receiver Info */}
+                {selectedOrder.receiverName && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={styles.detailInfoTitle}>Người nhận</ThemedText>
+                    <ThemedText style={styles.detailInfoText}>{selectedOrder.receiverName}</ThemedText>
+                    {selectedOrder.receiverPhone && (
+                      <ThemedText style={styles.detailInfoSubtext}>{selectedOrder.receiverPhone}</ThemedText>
+                    )}
+                  </View>
+                )}
+
+                {/* Locker Info */}
+                <View style={styles.detailInfoBox}>
+                  <ThemedText style={styles.detailInfoTitle}>Vị trí</ThemedText>
+                  <ThemedText style={styles.detailInfoText}>
+                    {selectedOrder.locker?.name || selectedOrder.lockerName || 'N/A'}
+                  </ThemedText>
+                  <ThemedText style={styles.detailInfoSubtext}>
+                    Ô số: {selectedOrder.boxNumber || selectedOrder.sendBoxNumber || 'N/A'}
+                  </ThemedText>
+                </View>
+
+                {/* PIN Code */}
+                {(selectedOrder.pin || selectedOrder.pinCode) && (
+                  <View style={styles.detailPinBox}>
+                    <ThemedText style={styles.detailPinLabel}>Mã PIN</ThemedText>
+                    <ThemedText style={styles.detailPinValue}>{selectedOrder.pinCode || selectedOrder.pin}</ThemedText>
+                  </View>
+                )}
+
+                {/* Items/Services */}
+                {selectedOrder.items && selectedOrder.items.length > 0 && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={styles.detailInfoTitle}>Dịch vụ</ThemedText>
+                    {selectedOrder.items.map((item, index) => (
+                      <View key={index} style={styles.detailItemRow}>
+                        <ThemedText style={styles.detailItemName}>{item.serviceName || 'Dịch vụ'}</ThemedText>
+                        <ThemedText style={styles.detailItemPrice}>{formatPrice(item.subtotal || item.price)}</ThemedText>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Pricing */}
+                <View style={styles.detailPriceBox}>
+                  {selectedOrder.estimatedPrice && (
+                    <View style={styles.detailPriceRow}>
+                      <ThemedText style={styles.detailPriceLabel}>Giá ước tính</ThemedText>
+                      <ThemedText style={styles.detailPriceValue}>
+                        {formatPrice(typeof selectedOrder.estimatedPrice === 'number' ? selectedOrder.estimatedPrice : 0)}
+                      </ThemedText>
+                    </View>
+                  )}
+                  {selectedOrder.actualPrice && (
+                    <View style={styles.detailPriceRow}>
+                      <ThemedText style={styles.detailPriceLabel}>Giá thực tế</ThemedText>
+                      <ThemedText style={styles.detailPriceValue}>{formatPrice(selectedOrder.actualPrice)}</ThemedText>
+                    </View>
+                  )}
+                  {selectedOrder.discountAmount && selectedOrder.discountAmount > 0 && (
+                    <View style={styles.detailPriceRow}>
+                      <ThemedText style={styles.detailPriceLabel}>Giảm giá</ThemedText>
+                      <ThemedText style={[styles.detailPriceValue, {color: '#4CAF50'}]}>-{formatPrice(selectedOrder.discountAmount)}</ThemedText>
+                    </View>
+                  )}
+                  <View style={[styles.detailPriceRow, styles.detailTotalRow]}>
+                    <ThemedText style={styles.detailTotalLabel}>Tổng cộng</ThemedText>
+                    <ThemedText style={styles.detailTotalValue}>
+                      {formatPrice(selectedOrder.totalAmount || selectedOrder.actualPrice || selectedOrder.totalPrice || 0)}
+                    </ThemedText>
+                  </View>
+                </View>
+
+                {/* Payment Status */}
+                {selectedOrder.payment && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={styles.detailInfoTitle}>Thanh toán</ThemedText>
+                    <ThemedText style={styles.detailInfoText}>
+                      {selectedOrder.payment.status === 'COMPLETED' ? '✅ Đã thanh toán' : '⏳ Chưa thanh toán'}
+                    </ThemedText>
+                    {selectedOrder.payment.method && (
+                      <ThemedText style={styles.detailInfoSubtext}>Phương thức: {selectedOrder.payment.method}</ThemedText>
+                    )}
+                  </View>
+                )}
+
+                {/* Timestamps */}
+                <View style={styles.detailInfoBox}>
+                  <ThemedText style={styles.detailInfoTitle}>Thời gian</ThemedText>
+                  <ThemedText style={styles.detailInfoSubtext}>Tạo: {formatDate(selectedOrder.createdAt)}</ThemedText>
+                  {selectedOrder.confirmedAt && (
+                    <ThemedText style={styles.detailInfoSubtext}>Xác nhận: {formatDate(selectedOrder.confirmedAt)}</ThemedText>
+                  )}
+                  {selectedOrder.completedAt && (
+                    <ThemedText style={styles.detailInfoSubtext}>Hoàn thành: {formatDate(selectedOrder.completedAt)}</ThemedText>
+                  )}
+                </View>
+
+                <View style={{height: 20}} />
+              </ScrollView>
+            ) : (
+              <ThemedText style={{textAlign: 'center', margin: 20}}>Không có dữ liệu</ThemedText>
+            )}
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -368,20 +820,28 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   header: {
-    backgroundColor: "#003D5B",
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 10,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#fff",
+    color: "#003D5B",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: "#003D5B",
+    opacity: 0.8,
   },
   loadingText: {
     marginTop: 12,
@@ -903,6 +1363,64 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#9CA3AF",
   },
+  // New styles for enhanced order display
+  orderHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  typeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  typeBadgeText: {
+    fontSize: 12,
+  },
+  ticketLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 4,
+  },
+  ticketLocationText: {
+    fontSize: 11,
+    color: "#666",
+    flex: 1,
+  },
+  ticketItemsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 4,
+  },
+  ticketItemsText: {
+    fontSize: 11,
+    color: "#666",
+  },
+  ticketPersonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 3,
+  },
+  ticketPersonText: {
+    fontSize: 11,
+    color: "#555",
+    flex: 1,
+  },
+  discountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 2,
+  },
+  discountText: {
+    fontSize: 10,
+    color: "#4CAF50",
+    fontWeight: "600",
+  },
   ticketDivider: {
     width: 1,
     backgroundColor: "#E5E7EB",
@@ -945,13 +1463,11 @@ const styles = StyleSheet.create({
   ticketButton: {
     backgroundColor: "#10B981",
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 12,
-  },
-  ticketButtonText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#fff",
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ticketButtonCancel: {
     backgroundColor: "transparent",
@@ -965,5 +1481,284 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 100,
+  },
+  
+  // Modal Styles
+  centeredView: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  trackingModalView: {
+      width: '90%',
+      backgroundColor: 'white',
+      borderRadius: 16,
+      padding: 20,
+      maxHeight: '80%',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+  },
+  modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#eee',
+      paddingBottom: 10,
+  },
+  modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#003D5B',
+  },
+  trackingInfoContainer: {
+      marginBottom: 20,
+      backgroundColor: '#F7FAFC',
+      padding: 16,
+      borderRadius: 12,
+  },
+  trackingRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+  },
+  trackingLabel: {
+      color: '#666',
+      fontSize: 14,
+  },
+  trackingValue: {
+      fontWeight: '600',
+      color: '#333',
+      fontSize: 14,
+  },
+  timelineWrapper: {
+      marginBottom: 20,
+  },
+  timelineContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      position: 'relative',
+      paddingHorizontal: 4,
+  },
+  timelineStep: {
+      alignItems: 'center',
+      width: 50,
+      position: 'relative',
+  },
+  timelineDot: {
+      width: 14,
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: '#E2E8F0',
+      marginBottom: 4,
+      zIndex: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  timelineDotActive: {
+      backgroundColor: '#4CAF50',
+  },
+  timelineDotCurrent: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: '#003D5B',
+      borderWidth: 2,
+      borderColor: '#fff',
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      elevation: 3,
+  },
+  timelineLabel: {
+      fontSize: 8,
+      textAlign: 'center',
+      color: '#CBD5E0',
+  },
+  timelineLabelActive: {
+      color: '#003D5B',
+      fontWeight: '700',
+  },
+  timelineLine: {
+      position: 'absolute',
+      top: 6,
+      left: '50%',
+      width: '100%',
+      height: 2,
+      backgroundColor: '#E2E8F0',
+      zIndex: 1,
+  },
+  timelineLineActive: {
+      backgroundColor: '#4CAF50',
+  },
+  statusDescriptionBox: {
+      backgroundColor: '#EBF8FF',
+      borderRadius: 12,
+      padding: 16,
+      borderLeftWidth: 4,
+      borderLeftColor: '#003D5B',
+  },
+  statusDescTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#003D5B',
+      marginBottom: 4,
+  },
+  statusDescText: {
+      fontSize: 13,
+      color: '#4A5568',
+      marginBottom: 8,
+  },
+  nextActionText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#2F855A',
+  },
+  // Order Detail Modal Styles
+  detailModalView: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    width: "100%",
+    maxHeight: "90%",
+  },
+  detailScrollView: {
+    maxHeight: "90%",
+  },
+  detailSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  detailOrderCode: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+  },
+  detailStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  detailStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  detailTypeBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#F0F4F8",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  detailTypeText: {
+    fontSize: 13,
+    color: "#333",
+    fontWeight: "500",
+  },
+  detailInfoBox: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  detailInfoTitle: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#666",
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  detailInfoText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#111",
+    marginBottom: 2,
+  },
+  detailInfoSubtext: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 2,
+  },
+  detailPinBox: {
+    backgroundColor: "#FEF3C7",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  detailPinLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#92400E",
+    marginBottom: 4,
+  },
+  detailPinValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#92400E",
+    letterSpacing: 4,
+  },
+  detailItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  detailItemName: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+  },
+  detailItemPrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111",
+  },
+  detailPriceBox: {
+    backgroundColor: "#F0F4F8",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  detailPriceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  detailPriceLabel: {
+    fontSize: 13,
+    color: "#666",
+  },
+  detailPriceValue: {
+    fontSize: 13,
+    color: "#333",
+  },
+  detailTotalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#D1D5DB",
+    marginTop: 8,
+    paddingTop: 8,
+  },
+  detailTotalLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111",
+  },
+  detailTotalValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#003D5B",
   },
 });

@@ -9,8 +9,17 @@ export const getProfile = async (): Promise<ApiResponse<User>> => {
     return response.data;
 };
 
+/**
+ * Update user avatar
+ */
+export const updateAvatar = async (imageUrl: string): Promise<ApiResponse<User>> => {
+    const response = await api.put<ApiResponse<User>>('/user/avatar', { imageUrl });
+    return response.data;
+};
+
 export const userService = {
     getProfile,
+    updateAvatar,
 };
 
 export default userService;

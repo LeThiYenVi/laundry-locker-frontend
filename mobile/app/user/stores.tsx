@@ -4,13 +4,12 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { storeService } from "@/services/user";
 import { Store } from "@/types";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  ScrollView,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
@@ -60,56 +59,69 @@ export default function StoresScreen() {
   };
 
   const handleStorePress = (store: Store) => {
-    // TODO: Navigate to store detail screen
-    console.log("Store pressed:", store);
+    router.push({
+      pathname: "/user/store-detail",
+      params: {
+        id: store.id,
+        name: store.name,
+        address: store.address,
+        phone: store.phone,
+        openTime: store.openTime,
+        closeTime: store.closeTime,
+        latitude: store.latitude,
+        longitude: store.longitude,
+      } as any
+    });
   };
 
   const renderStoreCard = ({ item }: { item: Store }) => (
     <TouchableOpacity
       style={styles.storeCard}
       onPress={() => handleStorePress(item)}
-      activeOpacity={0.7}
+      activeOpacity={0.9}
     >
       <View style={styles.storeCardHeader}>
-        <View style={styles.activeBadge}>
-          <View style={styles.activeDot} />
-          <ThemedText style={styles.activeBadgeText}>ACTIVE</ThemedText>
+        <View style={styles.statusBadge}>
+            <View style={styles.statusDot} />
+            <ThemedText style={styles.statusText}>Hoạt động</ThemedText>
         </View>
         <TouchableOpacity style={styles.chevronButton}>
-          <IconSymbol size={18} name="chevron.right" color="#666" />
+          <IconSymbol size={20} name="chevron.right" color="#666" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.storeImagePlaceholder}>
-        <IconSymbol size={70} name="map.fill" color="#B0B0B0" />
-        <ThemedText style={styles.mapPlaceholderText}>Map View</ThemedText>
+      <View style={styles.mapContainer}>
+        {item.latitude && item.longitude ? (
+            <View style={styles.mapPlaceholderContent}>
+                <IconSymbol size={40} name="map.fill" color="#A0AEC0" />
+                <ThemedText style={styles.mapPlaceholderLabel}>Map Preview</ThemedText>
+            </View>
+        ) : (
+            <View style={styles.mapPlaceholderContent}>
+                <IconSymbol size={40} name="map.fill" color="#CBD5E0" />
+                <ThemedText style={styles.mapPlaceholderLabel}>No Location Data</ThemedText>
+            </View>
+        )}
       </View>
 
-      <View style={styles.storeInfo}>
-        <View style={styles.storeNameRow}>
-          <ThemedText style={styles.storeName}>{item.name}</ThemedText>
-          {item.latitude && item.longitude && (
-            <View style={styles.distanceBadge}>
-              <IconSymbol size={12} name="location.fill" color="#003D5B" />
-              <ThemedText style={styles.distanceText}>-</ThemedText>
-            </View>
-          )}
-        </View>
+      <View style={styles.cardContent}>
+        <ThemedText style={styles.storeTitle}>{item.name}</ThemedText>
         <ThemedText style={styles.storeAddress}>{item.address}</ThemedText>
-        {item.phone && (
-          <View style={styles.phoneRow}>
-            <IconSymbol size={14} name="phone.fill" color="#666" />
-            <ThemedText style={styles.phoneText}>{item.phone}</ThemedText>
-          </View>
-        )}
-        {item.openTime && item.closeTime && (
-          <View style={styles.timeRow}>
-            <IconSymbol size={14} name="clock.fill" color="#666" />
-            <ThemedText style={styles.timeText}>
-              {item.openTime} - {item.closeTime}
-            </ThemedText>
-          </View>
-        )}
+        
+        <View style={styles.cardFooter}>
+            {item.phone && (
+              <View style={styles.infoRow}>
+                <IconSymbol size={14} name="phone.fill" color="#718096" />
+                <ThemedText style={styles.infoText}>{item.phone}</ThemedText>
+              </View>
+            )}
+            {item.openTime && (
+              <View style={styles.infoRow}>
+                <IconSymbol size={14} name="clock.fill" color="#718096" />
+                <ThemedText style={styles.infoText}>{item.openTime} - {item.closeTime}</ThemedText>
+              </View>
+            )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -118,18 +130,13 @@ export default function StoresScreen() {
     return (
       <View style={[styles.container, { backgroundColor }]}>
         <StatusBar barStyle="dark-content" />
-        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <IconSymbol size={24} name="chevron.left" color="#003D5B" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Cửa hàng</ThemedText>
-          <View style={styles.headerRight} />
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <IconSymbol size={24} name="chevron.left" color="#003D5B" />
+            </TouchableOpacity>
+            <ThemedText style={styles.headerTitle}>Cửa hàng</ThemedText>
+            <View style={styles.headerRight} />
         </View>
-
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#003D5B" />
           <ThemedText style={styles.loadingText}>Đang tải...</ThemedText>
@@ -142,29 +149,17 @@ export default function StoresScreen() {
     return (
       <View style={[styles.container, { backgroundColor }]}>
         <StatusBar barStyle="dark-content" />
-        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <IconSymbol size={24} name="chevron.left" color="#003D5B" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Cửa hàng</ThemedText>
-          <View style={styles.headerRight} />
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <IconSymbol size={24} name="chevron.left" color="#003D5B" />
+            </TouchableOpacity>
+            <ThemedText style={styles.headerTitle}>Cửa hàng</ThemedText>
+            <View style={styles.headerRight} />
         </View>
-
         <View style={styles.errorContainer}>
-          <IconSymbol
-            size={64}
-            name="exclamationmark.triangle"
-            color="#FF6B6B"
-          />
+          <IconSymbol size={64} name="exclamationmark.triangle" color="#FF6B6B" />
           <ThemedText style={styles.errorText}>{error}</ThemedText>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => fetchStores()}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchStores()}>
             <ThemedText style={styles.retryButtonText}>Thử lại</ThemedText>
           </TouchableOpacity>
         </View>
@@ -173,60 +168,44 @@ export default function StoresScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <StatusBar barStyle="dark-content" />
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.container, { backgroundColor }]}>
+        <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <IconSymbol size={24} name="chevron.left" color="#003D5B" />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Cửa hàng</ThemedText>
-        <View style={styles.headerRight} />
-      </View>
+        {/* Header */}
+        <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <IconSymbol size={24} name="chevron.left" color="#003D5B" />
+            </TouchableOpacity>
+            <ThemedText style={styles.headerTitle}>Cửa hàng</ThemedText>
+            <View style={styles.headerRight} />
+        </View>
 
-      {/* Store Count */}
-      <View style={styles.countContainer}>
-        <ThemedText style={styles.countText}>
-          Tìm thấy {stores.length} cửa hàng
-        </ThemedText>
-      </View>
+        {/* Store Count */}
+        <View style={styles.countContainer}>
+            <ThemedText style={styles.countText}>Tìm thấy {stores.length} cửa hàng</ThemedText>
+        </View>
 
-      {/* Stores List */}
-      {stores.length === 0 ? (
-        <ScrollView
-          contentContainerStyle={styles.emptyContainer}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={["#003D5B"]}
-            />
-          }
-        >
-          <IconSymbol size={64} name="building.2" color="#CCC" />
-          <ThemedText style={styles.emptyText}>Chưa có cửa hàng nào</ThemedText>
-        </ScrollView>
-      ) : (
+        {/* Stores List */}
         <FlatList
-          data={stores}
-          renderItem={renderStoreCard}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={["#003D5B"]}
-            />
-          }
-          showsVerticalScrollIndicator={false}
+            data={stores}
+            renderItem={renderStoreCard}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+                <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={["#003D5B"]} />
+            }
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                    <IconSymbol size={64} name="building.2.fill" color="#CBD5E0" />
+                    <ThemedText style={styles.emptyText}>Chưa có cửa hàng nào</ThemedText>
+                </View>
+            }
         />
-      )}
-    </View>
+      </View>
+    </>
   );
 }
 
@@ -241,8 +220,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: '#F0F4F8',
+    zIndex: 10,
   },
   backButton: {
     width: 40,
@@ -255,7 +236,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#000",
+    color: "#1A202C",
   },
   headerRight: {
     width: 40,
@@ -266,52 +247,61 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontSize: 14,
-    color: "#666",
+    color: "#718096",
     fontWeight: "500",
   },
   listContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
+  
+  /* Store Card Styles (Synced with Home) */
   storeCard: {
-    backgroundColor: "#E8E8E8",
-    borderRadius: 20,
-    padding: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
     marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F0F4F8',
   },
   storeCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    zIndex: 10,
   },
-  activeBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#000",
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
     gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#4CAF50",
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#48BB78",
   },
-  activeBadgeText: {
-    color: "#000",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
+  statusText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2F855A",
   },
   chevronButton: {
     width: 32,
@@ -320,119 +310,101 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  storeImagePlaceholder: {
-    backgroundColor: "#D5D5D5",
-    height: 190,
-    borderRadius: 16,
-    marginBottom: 16,
-    justifyContent: "center",
-    alignItems: "center",
+  
+  mapContainer: {
+    height: 180,
+    width: '100%',
+    backgroundColor: '#F7FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  mapPlaceholderText: {
-    color: "#888",
-    fontSize: 13,
-    marginTop: 8,
-    fontWeight: "500",
-  },
-  storeInfo: {
+  mapPlaceholderContent: {
+    alignItems: 'center',
     gap: 8,
   },
-  storeNameRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  mapPlaceholderLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#A0AEC0',
   },
-  storeName: {
-    fontSize: 17,
+  
+  cardContent: {
+    padding: 20,
+  },
+  storeTitle: {
+    fontSize: 18,
     fontWeight: "800",
-    color: "#000",
-    letterSpacing: 0.5,
-    flex: 1,
+    color: "#1A202C",
+    marginBottom: 4,
   },
-  distanceBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 61, 91, 0.1)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  distanceText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#003D5B",
-  },
-  storeAddress: {
+  storeAddress: { 
     fontSize: 13,
-    color: "#666",
+    color: "#718096",
     lineHeight: 19,
-    fontWeight: "400",
+    marginBottom: 16,
   },
-  phoneRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  cardFooter: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
-  phoneText: {
+  infoText: {
     fontSize: 13,
-    color: "#666",
+    color: "#4A5568",
     fontWeight: "500",
   },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  timeText: {
-    fontSize: 13,
-    color: "#666",
-    fontWeight: "500",
-  },
+  
+  /* Fallback States */
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 16,
+    gap: 12,
   },
   loadingText: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 14,
+    color: "#718096",
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 48,
+    paddingHorizontal: 40,
     gap: 16,
   },
   errorText: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 14,
+    color: "#E53E3E",
     textAlign: "center",
-    lineHeight: 24,
   },
   retryButton: {
     backgroundColor: "#003D5B",
-    paddingHorizontal: 32,
-    paddingVertical: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     borderRadius: 12,
-    marginTop: 8,
   },
   retryButtonText: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+    paddingVertical: 60,
     alignItems: "center",
     gap: 16,
   },
   emptyText: {
-    fontSize: 16,
-    color: "#999",
+    fontSize: 14,
+    color: "#A0AEC0",
   },
 });
