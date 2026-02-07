@@ -1,3 +1,4 @@
+import LockerIcon from "@/components/LockerIcon";
 import { ThemedText } from "@/components/themed-text";
 import { lockerService, storeService } from "@/services/user";
 import { Box, Locker, Store } from "@/types";
@@ -219,7 +220,7 @@ export default function LockersScreen() {
   if (isLoadingStores) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator size="large" color="#003D5B" />
         <ThemedText style={styles.loadingText}>Đang tải cửa hàng...</ThemedText>
       </View>
     );
@@ -244,11 +245,11 @@ export default function LockersScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       
       {/* Header with Gradient */}
       <LinearGradient
-        colors={['#4A90E2', '#357ABD', '#2868A8']}
+        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -256,7 +257,7 @@ export default function LockersScreen() {
         <View style={styles.headerContent}>
           {viewMode === 'lockers' && (
             <TouchableOpacity onPress={backToStores} style={styles.backButton}>
-              <Icon name="arrow-back" type="material" size={24} color="#fff" />
+              <Icon name="arrow-back" type="material" size={24} color="#003D5B" />
             </TouchableOpacity>
           )}
           <View style={styles.headerTextContainer}>
@@ -311,12 +312,12 @@ export default function LockersScreen() {
                     {/* Store Image with Gradient */}
                     <View style={styles.popularImageContainer}>
                       <LinearGradient
-                        colors={['#4A90E2', '#357ABD']}
+                        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.popularImage}
                       >
-                        <Icon name="store" type="material" size={64} color="rgba(255,255,255,0.9)" />
+                        <Icon name="store" type="material" size={64} color="#003D5B" />
                       </LinearGradient>
                       
                       {/* Overlay Badge */}
@@ -364,12 +365,12 @@ export default function LockersScreen() {
                     {/* Store Image */}
                     <View style={styles.recommendedImageContainer}>
                       <LinearGradient
-                        colors={['#4A90E2', '#357ABD']}
+                        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.recommendedImage}
                       >
-                        <Icon name="store" type="material" size={40} color="rgba(255,255,255,0.9)" />
+                        <Icon name="store" type="material" size={40} color="#003D5B" />
                       </LinearGradient>
                       
                       {/* Small Badge */}
@@ -402,13 +403,13 @@ export default function LockersScreen() {
         {viewMode === 'lockers' && (
           <View style={styles.section}>
             <View style={styles.sectionTitleRow}>
-              <Icon name="door-front" type="material" size={22} color="#4A90E2" />
+              <Icon name="door-front" type="material" size={22} color="#003D5B" />
               <ThemedText style={styles.sectionTitle}>Danh sách tủ</ThemedText>
             </View>
             
             {isLoadingLockers ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4A90E2" />
+                <ActivityIndicator size="large" color="#003D5B" />
                 <ThemedText style={styles.loadingText}>Đang tải tủ...</ThemedText>
               </View>
             ) : lockers.length === 0 ? (
@@ -429,7 +430,7 @@ export default function LockersScreen() {
                   >
                     <View style={styles.lockerCardHeader}>
                       <View style={styles.lockerIconContainer}>
-                        <Icon name="door-front" type="material" size={28} color="#4A90E2" />
+                        <Icon name="door-front" type="material" size={28} color="#003D5B" />
                       </View>
                       <View
                         style={[
@@ -529,7 +530,7 @@ export default function LockersScreen() {
             >
               {isLoadingBoxes ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#4A90E2" />
+                  <ActivityIndicator size="large" color="#003D5B" />
                   <ThemedText style={styles.loadingText}>Đang tải ngăn...</ThemedText>
                 </View>
               ) : boxes.length === 0 ? (
@@ -569,19 +570,27 @@ export default function LockersScreen() {
                         style={[
                           styles.boxCell,
                           { 
-                            backgroundColor: getBoxStatusColor(box.status),
-                            opacity: box.status === "AVAILABLE" ? 1 : 0.5,
+                            opacity: box.status === "AVAILABLE" ? 1 : 0.6,
+                            borderWidth: 0, 
                           },
                         ]}
                         onPress={() => handleBoxClick(box)}
                         disabled={box.status !== "AVAILABLE"}
                         activeOpacity={0.8}
                       >
-                        <ThemedText style={styles.boxNumber}>{box.boxNumber}</ThemedText>
-                        <ThemedText style={styles.boxStatus}>
-                          {getBoxStatusText(box.status)}
-                        </ThemedText>
-                        <ThemedText style={styles.boxSize}>{box.size}</ThemedText>
+                        <LockerIcon 
+                          width="70%" 
+                          height="70%"
+                          color={getBoxStatusColor(box.status)}
+                        />
+                        
+                        <View style={styles.boxContentOverlay}>
+                          <ThemedText style={styles.boxNumber}>{box.boxNumber}</ThemedText>
+                          <ThemedText style={styles.boxStatus}>
+                            {getBoxStatusText(box.status)}
+                          </ThemedText>
+                          <ThemedText style={styles.boxSize}>{box.size}</ThemedText>
+                        </View>
                         
                         {box.status === "AVAILABLE" && (
                           <View style={styles.boxAvailableBadge}>
@@ -655,12 +664,12 @@ export default function LockersScreen() {
                     {/* Store Image */}
                     <View style={styles.allStoreImageContainer}>
                       <LinearGradient
-                        colors={['#4A90E2', '#357ABD']}
+                        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.allStoreImage}
                       >
-                        <Icon name="store" type="material" size={48} color="rgba(255,255,255,0.9)" />
+                        <Icon name="store" type="material" size={48} color="#003D5B" />
                       </LinearGradient>
                       
                       {/* Badge */}
@@ -719,6 +728,14 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: "row",
@@ -729,23 +746,29 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24, // Slightly smaller to match Home title vibes if needed, or keep 28
     fontWeight: "900",
-    color: "#fff",
-    marginBottom: 6,
+    color: "#003D5B",
+    marginBottom: 4,
     letterSpacing: -0.5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: "#003D5B",
+    opacity: 0.8,
     fontWeight: "500",
   },
   content: {
@@ -1137,8 +1160,8 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
     height: height * 0.85,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
@@ -1165,7 +1188,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F3F4F6",
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "900",
     color: "#1F2937",
     letterSpacing: -0.5,
@@ -1223,35 +1246,48 @@ const styles = StyleSheet.create({
   },
   boxCell: {
     width: (width - 76) / 3,
-    aspectRatio: 0.85,
+    aspectRatio: 1, // Square container
     borderRadius: 16,
-    padding: 12,
+    padding: 0, 
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff", // White background for the card look
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     position: "relative",
+    marginBottom: 12,
+  },
+  boxContentOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 16, // Push down to avoid top part of locker
+    paddingRight: 4, 
   },
   boxNumber: {
-    fontSize: 24,
+    fontSize: 20, // Reduced from 24
     fontWeight: "900",
-    color: "#fff",
-    marginBottom: 6,
+    color: "#0e0c0cff",
+    marginBottom: 2,
     letterSpacing: -0.5,
   },
   boxStatus: {
-    fontSize: 11,
+    fontSize: 8, 
     fontWeight: "700",
-    color: "#fff",
-    marginBottom: 4,
+    color: "#1b1717ff",
+    marginBottom: 2,
     textTransform: "uppercase",
   },
   boxSize: {
-    fontSize: 10,
-    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: 8,
+    color: "rgba(22, 21, 21, 0.9)",
     fontWeight: "600",
   },
   boxAvailableBadge: {
