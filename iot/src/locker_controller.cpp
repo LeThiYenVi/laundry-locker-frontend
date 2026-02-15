@@ -6,8 +6,9 @@
 
 #include "locker_controller.h"
 #include "config.h"
-#include <WiFi.h>
-#include <HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
 #include <ArduinoJson.h>
 
 // ============================================
@@ -42,7 +43,8 @@ void initLockerController() {
     
     // Đảm bảo relay ở trạng thái OFF ban đầu (khóa đóng)
     setRelay(false);
-    digitalWrite(LED_STATUS, LOW);
+    // ESP8266 built-in LED is active LOW
+    digitalWrite(LED_STATUS, HIGH);
     
     _isUnlocked = false;
     Serial.println("[LOCKER] Controller initialized");
@@ -54,7 +56,8 @@ void unlockBox() {
     
     // Kích hoạt relay để mở solenoid
     setRelay(true);
-    digitalWrite(LED_STATUS, HIGH);
+    // ESP8266 built-in LED is active LOW
+    digitalWrite(LED_STATUS, LOW);
     
     _isUnlocked = true;
     _unlockStartTime = millis();
@@ -67,7 +70,8 @@ void lockBox() {
     
     // Tắt relay để đóng solenoid
     setRelay(false);
-    digitalWrite(LED_STATUS, LOW);
+    // ESP8266 built-in LED is active LOW
+    digitalWrite(LED_STATUS, HIGH);
     
     _isUnlocked = false;
     
@@ -100,12 +104,13 @@ bool reportBoxStatus(BoxStatus status, bool isDoorOpen) {
         return false;
     }
     
+    WiFiClient client;
     HTTPClient http;
     String url = String(BACKEND_URL) + "/api/iot/box-status";
     
     Serial.printf("[LOCKER] Reporting status to: %s\n", url.c_str());
     
-    http.begin(url);
+    http.begin(client, url);
     http.addHeader("Content-Type", "application/json");
     http.setTimeout(HTTP_TIMEOUT);
     
