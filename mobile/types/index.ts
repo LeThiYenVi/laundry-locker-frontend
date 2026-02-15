@@ -431,3 +431,39 @@ export interface RefreshTokenRequest {
 export interface LogoutRequest {
   refreshToken: string;
 }
+
+// ============================================
+// IoT Types
+// ============================================
+
+export interface VerifyPinRequest {
+  boxId: number;
+  pinCode: string;
+}
+
+export interface VerifyPinResponse {
+  valid: boolean;
+  orderId?: number;
+  boxId?: number;
+  boxNumber?: number;
+  lockerCode?: string;
+  orderStatus?: string;
+  message?: string;
+}
+
+export interface UnlockBoxRequest {
+  boxId: number;
+  pinCode: string;
+  actionType?: 'DROP_OFF' | 'PICKUP';
+}
+
+export interface UnlockBoxResponse {
+  success: boolean;
+  boxId?: number;
+  boxNumber?: number;
+  lockerCode?: string;
+  orderId?: number;
+  message?: string;
+  unlockToken?: string;
+  unlockTimestamp?: number;
+}
