@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
   DollarSign,
@@ -6,6 +7,7 @@ import {
   Boxes,
   AlertCircle,
   Clock,
+  ArrowRight,
 } from "lucide-react";
 import {
   Card,
@@ -18,47 +20,22 @@ import {
   PageLoading,
   ErrorState,
 } from "~/components/ui";
-import { t } from "@/lib/i18n";
-import { PARTNER_DASHBOARD } from "@/constants/partner-page.constants";
-import type { PartnerDashboardOverview } from "@/types";
+import { useGetPartnerDashboardQuery, useGetPendingOrdersQuery } from "@/stores/apis/partnerApi";
 
 export default function PartnerDashboard(): React.JSX.Element {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<any>(null);
-  const [dashboardData, setDashboardData] =
-    React.useState<PartnerDashboardOverview | null>(null);
-
-  // TODO: Replace with actual API call
-  React.useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        // Simulated API call
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        // Mock data
-        setDashboardData({
-          todayOrders: 12,
-          processingOrders: 5,
-          monthlyRevenue: 45000000,
-          activeLockers: 3,
-          pendingCollections: 8,
-          overdueOrders: 2,
-          avgProcessingTime: "24h",
-          completionRate: 95.5,
-          revenueChart: [],
-          ordersByStatus: [],
-          topServices: [],
-        });
-      } catch (err) {
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, []);
+  const navigate = useNavigate();
+  
+  // RTK Query hooks
+  const { 
+    data: dashboardData, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useGetPartnerDashboardQuery();
+  
+  const { 
+    data: pendingOrders = [] 
+  } = useGetPendingOrdersQuery();
 
   if (isLoading) {
     return <PageLoading message="Đang tải dashboard..." />;
@@ -70,10 +47,26 @@ export default function PartnerDashboard(): React.JSX.Element {
         variant="server"
         title="Không thể tải dữ liệu dashboard"
         error={error}
-        onRetry={() => window.location.reload()}
+        onRetry={refetch}
       />
     );
   }
+
+  // Map API response to display data
+  const displayData = {
+    todayOrders: dashboardData.totalOrders || 0,
+    processingOrders: dashboardData.totalOrders - dashboardData.completedOrders - dashboardData.canceledOrders || 0,
+    monthlyRevenue: dashboardData.monthRevenue || 0,
+    activeLockers: dashboardData.totalStores || 0,
+    pendingCollections: dashboardData.pendingOrders || 0,
+    overdueOrders: 0, // Not in API response yet
+    avgProcessingTime: "24h", // Static for now
+    completionRate: dashboardData.totalOrders > 0 
+      ? ((dashboardData.completedOrders / dashboardData.totalOrders) * 100).toFixed(1) 
+      : 0,
+    partnerRevenue: dashboardData.partnerRevenue || 0,
+    platformFee: dashboardData.platformFee || 0,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -85,33 +78,38 @@ export default function PartnerDashboard(): React.JSX.Element {
         </p>
       </div>
 
-      {/* Alert Section */}
-      {(dashboardData.pendingCollections > 0 ||
-        dashboardData.overdueOrders > 0) && (
+      {/* Alert Section - Pending Orders */}
+      {(displayData.pendingCollections > 0 || pendingOrders.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {dashboardData.pendingCollections > 0 && (
-            <Card className="border-l-4 border-l-yellow-500">
-              <CardContent className="flex items-center gap-3 p-4">
-                <AlertCircle className="text-yellow-600" size={24} />
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    {dashboardData.pendingCollections} đơn chờ lấy đồ
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Cần xử lý ngay hôm nay
-                  </p>
+          {displayData.pendingCollections > 0 && (
+            <Card 
+              className="border-l-4 border-l-yellow-500 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => navigate("/partner/orders?status=WAITING")}
+            >
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="text-yellow-600" size={24} />
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {displayData.pendingCollections} đơn chờ chấp nhận
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Cần tạo mã cho Staff lấy đồ
+                    </p>
+                  </div>
                 </div>
+                <ArrowRight className="text-gray-400" size={20} />
               </CardContent>
             </Card>
           )}
 
-          {dashboardData.overdueOrders > 0 && (
+          {displayData.overdueOrders > 0 && (
             <Card className="border-l-4 border-l-red-500">
               <CardContent className="flex items-center gap-3 p-4">
                 <Clock className="text-red-600" size={24} />
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {dashboardData.overdueOrders} đơn quá hạn
+                    {displayData.overdueOrders} đơn quá hạn
                   </p>
                   <p className="text-sm text-gray-600">Cần xử lý gấp</p>
                 </div>
@@ -129,11 +127,11 @@ export default function PartnerDashboard(): React.JSX.Element {
             <div className="p-3 bg-white rounded-xl">
               <Package className="text-blue-600" size={24} />
             </div>
-            <Badge className="bg-blue-600 text-white">Hôm nay</Badge>
+            <Badge className="bg-blue-600 text-white">Tổng đơn</Badge>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Đơn hàng mới</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Tổng đơn hàng</h3>
           <p className="text-3xl font-bold text-blue-600">
-            {dashboardData.todayOrders}
+            {displayData.todayOrders}
           </p>
         </Card>
 
@@ -147,7 +145,7 @@ export default function PartnerDashboard(): React.JSX.Element {
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">Đang giặt</h3>
           <p className="text-3xl font-bold text-orange-600">
-            {dashboardData.processingOrders}
+            {displayData.processingOrders}
           </p>
         </Card>
 
@@ -161,7 +159,10 @@ export default function PartnerDashboard(): React.JSX.Element {
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">Doanh thu</h3>
           <p className="text-3xl font-bold text-green-600">
-            {(dashboardData.monthlyRevenue / 1000000).toFixed(1)}M
+            {(displayData.monthlyRevenue / 1000000).toFixed(1)}M
+          </p>
+          <p className="text-sm text-gray-600 mt-1">
+            Thu về: {(displayData.partnerRevenue / 1000000).toFixed(1)}M
           </p>
         </Card>
 
@@ -173,9 +174,9 @@ export default function PartnerDashboard(): React.JSX.Element {
             </div>
             <Badge className="bg-purple-600 text-white">Hoạt động</Badge>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Tủ locker</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Cửa hàng</h3>
           <p className="text-3xl font-bold text-purple-600">
-            {dashboardData.activeLockers}
+            {displayData.activeLockers}
           </p>
         </Card>
       </div>
@@ -188,7 +189,7 @@ export default function PartnerDashboard(): React.JSX.Element {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-gray-900">
-              {dashboardData.avgProcessingTime}
+              {displayData.avgProcessingTime}
             </div>
             <p className="text-sm text-gray-600 mt-2">
               Từ lúc lấy đồ đến trả khách
@@ -202,7 +203,7 @@ export default function PartnerDashboard(): React.JSX.Element {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold text-green-600">
-              {dashboardData.completionRate}%
+              {displayData.completionRate}%
             </div>
             <p className="text-sm text-gray-600 mt-2">Đúng hạn cam kết</p>
           </CardContent>
@@ -213,11 +214,21 @@ export default function PartnerDashboard(): React.JSX.Element {
             <CardTitle>Hành động nhanh</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button size="sm" className="w-full" variant="outline">
-              Xem đơn chờ lấy ({dashboardData.pendingCollections})
+            <Button 
+              size="sm" 
+              className="w-full" 
+              variant="outline"
+              onClick={() => navigate("/partner/orders?status=WAITING")}
+            >
+              Xem đơn chờ chấp nhận ({displayData.pendingCollections})
             </Button>
-            <Button size="sm" className="w-full" variant="outline">
-              Đơn cần trả hôm nay
+            <Button 
+              size="sm" 
+              className="w-full" 
+              variant="outline"
+              onClick={() => navigate("/partner/orders?status=READY")}
+            >
+              Đơn sẵn sàng trả
             </Button>
           </CardContent>
         </Card>

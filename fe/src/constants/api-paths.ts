@@ -6,6 +6,7 @@ export const ROOT_URI = {
   AUTH: '/api/auth',
   USERS: '/api/user',
   ADMIN: '/api/admin',
+  PARTNER: '/api/partner',
 } as const;
 
 // Authentication Endpoints
@@ -88,11 +89,50 @@ export const ADMIN_ENDPOINTS = {
   SETTINGS: `${ROOT_URI.ADMIN}/settings`,
 } as const;
 
+// Partner Endpoints
+export const PARTNER_ENDPOINTS = {
+  // Profile
+  PROFILE: `${ROOT_URI.PARTNER}/profile`,
+  REGISTER: `${ROOT_URI.PARTNER}/register`,
+  
+  // Dashboard
+  DASHBOARD: `${ROOT_URI.PARTNER}/dashboard`,
+  
+  // Orders Management
+  ORDERS: `${ROOT_URI.PARTNER}/orders`,
+  ORDERS_PENDING: `${ROOT_URI.PARTNER}/orders/pending`,
+  ORDER_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}`,
+  ORDER_ACCEPT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/accept`,
+  ORDER_PROCESS: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/process`,
+  ORDER_READY: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/ready`,
+  ORDER_WEIGHT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/weight`,
+  ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
+  
+  // Access Code Management
+  ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
+  ACCESS_CODE_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
+  ACCESS_CODES_BY_ORDER: (orderId: number) => `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
+  ACCESS_CODE_CANCEL: (codeId: number) => `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
+  
+  // Staff Management (Directory only)
+  STAFF: `${ROOT_URI.PARTNER}/staff`,
+  STAFF_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/staff/${id}`,
+  
+  // Stores & Lockers
+  STORES: `${ROOT_URI.PARTNER}/stores`,
+  LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
+  LOCKER_AVAILABLE_BOXES: (lockerId: number) => `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+  
+  // Revenue
+  REVENUE: `${ROOT_URI.PARTNER}/revenue`,
+} as const;
+
 // Combined API Paths for RTK Query
 export const API_PATHS = {
   ...AUTH_ENDPOINTS,
   ...USER_ENDPOINTS,
   ...ADMIN_ENDPOINTS,
+  ...PARTNER_ENDPOINTS,
 } as const;
 
 // HTTP Methods
