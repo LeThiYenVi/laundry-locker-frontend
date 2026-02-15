@@ -9,6 +9,7 @@ export const OrderStatus = {
   COLLECTED: "COLLECTED",
   PROCESSING: "PROCESSING",
   PROCESSED: "PROCESSED",
+  READY: "READY",
   RETURNED: "RETURNED",
   COMPLETED: "COMPLETED",
   CANCELED: "CANCELED",
@@ -32,8 +33,8 @@ export const ReturnMethod = {
 export type ReturnMethod = (typeof ReturnMethod)[keyof typeof ReturnMethod];
 
 export const StaffRole = {
-  LAUNDRY_ATTENDANT: "LAUNDRY_ATTENDANT",
-  DELIVERY_DRIVER: "DELIVERY_DRIVER",
+  STAFF: "STAFF",
+  DRIVER: "DRIVER",
   MANAGER: "MANAGER",
 } as const;
 
@@ -41,6 +42,7 @@ export type StaffRole = (typeof StaffRole)[keyof typeof StaffRole];
 
 export const PaymentStatus = {
   PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
   PAID: "PAID",
   REFUNDED: "REFUNDED",
 } as const;
@@ -54,3 +56,36 @@ export const PaymentMethod = {
 } as const;
 
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
+
+// ============================================
+// Staff Access Code Enums (Business Flow)
+// ============================================
+
+export const AccessCodeAction = {
+  COLLECT: "COLLECT",
+  RETURN: "RETURN",
+} as const;
+
+export type AccessCodeAction = (typeof AccessCodeAction)[keyof typeof AccessCodeAction];
+
+export const AccessCodeStatus = {
+  ACTIVE: "ACTIVE",
+  USED: "USED",
+  EXPIRED: "EXPIRED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type AccessCodeStatus = (typeof AccessCodeStatus)[keyof typeof AccessCodeStatus];
+
+// ============================================
+// Partner Status Enum
+// ============================================
+
+export const PartnerStatus = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  SUSPENDED: "SUSPENDED",
+} as const;
+
+export type PartnerStatus = (typeof PartnerStatus)[keyof typeof PartnerStatus];

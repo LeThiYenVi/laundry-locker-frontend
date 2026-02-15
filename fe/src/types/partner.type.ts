@@ -5,6 +5,9 @@ import type {
   StaffRole,
   PaymentStatus,
   PaymentMethod,
+  AccessCodeAction,
+  AccessCodeStatus,
+  PartnerStatus,
 } from "./partner.enum";
 
 // ============================================
@@ -301,4 +304,138 @@ export interface UpdatePartnerProfileRequest {
     close: string;
   };
   serviceArea?: string[];
+}
+
+// ============================================
+// Staff Access Code Types (Business Flow)
+// ============================================
+
+export interface StaffAccessCode {
+  id: number;
+  code: string;
+  orderId: number;
+  partnerId: number;
+  action: AccessCodeAction;
+  status: AccessCodeStatus;
+  expiresAt: string;
+  usedAt?: string;
+  staffName?: string;
+  notes?: string;
+  createdAt: string;
+  orderLockerCode?: string;
+  orderLockerName?: string;
+  orderBoxNumbers?: string;
+  customerName?: string;
+}
+
+export interface GenerateAccessCodeRequest {
+  orderId: number;
+  action: AccessCodeAction;
+  expirationHours?: number;
+  notes?: string;
+}
+
+export interface AcceptOrderResponse {
+  orderId: number;
+  status: OrderStatus;
+  staffAccessCode: StaffAccessCode;
+  message: string;
+}
+
+export interface MarkReadyResponse {
+  orderId: number;
+  status: OrderStatus;
+  staffAccessCode: StaffAccessCode;
+  message: string;
+}
+
+export interface UpdateWeightRequest {
+  orderId: number;
+  actualWeight: number;
+  weightUnit?: "kg" | "g";
+  notes?: string;
+}
+
+export interface UpdateWeightResponse {
+  orderId: number;
+  actualWeight: number;
+  totalPrice: number;
+  message: string;
+}
+
+// ============================================
+// Partner API Response Types (from Backend)
+// ============================================
+
+export interface PartnerResponse {
+  id: number;
+  userId: number;
+  userName: string;
+  businessName: string;
+  businessRegistrationNumber?: string;
+  taxId?: string;
+  businessAddress: string;
+  contactPhone: string;
+  contactEmail?: string;
+  status: PartnerStatus;
+  approvedAt?: string;
+  approvedBy?: number;
+  rejectionReason?: string;
+  revenueSharePercent: number;
+  storeCount: number;
+  staffCount: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PartnerDashboardResponse {
+  partnerId: number;
+  businessName: string;
+  totalStores: number;
+  activeStores: number;
+  totalStaff: number;
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  canceledOrders: number;
+  totalRevenue: number;
+  partnerRevenue: number;
+  platformFee: number;
+  todayRevenue: number;
+  monthRevenue: number;
+}
+
+export interface PartnerRevenueResponse {
+  partnerId: number;
+  businessName: string;
+  fromDate: string;
+  toDate: string;
+  grossRevenue: number;
+  partnerRevenue: number;
+  platformFee: number;
+  revenueSharePercent: number;
+  totalOrders: number;
+  completedOrders: number;
+  canceledOrders: number;
+  previousPeriodRevenue?: number;
+  revenueGrowthPercent?: number;
+}
+
+// ============================================
+// Staff Directory Types (Simple - No Accounts)
+// ============================================
+
+export interface StaffContact {
+  id: number;
+  name: string;
+  phoneNumber: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateStaffContactRequest {
+  name: string;
+  phoneNumber: string;
+  notes?: string;
 }
