@@ -21,7 +21,6 @@ import {
 import PartnerLayout from "../pages/Partner/layout";
 import PartnerDashboard from "../pages/Partner/dashboard";
 import PartnerOrders from "../pages/Partner/orders";
-import PartnerProfile from "../pages/Partner/profile";
 import PartnerStaff from "../pages/Partner/staff";
 import PartnerRevenue from "../pages/Partner/revenue";
 import PartnerLockers from "../pages/Partner/lockers";
@@ -89,7 +88,7 @@ const routesConfig: RouteObject[] = [
           { path: "services", element: <PartnerServices /> },
           { path: "notifications", element: <PartnerNotifications /> },
           { path: "settings", element: <PartnerSettings /> },
-          { path: "profile", element: <PartnerProfile /> },
+          { path: "profile", element: <Navigate to="../settings" replace /> },
         ],
       },
 

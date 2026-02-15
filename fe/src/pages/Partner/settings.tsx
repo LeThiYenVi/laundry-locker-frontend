@@ -7,6 +7,7 @@ import {
   Input,
   Badge,
 } from "~/components/ui";
+import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui";
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -15,27 +16,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Camera, Building2, Phone, Mail, MapPin, CreditCard, Bell, Clock } from "lucide-react";
+import {
+  useGetPartnerProfileQuery,
+  useUpdatePartnerProfileMutation,
+} from "@/stores/apis/partnerApi";
 
 export default function PartnerSettingsPage(): React.JSX.Element {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isSaving, setIsSaving] = React.useState(false);
+  const { data: profile, isLoading, error, refetch } = useGetPartnerProfileQuery();
+  const [updateProfile, { isLoading: isSaving }] = useUpdatePartnerProfileMutation();
 
-  // Business Info
+  // Business Info (local state for editing)
   const [businessInfo, setBusinessInfo] = React.useState({
-    businessName: "Giặt ủi Viettel",
-    taxCode: "0123456789",
+    businessName: "",
+    taxCode: "",
     businessType: "COMPANY",
-    registrationNumber: "0123456789-001",
-    establishedDate: "2020-01-01",
+    registrationNumber: "",
+    establishedDate: "",
   });
 
   // Contact Info
   const [contactInfo, setContactInfo] = React.useState({
-    phone: "0901234567",
-    email: "contact@viettellaundry.vn",
-    address: "123 Nguyễn Huệ, Quận 1",
-    city: "Hồ Chí Minh",
-    state: "Hồ Chí Minh",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
     country: "Việt Nam",
   });
 
@@ -52,10 +58,10 @@ export default function PartnerSettingsPage(): React.JSX.Element {
 
   // Bank Info
   const [bankInfo, setBankInfo] = React.useState({
-    bankName: "Vietcombank",
-    accountNumber: "1234567890",
-    accountHolder: "NGUYEN VAN A",
-    branch: "Chi nhánh Quận 1",
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
+    branch: "",
   });
 
   // Notification Preferences
@@ -68,31 +74,39 @@ export default function PartnerSettingsPage(): React.JSX.Element {
     systemNews: false,
   });
 
+  // Populate form with API data
   React.useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        // Data is already initialized above
-      } catch (err) {
-        console.error("Lỗi khi tải cài đặt:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
+    if (profile) {
+      setBusinessInfo({
+        businessName: profile.businessName || "",
+        taxCode: profile.taxId || "",
+        businessType: "COMPANY",
+        registrationNumber: profile.businessRegistrationNumber || "",
+        establishedDate: "",
+      });
+      setContactInfo({
+        phone: profile.contactPhone || "",
+        email: profile.contactEmail || "",
+        address: profile.businessAddress || "",
+        city: "",
+        state: "",
+        country: "Việt Nam",
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     try {
-      setIsSaving(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await updateProfile({
+        businessName: businessInfo.businessName,
+        phoneNumber: contactInfo.phone,
+        email: contactInfo.email,
+        address: contactInfo.address,
+      }).unwrap();
       alert("Lưu cài đặt thành công!");
     } catch (err) {
+      console.error("Failed to save:", err);
       alert("Có lỗi xảy ra khi lưu cài đặt");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -119,7 +133,7 @@ export default function PartnerSettingsPage(): React.JSX.Element {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#326B9C]">Cài đặt</h1>
+            <h1 className="text-3xl font-bold text-[#326B9C]">Hồ sơ & Cài đặt</h1>
             <p className="text-[#7BAAD1] mt-1">
               Quản lý thông tin và cài đặt tài khoản của bạn
             </p>
@@ -133,6 +147,65 @@ export default function PartnerSettingsPage(): React.JSX.Element {
             {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
           </Button>
         </div>
+
+        {/* Profile Header Card */}
+        <Card className="border-[#E8E9EB] overflow-hidden">
+          <div className="bg-gradient-to-r from-[#326B9C] to-[#7BAAD1] h-32"></div>
+          <CardContent className="p-6 -mt-16">
+            <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+              {/* Avatar */}
+              <div className="relative">
+                <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.businessName || 'P'}`} />
+                  <AvatarFallback className="bg-[#B0C8DA] text-[#326B9C] text-3xl font-bold">
+                    {profile?.businessName?.substring(0, 2) || 'P'}
+                  </AvatarFallback>
+                </Avatar>
+                <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-[#E8E9EB] hover:bg-[#FAFCFF]">
+                  <Camera size={16} className="text-[#326B9C]" />
+                </button>
+              </div>
+
+              {/* Profile Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-2xl font-bold text-[#326B9C]">
+                    {profile?.businessName || businessInfo.businessName || "Chưa cập nhật"}
+                  </h2>
+                  <Badge 
+                    className={
+                      profile?.status === "APPROVED" 
+                        ? "bg-green-100 text-green-700 border-green-200" 
+                        : profile?.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                        : "bg-gray-100 text-gray-700 border-gray-200"
+                    }
+                  >
+                    {profile?.status === "APPROVED" ? "Đã xác thực" : 
+                     profile?.status === "PENDING" ? "Chờ duyệt" : profile?.status || "N/A"}
+                  </Badge>
+                </div>
+                <p className="text-[#7BAAD1] mb-4">Partner ID: #{profile?.id || "---"}</p>
+                
+                {/* Quick Stats */}
+                <div className="flex flex-wrap gap-6">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#326B9C]">{profile?.storeCount || 0}</p>
+                    <p className="text-xs text-[#7BAAD1]">Cửa hàng</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#326B9C]">{profile?.staffCount || 0}</p>
+                    <p className="text-xs text-[#7BAAD1]">Nhân viên</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">{profile?.revenueSharePercent || 70}%</p>
+                    <p className="text-xs text-[#7BAAD1]">Tỷ lệ chia sẻ</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Business Information */}
         <Card className="border-[#E8E9EB]">
