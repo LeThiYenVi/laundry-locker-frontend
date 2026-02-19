@@ -5,6 +5,7 @@ import {
   Button,
   PageLoading,
   ErrorState,
+  EmptyData,
   Badge,
 } from "~/components/ui";
 import { Label } from "~/components/ui/label";
@@ -23,581 +24,392 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import type { RevenueStats, PaymentHistory, RevenueByPeriod } from "@/types";
-import { PaymentMethod, PaymentStatus } from "@/types/partner.enum";
+import {
+  RefreshCw,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  AlertTriangle,
+} from "lucide-react";
+import { useGetPartnerRevenueQuery } from "@/stores/apis/partnerApi";
 
-export default function PartnerRevenuePage(): React.JSX.Element {
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [stats, setStats] = React.useState<RevenueStats | null>(null);
-  const [paymentHistory, setPaymentHistory] = React.useState<PaymentHistory[]>(
-    [],
-  );
-  const [revenueData, setRevenueData] = React.useState<RevenueByPeriod[]>([]);
-  const [filterPeriod, setFilterPeriod] = React.useState<string>("30");
-  const [filterStatus, setFilterStatus] = React.useState<string>("ALL");
+// ============================================
+// Error Handling
+// ============================================
 
-  // TODO: Replace with actual API call
-  React.useEffect(() => {
-    const fetchRevenueData = async () => {
-      try {
-        setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 800));
+const ERROR_MESSAGES: Record<string, string> = {
+  E_PARTNER001: "Không tìm thấy thông tin partner.",
+  E_AUTH001: "Bạn không có quyền truy cập.",
+};
 
-        // Mock stats
-        const mockStats: RevenueStats = {
-          totalRevenue: 125000000,
-          platformFee: 25000000,
-          netRevenue: 100000000,
-          paidAmount: 80000000,
-          pendingAmount: 20000000,
-          totalOrders: 450,
-          completedOrders: 380,
-        };
-
-        // Mock payment history
-        const mockPayments: PaymentHistory[] = [
-          {
-            id: 1,
-            amount: 15000000,
-            platformFee: 3000000,
-            netAmount: 12000000,
-            paymentDate: "2024-03-25T10:00:00Z",
-            paymentMethod: "BANK_TRANSFER" as PaymentMethod,
-            status: "PAID" as PaymentStatus,
-            transactionId: "TXN20240325001",
-            periodStart: "2024-03-01",
-            periodEnd: "2024-03-15",
-          },
-          {
-            id: 2,
-            amount: 18500000,
-            platformFee: 3700000,
-            netAmount: 14800000,
-            paymentDate: "2024-03-10T10:00:00Z",
-            paymentMethod: "BANK_TRANSFER" as PaymentMethod,
-            status: "PAID" as PaymentStatus,
-            transactionId: "TXN20240310001",
-            periodStart: "2024-02-16",
-            periodEnd: "2024-02-29",
-          },
-          {
-            id: 3,
-            amount: 22000000,
-            platformFee: 4400000,
-            netAmount: 17600000,
-            paymentDate: "",
-            paymentMethod: "BANK_TRANSFER" as PaymentMethod,
-            status: "PENDING" as PaymentStatus,
-            transactionId: "TXN20240401001",
-            periodStart: "2024-03-16",
-            periodEnd: "2024-03-31",
-          },
-          {
-            id: 4,
-            amount: 12500000,
-            platformFee: 2500000,
-            netAmount: 10000000,
-            paymentDate: "2024-02-25T10:00:00Z",
-            paymentMethod: "BANK_TRANSFER" as PaymentMethod,
-            status: "PAID" as PaymentStatus,
-            transactionId: "TXN20240225001",
-            periodStart: "2024-02-01",
-            periodEnd: "2024-02-15",
-          },
-          {
-            id: 5,
-            amount: 8000000,
-            platformFee: 1600000,
-            netAmount: 6400000,
-            paymentDate: "",
-            paymentMethod: "BANK_TRANSFER" as PaymentMethod,
-            status: "PROCESSING" as PaymentStatus,
-            transactionId: "TXN20240405001",
-            periodStart: "2024-04-01",
-            periodEnd: "2024-04-15",
-          },
-        ];
-
-        // Mock revenue by period
-        const mockRevenueData: RevenueByPeriod[] = [
-          {
-            date: "2024-03-25",
-            revenue: 15000000,
-            orders: 60,
-            avgOrderValue: 250000,
-          },
-          {
-            date: "2024-03-20",
-            revenue: 12000000,
-            orders: 50,
-            avgOrderValue: 240000,
-          },
-          {
-            date: "2024-03-15",
-            revenue: 18500000,
-            orders: 70,
-            avgOrderValue: 264285,
-          },
-          {
-            date: "2024-03-10",
-            revenue: 14000000,
-            orders: 55,
-            avgOrderValue: 254545,
-          },
-          {
-            date: "2024-03-05",
-            revenue: 16000000,
-            orders: 65,
-            avgOrderValue: 246153,
-          },
-          {
-            date: "2024-02-28",
-            revenue: 13500000,
-            orders: 52,
-            avgOrderValue: 259615,
-          },
-          {
-            date: "2024-02-25",
-            revenue: 11000000,
-            orders: 45,
-            avgOrderValue: 244444,
-          },
-        ];
-
-        setStats(mockStats);
-        setPaymentHistory(mockPayments);
-        setRevenueData(mockRevenueData);
-      } catch (err) {
-        console.error("Lỗi khi tải dữ liệu doanh thu:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRevenueData();
-  }, []);
-
-  const filteredPayments = React.useMemo(() => {
-    let result = [...paymentHistory];
-
-    if (filterStatus !== "ALL") {
-      result = result.filter((p) => p.status === filterStatus);
-    }
-
-    // Filter by period (days)
-    if (filterPeriod !== "ALL") {
-      const days = parseInt(filterPeriod);
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-
-      result = result.filter((p) => {
-        const paymentDate = p.paymentDate
-          ? new Date(p.paymentDate)
-          : new Date();
-        return paymentDate >= cutoffDate;
-      });
-    }
-
-    return result;
-  }, [paymentHistory, filterStatus, filterPeriod]);
-
-  const getStatusBadge = (status: PaymentStatus) => {
-    switch (status) {
-      case "PAID":
-        return "bg-green-100 text-green-700 border-green-200";
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "PROCESSING":
-        return "bg-blue-100 text-blue-700 border-blue-200";
-      case "FAILED":
-        return "bg-red-100 text-red-700 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    }
+const getErrorMessage = (err: unknown): string => {
+  const apiError = err as {
+    status?: number;
+    data?: { code?: string; message?: string };
   };
 
-  const getStatusLabel = (status: PaymentStatus) => {
-    switch (status) {
-      case "PAID":
-        return "Đã thanh toán";
-      case "PENDING":
-        return "Chờ thanh toán";
-      case "PROCESSING":
-        return "Đang xử lý";
-      case "FAILED":
-        return "Thất bại";
-      default:
-        return status;
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
-  if (isLoading) {
-    return <PageLoading message="Đang tải dữ liệu doanh thu..." />;
+  if (apiError?.status === 401 || apiError?.status === 403) {
+    localStorage.removeItem("accessToken");
+    window.location.href =
+      "/login?redirect=" + encodeURIComponent(window.location.pathname);
+    return "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
   }
 
-  if (!stats) {
+  const errorCode = apiError?.data?.code;
+  if (errorCode && ERROR_MESSAGES[errorCode]) {
+    return ERROR_MESSAGES[errorCode];
+  }
+
+  return apiError?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
+};
+
+// ============================================
+// Helpers
+// ============================================
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
+};
+
+const formatDate = (dateStr: string): string => {
+  return new Date(dateStr).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+// ============================================
+// Main Component
+// ============================================
+
+export default function PartnerRevenuePage(): React.JSX.Element {
+  const [filterPeriod, setFilterPeriod] = React.useState<string>("30");
+  const [errorToast, setErrorToast] = React.useState<string | null>(null);
+
+  // Calculate date range based on filter
+  const dateRange = React.useMemo(() => {
+    const toDate = new Date().toISOString();
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - parseInt(filterPeriod));
+    return {
+      fromDate: fromDate.toISOString(),
+      toDate,
+    };
+  }, [filterPeriod]);
+
+  // RTK Query - fetch revenue data from API
+  const {
+    data: revenueData,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useGetPartnerRevenueQuery(dateRange, {
+    refetchOnFocus: true,
+  });
+
+  // Auto-hide error toast
+  React.useEffect(() => {
+    if (errorToast) {
+      const timer = setTimeout(() => setErrorToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorToast]);
+
+  // Loading state
+  if (isLoading) {
+    return <PageLoading message="Đang tải thông tin doanh thu..." />;
+  }
+
+  // Error state
+  if (error) {
     return (
       <ErrorState
         variant="server"
-        title="Không thể tải dữ liệu"
-        onRetry={() => window.location.reload()}
+        title="Không thể tải thông tin doanh thu"
+        error={error}
+        onRetry={refetch}
       />
+    );
+  }
+
+  // Empty state
+  if (!revenueData) {
+    return (
+      <div className="min-h-screen bg-[#FAFCFF] p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#326B9C]">
+              Báo cáo Doanh thu
+            </h1>
+            <p className="text-[#7BAAD1] mt-1">
+              Theo dõi doanh thu và thanh toán của Partner
+            </p>
+          </div>
+          <EmptyData
+            title="Chưa có dữ liệu doanh thu"
+            message="Dữ liệu doanh thu sẽ hiển thị sau khi có đơn hàng hoàn thành."
+            icon={<DollarSign className="h-16 w-16 text-muted-foreground" />}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#FAFCFF] p-8">
+      {/* Error Toast */}
+      {errorToast && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <span>{errorToast}</span>
+            <button
+              onClick={() => setErrorToast(null)}
+              className="ml-2 text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fetching Indicator */}
+      {isFetching && !isLoading && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className="bg-blue-100 text-blue-700 px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            Đang cập nhật...
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#326B9C]">Doanh thu</h1>
+            <h1 className="text-3xl font-bold text-[#326B9C]">
+              Báo cáo Doanh thu
+            </h1>
             <p className="text-[#7BAAD1] mt-1">
-              Theo dõi doanh thu và lịch sử thanh toán
+              {revenueData.businessName} - Kỳ:{" "}
+              {formatDate(revenueData.fromDate)} -{" "}
+              {formatDate(revenueData.toDate)}
             </p>
           </div>
 
-          <Button className="bg-[#326B9C] hover:bg-[#7BAAD1] text-white font-semibold">
-            Xuất báo cáo
-          </Button>
+          <div className="flex gap-3">
+            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+              <SelectTrigger className="w-40 border-[#B0C8DA] bg-white">
+                <SelectValue placeholder="Chọn kỳ" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-[#E8E9EB]">
+                <SelectItem value="7">7 ngày</SelectItem>
+                <SelectItem value="30">30 ngày</SelectItem>
+                <SelectItem value="90">90 ngày</SelectItem>
+                <SelectItem value="365">1 năm</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="border-[#B0C8DA]"
+            >
+              <RefreshCw
+                size={16}
+                className={`mr-2 ${isFetching ? "animate-spin" : ""}`}
+              />
+              Làm mới
+            </Button>
+          </div>
         </div>
 
-        {/* Revenue Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Revenue Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-[#E8E9EB]">
             <CardContent className="p-6">
-              <div className="text-sm text-[#7BAAD1] mb-2">Tổng doanh thu</div>
-              <div className="text-2xl font-bold text-[#326B9C]">
-                {formatCurrency(stats.totalRevenue)}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <DollarSign className="text-green-600" size={24} />
+                </div>
+                <div className="text-sm text-[#7BAAD1]">Tổng doanh thu</div>
               </div>
-              <div className="text-xs text-[#7BAAD1] mt-2">
-                {stats.totalOrders} đơn hàng
+              <div className="text-3xl font-bold text-green-600">
+                {formatCurrency(revenueData.grossRevenue)}
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-[#E8E9EB]">
             <CardContent className="p-6">
-              <div className="text-sm text-[#7BAAD1] mb-2">
-                Phí nền tảng (20%)
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <TrendingUp className="text-blue-600" size={24} />
+                </div>
+                <div className="text-sm text-[#7BAAD1]">
+                  Doanh thu Partner ({revenueData.revenueSharePercent}%)
+                </div>
               </div>
-              <div className="text-2xl font-bold text-red-600">
-                -{formatCurrency(stats.platformFee)}
-              </div>
-              <div className="text-xs text-[#7BAAD1] mt-2">
-                Trên {stats.completedOrders} đơn
+              <div className="text-3xl font-bold text-blue-600">
+                {formatCurrency(revenueData.partnerRevenue)}
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-[#E8E9EB]">
             <CardContent className="p-6">
-              <div className="text-sm text-[#7BAAD1] mb-2">Doanh thu ròng</div>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(stats.netRevenue)}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-orange-100 rounded-lg">
+                  <DollarSign className="text-orange-600" size={24} />
+                </div>
+                <div className="text-sm text-[#7BAAD1]">
+                  Phí nền tảng ({100 - revenueData.revenueSharePercent}%)
+                </div>
               </div>
-              <div className="text-xs text-[#7BAAD1] mt-2">Sau khi trừ phí</div>
+              <div className="text-3xl font-bold text-orange-600">
+                {formatCurrency(revenueData.platformFee)}
+              </div>
             </CardContent>
           </Card>
 
           <Card className="border-[#E8E9EB]">
             <CardContent className="p-6">
-              <div className="text-sm text-[#7BAAD1] mb-2">Chờ thanh toán</div>
-              <div className="text-2xl font-bold text-yellow-600">
-                {formatCurrency(stats.pendingAmount)}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Calendar className="text-purple-600" size={24} />
+                </div>
+                <div className="text-sm text-[#7BAAD1]">Tổng đơn hàng</div>
               </div>
-              <div className="text-xs text-[#7BAAD1] mt-2">
-                Đã nhận: {formatCurrency(stats.paidAmount)}
+              <div className="text-3xl font-bold text-purple-600">
+                {revenueData.totalOrders}
+              </div>
+              <div className="text-sm text-[#7BAAD1] mt-1">
+                Hoàn thành: {revenueData.completedOrders} | Hủy:{" "}
+                {revenueData.canceledOrders}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Revenue Chart Placeholder */}
+        {/* Summary Table */}
         <Card className="border-[#E8E9EB]">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold text-[#326B9C] mb-6">
-              Biểu đồ doanh thu theo ngày
+            <h3 className="text-lg font-bold text-[#326B9C] mb-4">
+              Chi tiết doanh thu
             </h3>
-            <div className="h-64 bg-gradient-to-br from-[#B0C8DA]/20 to-[#E8E9EB]/40 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-[#7BAAD1] mb-2">📊</div>
-                <p className="text-sm text-[#7BAAD1]">
-                  Biểu đồ sẽ được tích hợp sau
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Filters */}
-        <Card className="border-[#E8E9EB]">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[#7BAAD1] font-medium">
-                  Khoảng thời gian
-                </Label>
-                <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-                  <SelectTrigger className="border-[#B0C8DA] bg-white">
-                    <SelectValue placeholder="Chọn thời gian" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-[#E8E9EB]">
-                    <SelectItem
-                      value="7"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      7 ngày qua
-                    </SelectItem>
-                    <SelectItem
-                      value="30"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      30 ngày qua
-                    </SelectItem>
-                    <SelectItem
-                      value="90"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      90 ngày qua
-                    </SelectItem>
-                    <SelectItem
-                      value="ALL"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      Tất cả
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[#7BAAD1] font-medium">Trạng thái</Label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="border-[#B0C8DA] bg-white">
-                    <SelectValue placeholder="Chọn trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-[#E8E9EB]">
-                    <SelectItem
-                      value="ALL"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      Tất cả
-                    </SelectItem>
-                    <SelectItem
-                      value="PAID"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      Đã thanh toán
-                    </SelectItem>
-                    <SelectItem
-                      value="PENDING"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      Chờ thanh toán
-                    </SelectItem>
-                    <SelectItem
-                      value="PROCESSING"
-                      className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                    >
-                      Đang xử lý
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  className="w-full border-[#B0C8DA] text-[#326B9C] hover:bg-[#FAFCFF]"
-                  onClick={() => {
-                    setFilterPeriod("30");
-                    setFilterStatus("ALL");
-                  }}
-                >
-                  Đặt lại bộ lọc
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Payment History Table */}
-        <Card className="border-[#E8E9EB]">
-          <CardContent className="p-0">
-            <div className="p-6 border-b border-[#E8E9EB]">
-              <h3 className="text-lg font-bold text-[#326B9C]">
-                Lịch sử thanh toán
-              </h3>
-            </div>
 
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#FAFCFF] border-b border-[#E8E9EB]">
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Mã giao dịch
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Kỳ thanh toán
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Tổng doanh thu
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Phí nền tảng
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Thực nhận
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Ngày thanh toán
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Trạng thái
-                  </TableHead>
-                  <TableHead className="text-[#326B9C] font-semibold">
-                    Hành động
+                <TableRow className="bg-[#FAFCFF]">
+                  <TableHead className="text-[#7BAAD1]">Mục</TableHead>
+                  <TableHead className="text-[#7BAAD1] text-right">
+                    Giá trị
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="text-center py-8 text-[#7BAAD1]"
-                    >
-                      Không tìm thấy giao dịch nào
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredPayments.map((payment) => (
-                    <TableRow
-                      key={payment.id}
-                      className="border-b border-[#E8E9EB] hover:bg-[#FAFCFF]"
-                    >
-                      <TableCell>
-                        <div className="font-mono text-sm text-[#326B9C] font-semibold">
-                          {payment.transactionId}
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="text-sm text-[#326B9C]">
-                          {new Date(payment.periodStart).toLocaleDateString(
-                            "vi-VN",
-                          )}
-                        </div>
-                        <div className="text-xs text-[#7BAAD1]">
-                          đến{" "}
-                          {new Date(payment.periodEnd).toLocaleDateString(
-                            "vi-VN",
-                          )}
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <span className="font-semibold text-[#326B9C]">
-                          {formatCurrency(payment.amount)}
-                        </span>
-                      </TableCell>
-
-                      <TableCell>
-                        <span className="text-red-600 font-semibold">
-                          -{formatCurrency(payment.platformFee)}
-                        </span>
-                      </TableCell>
-
-                      <TableCell>
-                        <span className="text-green-600 font-semibold">
-                          {formatCurrency(payment.netAmount)}
-                        </span>
-                      </TableCell>
-
-                      <TableCell>
-                        <span className="text-[#7BAAD1]">
-                          {payment.paymentDate
-                            ? new Date(payment.paymentDate).toLocaleDateString(
-                                "vi-VN",
-                              )
-                            : "-"}
-                        </span>
-                      </TableCell>
-
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={getStatusBadge(payment.status)}
-                        >
-                          {getStatusLabel(payment.status)}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-[#B0C8DA] text-[#326B9C] hover:bg-[#FAFCFF]"
-                          onClick={() =>
-                            alert(`Xem chi tiết: ${payment.transactionId}`)
-                          }
-                        >
-                          Chi tiết
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                <TableRow>
+                  <TableCell className="font-medium">Tổng doanh thu</TableCell>
+                  <TableCell className="text-right font-bold text-green-600">
+                    {formatCurrency(revenueData.grossRevenue)}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">
+                    Phí nền tảng ({100 - revenueData.revenueSharePercent}%)
+                  </TableCell>
+                  <TableCell className="text-right text-orange-600">
+                    - {formatCurrency(revenueData.platformFee)}
+                  </TableCell>
+                </TableRow>
+                <TableRow className="border-t-2 border-[#326B9C]">
+                  <TableCell className="font-bold text-[#326B9C]">
+                    Doanh thu Partner ({revenueData.revenueSharePercent}%)
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-[#326B9C]">
+                    {formatCurrency(revenueData.partnerRevenue)}
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Recent Revenue Data */}
+        {/* Order Statistics */}
         <Card className="border-[#E8E9EB]">
           <CardContent className="p-6">
-            <h3 className="text-lg font-bold text-[#326B9C] mb-6">
-              Doanh thu theo ngày (7 ngày gần nhất)
+            <h3 className="text-lg font-bold text-[#326B9C] mb-4">
+              Thống kê đơn hàng
             </h3>
 
-            <div className="space-y-4">
-              {revenueData.slice(0, 7).map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-4 bg-[#FAFCFF] rounded-lg border border-[#E8E9EB]"
-                >
-                  <div className="flex-1">
-                    <div className="font-semibold text-[#326B9C]">
-                      {new Date(item.date).toLocaleDateString("vi-VN", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </div>
-                    <div className="text-sm text-[#7BAAD1] mt-1">
-                      {item.orders} đơn hàng • Trung bình:{" "}
-                      {formatCurrency(item.avgOrderValue)}
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-green-600">
-                      {formatCurrency(item.revenue)}
-                    </div>
-                  </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-[#FAFCFF] rounded-lg border border-[#E8E9EB]">
+                <div className="text-3xl font-bold text-[#326B9C]">
+                  {revenueData.totalOrders}
                 </div>
-              ))}
+                <div className="text-sm text-[#7BAAD1] mt-1">Tổng đơn</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="text-3xl font-bold text-green-600">
+                  {revenueData.completedOrders}
+                </div>
+                <div className="text-sm text-green-600 mt-1">Hoàn thành</div>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="text-3xl font-bold text-red-600">
+                  {revenueData.canceledOrders}
+                </div>
+                <div className="text-sm text-red-600 mt-1">Đã hủy</div>
+              </div>
+            </div>
+
+            {/* Completion Rate */}
+            <div className="mt-6">
+              <div className="flex justify-between text-sm text-[#7BAAD1] mb-2">
+                <span>Tỷ lệ hoàn thành</span>
+                <span className="font-semibold text-green-600">
+                  {revenueData.totalOrders > 0
+                    ? (
+                        (revenueData.completedOrders /
+                          revenueData.totalOrders) *
+                        100
+                      ).toFixed(1)
+                    : 0}
+                  %
+                </span>
+              </div>
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${
+                      revenueData.totalOrders > 0
+                        ? (revenueData.completedOrders /
+                            revenueData.totalOrders) *
+                          100
+                        : 0
+                    }%`,
+                  }}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Info Banner */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+          <p>
+            ℹ️ <strong>Lưu ý:</strong> Doanh thu được tính toán dựa trên các đơn
+            hàng đã hoàn thành trong kỳ. Phí nền tảng được khấu trừ tự động theo
+            tỷ lệ đã thỏa thuận ({100 - revenueData.revenueSharePercent}%).
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import {
   CardContent,
   Button,
   PageLoading,
+  ErrorState,
   Input,
   Badge,
 } from "~/components/ui";
@@ -25,6 +26,8 @@ import {
   CreditCard,
   Bell,
   Clock,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import {
   useGetPartnerProfileQuery,
@@ -40,6 +43,20 @@ export default function PartnerSettingsPage(): React.JSX.Element {
   } = useGetPartnerProfileQuery();
   const [updateProfile, { isLoading: isSaving }] =
     useUpdatePartnerProfileMutation();
+
+  // Toast state
+  const [toast, setToast] = React.useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Auto-hide toast after 5 seconds
+  React.useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // Business Info (local state for editing)
   const [businessInfo, setBusinessInfo] = React.useState({
@@ -118,10 +135,32 @@ export default function PartnerSettingsPage(): React.JSX.Element {
         contactEmail: contactInfo.email,
         businessAddress: contactInfo.address,
       }).unwrap();
-      alert("Lưu cài đặt thành công!");
-    } catch (err) {
+      setToast({ type: "success", message: "Lưu cài đặt thành công!" });
+    } catch (err: unknown) {
       console.error("Failed to save:", err);
-      alert("Có lỗi xảy ra khi lưu cài đặt");
+      // Type guard for API error
+      const apiError = err as {
+        status?: number;
+        data?: { message?: string; code?: string };
+      };
+
+      // Handle specific errors
+      if (apiError?.status === 401 || apiError?.status === 403) {
+        setToast({
+          type: "error",
+          message: "Phiên đăng nhập hết hạn. Đang chuyển hướng...",
+        });
+        setTimeout(() => {
+          localStorage.removeItem("accessToken");
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
+      // Show detailed error message
+      const errorMessage =
+        apiError?.data?.message || "Có lỗi xảy ra khi lưu cài đặt";
+      setToast({ type: "error", message: errorMessage });
     }
   };
 
@@ -142,8 +181,49 @@ export default function PartnerSettingsPage(): React.JSX.Element {
     return <PageLoading message="Đang tải cài đặt..." />;
   }
 
+  if (error) {
+    return (
+      <ErrorState
+        variant="server"
+        title="Không thể tải cài đặt"
+        error={error}
+        onRetry={refetch}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAFCFF] p-8">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2">
+          <div
+            className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
+              toast.type === "success"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+            )}
+            <span>{toast.message}</span>
+            <button
+              onClick={() => setToast(null)}
+              className={`ml-2 ${
+                toast.type === "success"
+                  ? "text-green-400 hover:text-green-600"
+                  : "text-red-400 hover:text-red-600"
+              }`}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
