@@ -24,6 +24,16 @@ interface RefreshTokenRequest {
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    // Email/Password Login
+    login: builder.mutation<AuthResponse, { username: string; password: string }>({
+      query: (credentials) => ({
+        url: AUTH_ENDPOINTS.LOGIN,
+        method: "POST",
+        body: credentials,
+      }),
+      invalidatesTags: ["Auth"],
+    }),
+
     // Phone Login
     phoneLogin: builder.mutation<AuthResponse, { phone: string; otp: string }>({
       query: (credentials) => ({
@@ -101,6 +111,7 @@ export const authApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useLoginMutation,
   usePhoneLoginMutation,
   useSendEmailOtpMutation,
   useVerifyEmailOtpMutation,

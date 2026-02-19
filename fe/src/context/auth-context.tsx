@@ -1,11 +1,20 @@
-import { createContext, useContext, useState, useEffect, type ReactNode, } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { AuthContextType, User } from "../types";
-import { mockAuthAPI, mockDevUser } from "../mockdata/auth.mock";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Development mode flag - set to true to bypass login
+// Development mode - Auto login as admin
 const DEV_MODE = true;
+
+// Mock admin user
+const mockAdminUser: User = {
+  id: "1",
+  fullName: "Admin User",
+  email: "admin@laundry.com",
+  role: ["SUPER_ADMIN"],
+  permissions: ["*"],
+  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin",
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,11 +24,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // In development mode, auto-login with mock user
+        // In development mode, auto-login with mock admin
         if (DEV_MODE) {
-          setUser(mockDevUser);
+          setUser(mockAdminUser);
           localStorage.setItem("accessToken", `dev-token-${Date.now()}`);
-          localStorage.setItem("user", JSON.stringify(mockDevUser));
+          localStorage.setItem("user", JSON.stringify(mockAdminUser));
           setLoading(false);
           return;
         }
@@ -29,18 +38,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userStr = localStorage.getItem("user");
 
         if (accessToken && userStr) {
-          // Validate token
-          const isValid = await mockAuthAPI.validateToken(accessToken);
-          
-          if (isValid) {
-            const parsedUser = JSON.parse(userStr);
-            setUser(parsedUser);
-          } else {
-            // Token invalid, clear storage
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("user");
-            setUser(null);
-          }
+          const parsedUser = JSON.parse(userStr);
+          setUser(parsedUser);
         }
       } catch (error) {
         console.error("Lỗi khi khởi tạo auth:", error);
@@ -60,34 +59,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
 
-      // Call mock API
-      const response = await mockAuthAPI.login(username, password);
+      // Mock login - accept any credentials in dev mode
+      if (DEV_MODE) {
+        setUser(mockAdminUser);
+        localStorage.setItem("accessToken", `dev-token-${Date.now()}`);
+        localStorage.setItem("user", JSON.stringify(mockAdminUser));
+        setLoading(false);
+        return;
+      }
 
-      // Save to localStorage
-      localStorage.setItem("accessToken", response.accessToken);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
-      setUser(response.user);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Đăng nhập thất bại";
+      // TODO: Implement real API login when backend is ready
+      throw new Error("API login chưa được implement");
+    } catch (err: any) {
+      const errorMessage = err?.message || "Đăng nhập thất bại";
       setError(errorMessage);
-      throw err;
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
-    try {
-      await mockAuthAPI.logout();
-    } catch (error) {
-      console.error("Lỗi khi logout:", error);
-    } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
-      setUser(null);
-      setError(null);
-    }
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    setUser(null);
+    setError(null);
   };
 
   const hasPermission = (requiredPermission: string): boolean => {

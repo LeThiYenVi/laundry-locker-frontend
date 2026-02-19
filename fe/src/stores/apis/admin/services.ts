@@ -1,5 +1,5 @@
-import { baseApi } from "../../baseAPi";
-import { ADMIN_ENDPOINTS } from "../../../constants";
+import { baseApi } from '../../baseAPi';
+import { ADMIN_ENDPOINTS } from '../../../constants';
 import type {
   ApiResponse,
   Page,
@@ -8,11 +8,22 @@ import type {
   CreateServiceRequest,
   UpdateServicePriceRequest,
   UpdateUserStatusRequest,
-} from "../../../types";
+} from '../../../types';
+import {
+  CreateServiceRequestSchema,
+  UpdateServicePriceRequestSchema,
+  UpdateServiceStatusRequestSchema,
+  createValidator,
+} from '../../../schemas';
 
 const TAGS = {
-  SERVICES: "Services",
+  SERVICES: 'Services',
 } as const;
+
+// Create validators
+const createServiceValidator = createValidator(CreateServiceRequestSchema);
+const updateServicePriceValidator = createValidator(UpdateServicePriceRequestSchema);
+const updateServiceStatusValidator = createValidator(UpdateServiceStatusRequestSchema);
 
 export const serviceManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -30,11 +41,15 @@ export const serviceManagementApi = baseApi.injectEndpoints({
     }),
 
     createService: builder.mutation<ApiResponse<AdminServiceResponse>, CreateServiceRequest>({
-      query: (serviceData) => ({
-        url: ADMIN_ENDPOINTS.SERVICES,
-        method: "POST",
-        body: serviceData,
-      }),
+      query: (serviceData) => {
+        // Validate with Zod before sending
+        createServiceValidator.validateRequestBody(serviceData);
+        return {
+          url: ADMIN_ENDPOINTS.SERVICES,
+          method: 'POST',
+          body: serviceData,
+        };
+      },
       invalidatesTags: [TAGS.SERVICES],
     }),
 
@@ -42,11 +57,15 @@ export const serviceManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminServiceResponse>,
       { id: number; data: CreateServiceRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.SERVICE_BY_ID(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        createServiceValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.SERVICE_BY_ID(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.SERVICES, id }, TAGS.SERVICES],
     }),
 
@@ -54,11 +73,15 @@ export const serviceManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminServiceResponse>,
       { id: number; data: UpdateServicePriceRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.SERVICE_PRICE(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        updateServicePriceValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.SERVICE_PRICE(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.SERVICES, id }, TAGS.SERVICES],
     }),
 
@@ -66,18 +89,22 @@ export const serviceManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminServiceResponse>,
       { id: number; data: UpdateUserStatusRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.SERVICE_STATUS(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        updateServiceStatusValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.SERVICE_STATUS(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.SERVICES, id }, TAGS.SERVICES],
     }),
 
     deleteService: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
         url: ADMIN_ENDPOINTS.SERVICE_BY_ID(id),
-        method: "DELETE",
+        method: 'DELETE',
       }),
       invalidatesTags: [TAGS.SERVICES],
     }),

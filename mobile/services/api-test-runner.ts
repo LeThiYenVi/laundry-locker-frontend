@@ -428,7 +428,7 @@ class APITestRunner {
     // ============================================
     async run() {
         this.log('\n🚀 Starting API Test Runner', colors.cyan + colors.bright);
-        this.log('API Base URL: ' + (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api'), colors.blue);
+        this.log('API Base URL: ' + (process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8080/api'), colors.blue);
 
         try {
             // Run tests in order
