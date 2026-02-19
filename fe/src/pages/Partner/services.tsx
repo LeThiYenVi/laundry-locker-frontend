@@ -4,13 +4,10 @@ import {
   CardContent,
   Button,
   PageLoading,
+  ErrorState,
+  EmptyData,
   Input,
   Badge,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
 } from "~/components/ui";
 import { Label } from "~/components/ui/label";
 import {
@@ -20,96 +17,176 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "~/components/ui/dialog";
+import {
+  AlertTriangle,
+  RefreshCw,
+  Wrench,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
 import type { PartnerService } from "@/types";
+import { useGetPartnerProfileQuery } from "@/stores/apis/partnerApi";
+
+// ============================================
+// Note: Backend chưa có endpoint riêng cho Partner Services
+// Hiện tại sử dụng API /api/services public với filter storeId
+// TODO: Tích hợp khi backend có endpoint:
+// - GET /api/partner/services
+// - PUT /api/partner/services/{id}/toggle
+// - PUT /api/partner/services/{id}/price
+// ============================================
+
+// ============================================
+// Error Handling
+// ============================================
+
+const ERROR_MESSAGES: Record<string, string> = {
+  E_SERVICE001: "Không tìm thấy dịch vụ.",
+  E_AUTH001: "Bạn không có quyền truy cập.",
+};
+
+const getErrorMessage = (err: unknown): string => {
+  const apiError = err as {
+    status?: number;
+    data?: { code?: string; message?: string };
+  };
+
+  if (apiError?.status === 401 || apiError?.status === 403) {
+    localStorage.removeItem("accessToken");
+    window.location.href =
+      "/login?redirect=" + encodeURIComponent(window.location.pathname);
+    return "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
+  }
+
+  const errorCode = apiError?.data?.code;
+  if (errorCode && ERROR_MESSAGES[errorCode]) {
+    return ERROR_MESSAGES[errorCode];
+  }
+
+  return apiError?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
+};
+
+// ============================================
+// Helpers
+// ============================================
+
+const getCategoryLabel = (category: string): string => {
+  switch (category) {
+    case "WASH":
+      return "Giặt";
+    case "WASH_IRON":
+      return "Giặt hấp";
+    case "DRY_CLEAN":
+      return "Giặt khô";
+    case "IRON":
+      return "Là ủi";
+    case "SPECIAL":
+      return "Đặc biệt";
+    default:
+      return category;
+  }
+};
+
+const getCategoryBadge = (category: string): string => {
+  switch (category) {
+    case "WASH":
+      return "bg-blue-100 text-blue-700 border-blue-200";
+    case "WASH_IRON":
+      return "bg-purple-100 text-purple-700 border-purple-200";
+    case "DRY_CLEAN":
+      return "bg-pink-100 text-pink-700 border-pink-200";
+    case "IRON":
+      return "bg-orange-100 text-orange-700 border-orange-200";
+    case "SPECIAL":
+      return "bg-green-100 text-green-700 border-green-200";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
+  }
+};
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
+};
+
+// ============================================
+// Main Component
+// ============================================
 
 export default function PartnerServicesPage(): React.JSX.Element {
-  const [isLoading, setIsLoading] = React.useState(true);
+  // Get partner profile to know which store(s) belong to partner
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+    error: profileError,
+    refetch: refetchProfile,
+  } = useGetPartnerProfileQuery();
+
+  // Local state for services (will be populated from API)
   const [services, setServices] = React.useState<PartnerService[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
+
   const [filterCategory, setFilterCategory] = React.useState<string>("ALL");
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [errorToast, setErrorToast] = React.useState<string | null>(null);
 
-  // Form state for new service
-  const [formData, setFormData] = React.useState({
-    name: "",
-    category: "",
-    basePrice: "",
-    pricePerKg: "",
-    processingTime: "",
-    description: "",
-  });
+  // Edit Price Modal
+  const [editModal, setEditModal] = React.useState<{
+    open: boolean;
+    service: PartnerService | null;
+    newPrice: string;
+  }>({ open: false, service: null, newPrice: "" });
 
+  // Fetch services from public API
   React.useEffect(() => {
     const fetchServices = async () => {
       try {
         setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        setError(null);
 
-        const mockServices: PartnerService[] = [
+        // Fetch from public services API
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/services`,
           {
-            id: 1,
-            name: "Giặt thường",
-            category: "WASH",
-            basePrice: 30000,
-            pricePerKg: 15000,
-            processingTime: 24,
-            isActive: true,
-            description: "Dịch vụ giặt quần áo thường ngày",
+            headers: {
+              "Content-Type": "application/json",
+            },
           },
-          {
-            id: 2,
-            name: "Giặt hấp",
-            category: "WASH_IRON",
-            basePrice: 50000,
-            pricePerKg: 25000,
-            processingTime: 36,
-            isActive: true,
-            description: "Giặt và là ủi đồ",
-          },
-          {
-            id: 3,
-            name: "Giặt khô",
-            category: "DRY_CLEAN",
-            basePrice: 80000,
-            pricePerKg: 40000,
-            processingTime: 48,
-            isActive: true,
-            description: "Giặt khô cho đồ cao cấp",
-          },
-          {
-            id: 4,
-            name: "Là ủi",
-            category: "IRON",
-            basePrice: 20000,
-            pricePerKg: 10000,
-            processingTime: 12,
-            isActive: true,
-            description: "Chỉ là ủi, không giặt",
-          },
-          {
-            id: 5,
-            name: "Giặt chăn màn",
-            category: "WASH",
-            basePrice: 100000,
-            pricePerKg: 30000,
-            processingTime: 48,
-            isActive: false,
-            description: "Giặt chăn gối, màn cửa",
-          },
-          {
-            id: 6,
-            name: "Giặt giày dép",
-            category: "SPECIAL",
-            basePrice: 50000,
-            pricePerKg: 0,
-            processingTime: 24,
-            isActive: true,
-            description: "Vệ sinh giày, dép",
-          },
-        ];
+        );
 
-        setServices(mockServices);
+        if (!response.ok) {
+          throw new Error("Không thể tải danh sách dịch vụ");
+        }
+
+        const data = await response.json();
+
+        // Map to PartnerService type with isActive default true
+        const mappedServices: PartnerService[] = (data.data || []).map(
+          (s: Record<string, unknown>) => ({
+            id: s.id as number,
+            name: s.name as string,
+            category: (s.category as string) || "WASH",
+            basePrice: (s.price as number) || 0,
+            pricePerKg: (s.pricePerKg as number) || 0,
+            processingTime: (s.estimatedTime as number) || 24,
+            isActive: true, // Default - backend doesn't return per-partner status yet
+            description: (s.description as string) || "",
+          }),
+        );
+
+        setServices(mappedServices);
       } catch (err) {
-        console.error("Lỗi khi tải danh sách dịch vụ:", err);
+        console.error("Error fetching services:", err);
+        setError(err as Error);
       } finally {
         setIsLoading(false);
       }
@@ -118,58 +195,40 @@ export default function PartnerServicesPage(): React.JSX.Element {
     fetchServices();
   }, []);
 
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "WASH":
-        return "Giặt";
-      case "WASH_IRON":
-        return "Giặt hấp";
-      case "DRY_CLEAN":
-        return "Giặt khô";
-      case "IRON":
-        return "Là ủi";
-      case "SPECIAL":
-        return "Đặc biệt";
-      default:
-        return category;
+  // Auto-hide error toast
+  React.useEffect(() => {
+    if (errorToast) {
+      const timer = setTimeout(() => setErrorToast(null), 5000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [errorToast]);
 
-  const getCategoryBadge = (category: string) => {
-    switch (category) {
-      case "WASH":
-        return "bg-blue-100 text-blue-700 border-blue-200";
-      case "WASH_IRON":
-        return "bg-purple-100 text-purple-700 border-purple-200";
-      case "DRY_CLEAN":
-        return "bg-pink-100 text-pink-700 border-pink-200";
-      case "IRON":
-        return "bg-orange-100 text-orange-700 border-orange-200";
-      case "SPECIAL":
-        return "bg-green-100 text-green-700 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
-
+  // Filter services
   const filteredServices = React.useMemo(() => {
     if (filterCategory === "ALL") return services;
     return services.filter((service) => service.category === filterCategory);
   }, [services, filterCategory]);
 
-  const activeServices = services.filter((s) => s.isActive).length;
-  const totalRevenue = services
-    .filter((s) => s.isActive)
-    .reduce((sum, s) => sum + s.basePrice, 0);
+  // Stats
+  const stats = React.useMemo(() => {
+    const activeServices = services.filter((s) => s.isActive).length;
+    const inactiveServices = services.length - activeServices;
+    const avgPrice =
+      services.length > 0
+        ? services.reduce((sum, s) => sum + s.basePrice, 0) / services.length
+        : 0;
 
+    return {
+      total: services.length,
+      active: activeServices,
+      inactive: inactiveServices,
+      avgPrice,
+    };
+  }, [services]);
+
+  // Toggle service active status (local only - needs backend)
   const handleToggleActive = (serviceId: number) => {
+    // TODO: Call API when backend supports: PUT /api/partner/services/{id}/toggle
     setServices((prev) =>
       prev.map((service) =>
         service.id === serviceId
@@ -177,38 +236,102 @@ export default function PartnerServicesPage(): React.JSX.Element {
           : service,
       ),
     );
+    setErrorToast(
+      "⚠️ Chức năng bật/tắt dịch vụ đang được phát triển. Thay đổi chỉ áp dụng tạm thời.",
+    );
   };
 
-  const handleAddService = () => {
-    const newService: PartnerService = {
-      id: services.length + 1,
-      name: formData.name,
-      category: formData.category as any,
-      basePrice: parseFloat(formData.basePrice),
-      pricePerKg: parseFloat(formData.pricePerKg),
-      processingTime: parseInt(formData.processingTime),
-      isActive: true,
-      description: formData.description,
-    };
+  // Update price (local only - needs backend)
+  const handleUpdatePrice = () => {
+    if (!editModal.service || !editModal.newPrice) return;
 
-    setServices([...services, newService]);
-    setIsDialogOpen(false);
-    setFormData({
-      name: "",
-      category: "",
-      basePrice: "",
-      pricePerKg: "",
-      processingTime: "",
-      description: "",
-    });
+    const newPrice = parseFloat(editModal.newPrice);
+    if (isNaN(newPrice) || newPrice < 0) {
+      setErrorToast("Giá không hợp lệ");
+      return;
+    }
+
+    // TODO: Call API when backend supports: PUT /api/partner/services/{id}/price
+    setServices((prev) =>
+      prev.map((service) =>
+        service.id === editModal.service?.id
+          ? { ...service, basePrice: newPrice }
+          : service,
+      ),
+    );
+
+    setEditModal({ open: false, service: null, newPrice: "" });
+    setErrorToast(
+      "⚠️ Chức năng cập nhật giá đang được phát triển. Thay đổi chỉ áp dụng tạm thời.",
+    );
   };
 
-  if (isLoading) {
+  // Refetch all data
+  const handleRefresh = () => {
+    setIsLoading(true);
+    refetchProfile();
+    // Re-trigger the effect by setting error to null
+    setError(null);
+  };
+
+  // Loading state
+  if (isLoading || isLoadingProfile) {
     return <PageLoading message="Đang tải danh sách dịch vụ..." />;
+  }
+
+  // Error state
+  if (error || profileError) {
+    return (
+      <ErrorState
+        variant="server"
+        title="Không thể tải danh sách dịch vụ"
+        error={error || profileError}
+        onRetry={handleRefresh}
+      />
+    );
+  }
+
+  // Empty state
+  if (services.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#FAFCFF] p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-[#326B9C]">
+              Quản lý Dịch vụ
+            </h1>
+            <p className="text-[#7BAAD1] mt-1">
+              Cài đặt và quản lý các dịch vụ giặt ủi
+            </p>
+          </div>
+          <EmptyData
+            title="Chưa có dịch vụ nào"
+            message="Hệ thống chưa có dịch vụ giặt ủi. Vui lòng liên hệ Admin để được hỗ trợ."
+            icon={<Wrench className="h-16 w-16 text-muted-foreground" />}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#FAFCFF] p-8">
+      {/* Error/Warning Toast */}
+      {errorToast && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2">
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
+            <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+            <span className="text-sm">{errorToast}</span>
+            <button
+              onClick={() => setErrorToast(null)}
+              className="ml-2 text-yellow-500 hover:text-yellow-700"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -221,164 +344,27 @@ export default function PartnerServicesPage(): React.JSX.Element {
             </p>
           </div>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#326B9C] hover:bg-[#7BAAD1] text-white font-semibold">
-                + Thêm dịch vụ
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-white">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-[#326B9C]">
-                  Thêm dịch vụ mới
-                </DialogTitle>
-              </DialogHeader>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="border-[#B0C8DA]"
+          >
+            <RefreshCw
+              size={16}
+              className={`mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            Làm mới
+          </Button>
+        </div>
 
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[#7BAAD1] font-medium">
-                      Tên dịch vụ
-                    </Label>
-                    <Input
-                      placeholder="VD: Giặt thường"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="border-[#B0C8DA] bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-[#7BAAD1] font-medium">
-                      Loại dịch vụ
-                    </Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, category: value })
-                      }
-                    >
-                      <SelectTrigger className="border-[#B0C8DA] bg-white">
-                        <SelectValue placeholder="Chọn loại" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border-[#E8E9EB]">
-                        <SelectItem
-                          value="WASH"
-                          className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                        >
-                          Giặt
-                        </SelectItem>
-                        <SelectItem
-                          value="WASH_IRON"
-                          className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                        >
-                          Giặt hấp
-                        </SelectItem>
-                        <SelectItem
-                          value="DRY_CLEAN"
-                          className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                        >
-                          Giặt khô
-                        </SelectItem>
-                        <SelectItem
-                          value="IRON"
-                          className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                        >
-                          Là ủi
-                        </SelectItem>
-                        <SelectItem
-                          value="SPECIAL"
-                          className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                        >
-                          Đặc biệt
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[#7BAAD1] font-medium">
-                      Giá cơ bản (VNĐ)
-                    </Label>
-                    <Input
-                      type="number"
-                      placeholder="30000"
-                      value={formData.basePrice}
-                      onChange={(e) =>
-                        setFormData({ ...formData, basePrice: e.target.value })
-                      }
-                      className="border-[#B0C8DA] bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-[#7BAAD1] font-medium">
-                      Giá/kg (VNĐ)
-                    </Label>
-                    <Input
-                      type="number"
-                      placeholder="15000"
-                      value={formData.pricePerKg}
-                      onChange={(e) =>
-                        setFormData({ ...formData, pricePerKg: e.target.value })
-                      }
-                      className="border-[#B0C8DA] bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[#7BAAD1] font-medium">
-                    Thời gian xử lý (giờ)
-                  </Label>
-                  <Input
-                    type="number"
-                    placeholder="24"
-                    value={formData.processingTime}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        processingTime: e.target.value,
-                      })
-                    }
-                    className="border-[#B0C8DA] bg-white"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[#7BAAD1] font-medium">Mô tả</Label>
-                  <Input
-                    placeholder="Mô tả ngắn về dịch vụ..."
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="border-[#B0C8DA] bg-white"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={() => setIsDialogOpen(false)}
-                    variant="outline"
-                    className="flex-1 border-[#B0C8DA]"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    onClick={handleAddService}
-                    className="flex-1 bg-[#326B9C] hover:bg-[#7BAAD1] text-white"
-                  >
-                    Thêm dịch vụ
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+        {/* Info Banner */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+          <p>
+            ℹ️ <strong>Lưu ý:</strong> Chức năng bật/tắt và cập nhật giá dịch vụ
+            đang được phát triển. Mọi thay đổi hiện tại chỉ áp dụng tạm thời
+            trong phiên làm việc này.
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -387,7 +373,7 @@ export default function PartnerServicesPage(): React.JSX.Element {
             <CardContent className="p-6">
               <div className="text-sm text-[#7BAAD1] mb-2">Tổng dịch vụ</div>
               <div className="text-3xl font-bold text-[#326B9C]">
-                {services.length}
+                {stats.total}
               </div>
             </CardContent>
           </Card>
@@ -396,7 +382,7 @@ export default function PartnerServicesPage(): React.JSX.Element {
             <CardContent className="p-6">
               <div className="text-sm text-[#7BAAD1] mb-2">Đang hoạt động</div>
               <div className="text-3xl font-bold text-green-600">
-                {activeServices}
+                {stats.active}
               </div>
             </CardContent>
           </Card>
@@ -405,16 +391,16 @@ export default function PartnerServicesPage(): React.JSX.Element {
             <CardContent className="p-6">
               <div className="text-sm text-[#7BAAD1] mb-2">Tạm ngưng</div>
               <div className="text-3xl font-bold text-red-600">
-                {services.length - activeServices}
+                {stats.inactive}
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-[#E8E9EB]">
             <CardContent className="p-6">
-              <div className="text-sm text-[#7BAAD1] mb-2">Tổng giá cơ bản</div>
+              <div className="text-sm text-[#7BAAD1] mb-2">Giá TB</div>
               <div className="text-2xl font-bold text-[#326B9C]">
-                {formatCurrency(totalRevenue)}
+                {formatCurrency(stats.avgPrice)}
               </div>
             </CardContent>
           </Card>
@@ -509,7 +495,7 @@ export default function PartnerServicesPage(): React.JSX.Element {
 
                 {/* Description */}
                 <p className="text-sm text-[#7BAAD1] line-clamp-2">
-                  {service.description}
+                  {service.description || "Không có mô tả"}
                 </p>
 
                 {/* Pricing */}
@@ -520,12 +506,14 @@ export default function PartnerServicesPage(): React.JSX.Element {
                       {formatCurrency(service.basePrice)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#7BAAD1]">Giá/kg:</span>
-                    <span className="font-bold text-[#326B9C]">
-                      {formatCurrency(service.pricePerKg)}
-                    </span>
-                  </div>
+                  {service.pricePerKg > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#7BAAD1]">Giá/kg:</span>
+                      <span className="font-bold text-[#326B9C]">
+                        {formatCurrency(service.pricePerKg)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-[#7BAAD1]">
                       Thời gian xử lý:
@@ -541,9 +529,15 @@ export default function PartnerServicesPage(): React.JSX.Element {
                   <Button
                     variant="outline"
                     className="flex-1 border-[#B0C8DA]"
-                    onClick={() => alert(`Chỉnh sửa dịch vụ: ${service.name}`)}
+                    onClick={() =>
+                      setEditModal({
+                        open: true,
+                        service,
+                        newPrice: service.basePrice.toString(),
+                      })
+                    }
                   >
-                    Chỉnh sửa
+                    Sửa giá
                   </Button>
                   <Button
                     className={`flex-1 ${
@@ -553,7 +547,17 @@ export default function PartnerServicesPage(): React.JSX.Element {
                     } text-white`}
                     onClick={() => handleToggleActive(service.id)}
                   >
-                    {service.isActive ? "Tắt" : "Bật"}
+                    {service.isActive ? (
+                      <>
+                        <ToggleRight size={16} className="mr-1" />
+                        Tắt
+                      </>
+                    ) : (
+                      <>
+                        <ToggleLeft size={16} className="mr-1" />
+                        Bật
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -564,11 +568,82 @@ export default function PartnerServicesPage(): React.JSX.Element {
         {filteredServices.length === 0 && (
           <Card className="border-[#E8E9EB]">
             <CardContent className="p-12 text-center">
-              <p className="text-[#7BAAD1]">Không tìm thấy dịch vụ nào</p>
+              <p className="text-[#7BAAD1]">
+                Không tìm thấy dịch vụ nào ở loại "
+                {filterCategory === "ALL"
+                  ? "Tất cả"
+                  : getCategoryLabel(filterCategory)}
+                "
+              </p>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Edit Price Modal */}
+      <Dialog
+        open={editModal.open}
+        onOpenChange={(open) => setEditModal((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cập nhật giá dịch vụ</DialogTitle>
+          </DialogHeader>
+
+          {editModal.service && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4 text-sm">
+                <p className="font-bold text-[#326B9C]">
+                  {editModal.service.name}
+                </p>
+                <p className="text-[#7BAAD1] mt-1">
+                  Giá hiện tại: {formatCurrency(editModal.service.basePrice)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[#7BAAD1] font-medium">
+                  Giá mới (VNĐ)
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="Nhập giá mới"
+                  value={editModal.newPrice}
+                  onChange={(e) =>
+                    setEditModal((prev) => ({
+                      ...prev,
+                      newPrice: e.target.value,
+                    }))
+                  }
+                  className="border-[#B0C8DA]"
+                />
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                ⚠️ Chức năng này đang được phát triển. Thay đổi giá sẽ chỉ áp
+                dụng tạm thời trong phiên làm việc hiện tại.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setEditModal({ open: false, service: null, newPrice: "" })
+              }
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleUpdatePrice}
+              className="bg-[#326B9C] hover:bg-[#7BAAD1] text-white"
+            >
+              Lưu thay đổi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

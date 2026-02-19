@@ -28,6 +28,7 @@ export const baseApi = createApi({
     "Partner",
     "AccessCodes",
     "PartnerOrder",
+    "Notifications",
   ],
 
   endpoints: () => ({}),
