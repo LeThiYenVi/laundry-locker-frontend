@@ -1,11 +1,13 @@
 // API Base URLs
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://10.0.2.2:8080';
+// Lưu ý: Mặc định là localhost cho Web. Nếu dùng Emulator Android, hãy đổi trong file .env thành 10.0.2.2
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // Root URIs
 export const ROOT_URI = {
   AUTH: '/api/auth',
   USERS: '/api/user',
   ADMIN: '/api/admin',
+  PARTNER: '/api/partner',
 } as const;
 
 // Authentication Endpoints
@@ -97,50 +99,50 @@ export const ADMIN_ENDPOINTS = {
   PARTNER_REJECT: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/reject`,
   PARTNER_SUSPEND: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
 
-  // Legacy (keep for backward compatibility)
+  // Legacy
   ANALYTICS: `${ROOT_URI.ADMIN}/analytics`,
   SCHEDULE: `${ROOT_URI.ADMIN}/schedule`,
   INTEGRATIONS: `${ROOT_URI.ADMIN}/integrations`,
   SETTINGS: `${ROOT_URI.ADMIN}/settings`,
 } as const;
 
-// Combined API Paths for RTK Query
+// Partner Endpoints
+export const PARTNER_ENDPOINTS = {
+  PROFILE: `${ROOT_URI.PARTNER}`,
+  REGISTER: `${ROOT_URI.PARTNER}/register`,
+  DASHBOARD: `${ROOT_URI.PARTNER}/dashboard`,
+  ORDERS: `${ROOT_URI.PARTNER}/orders`,
+  ORDERS_PENDING: `${ROOT_URI.PARTNER}/orders/pending`,
+  ORDER_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}`,
+  ORDER_ACCEPT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/accept`,
+  ORDER_PROCESS: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/process`,
+  ORDER_READY: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/ready`,
+  ORDER_WEIGHT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/weight`,
+  ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
+  ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
+  ACCESS_CODE_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
+  ACCESS_CODES_BY_ORDER: (orderId: number) => `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
+  ACCESS_CODE_CANCEL: (codeId: number) => `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
+  STAFF: `${ROOT_URI.PARTNER}/staff`,
+  STAFF_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/staff/${id}`,
+  STORES: `${ROOT_URI.PARTNER}/stores`,
+  LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
+  LOCKER_AVAILABLE_BOXES: (lockerId: number) => `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+  REVENUE: `${ROOT_URI.PARTNER}/revenue`,
+} as const;
+
+// Combined API Paths
 export const API_PATHS = {
   ...AUTH_ENDPOINTS,
   ...USER_ENDPOINTS,
   ...ADMIN_ENDPOINTS,
+  ...PARTNER_ENDPOINTS,
 } as const;
 
-// HTTP Methods
-export const HTTP_METHODS = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  PATCH: 'PATCH',
-  DELETE: 'DELETE',
-} as const;
+// HTTP Methods & Metadata
+export const HTTP_METHODS = { GET: 'GET', POST: 'POST', PUT: 'PUT', PATCH: 'PATCH', DELETE: 'DELETE' } as const;
+export const CONTENT_TYPES = { JSON: 'application/json', FORM_DATA: 'multipart/form-data' } as const;
 
-// Content Types
-export const CONTENT_TYPES = {
-  JSON: 'application/json',
-  FORM_DATA: 'multipart/form-data',
-  URL_ENCODED: 'application/x-www-form-urlencoded',
-} as const;
-
-// API Response Status
-export const API_STATUS = {
-  SUCCESS: 200,
-  CREATED: 201,
-  NO_CONTENT: 204,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  CONFLICT: 409,
-  INTERNAL_SERVER_ERROR: 500,
-} as const;
-
-// API Error Messages
 export const API_ERROR_MESSAGES = {
   NETWORK_ERROR: 'Network error occurred',
   UNAUTHORIZED: 'Unauthorized access',
