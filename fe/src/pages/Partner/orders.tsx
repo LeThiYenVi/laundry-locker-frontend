@@ -45,6 +45,7 @@ import {
   useUpdateOrderWeightMutation,
   useProcessOrderMutation,
   useMarkOrderReadyMutation,
+  POLLING_INTERVAL,
 } from "@/stores/apis/partnerApi";
 
 const tableHeader = {
@@ -66,11 +67,67 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELED: "Đã hủy",
 };
 
+// Error codes from Backend
+const ERROR_CODES = {
+  E_ORDER002: "E_ORDER002", // Sai trạng thái đơn hàng
+  E_BOX003: "E_BOX003", // Box đang bận/kẹt
+  E_ORDER001: "E_ORDER001", // Không tìm thấy đơn hàng
+  E_AUTH001: "E_AUTH001", // Không có quyền
+} as const;
+
+// Error messages mapping
+const ERROR_MESSAGES: Record<string, string> = {
+  [ERROR_CODES.E_ORDER002]:
+    "Trạng thái đơn hàng không hợp lệ để thực hiện thao tác này.",
+  [ERROR_CODES.E_BOX003]:
+    "Tủ Locker hiện không khả dụng (đang mở hoặc kẹt khóa).",
+  [ERROR_CODES.E_ORDER001]: "Không tìm thấy đơn hàng.",
+  [ERROR_CODES.E_AUTH001]: "Bạn không có quyền truy cập cửa hàng này.",
+};
+
+// Helper: Get error message from API error
+const getErrorMessage = (err: unknown): string => {
+  // Type guard for API error response
+  const apiError = err as {
+    status?: number;
+    data?: { code?: string; message?: string };
+  };
+
+  // Handle 401/403 - Unauthorized/Forbidden
+  if (apiError?.status === 401 || apiError?.status === 403) {
+    // Clear token and redirect to login
+    localStorage.removeItem("accessToken");
+    window.location.href =
+      "/login?redirect=" + encodeURIComponent(window.location.pathname);
+    return "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
+  }
+
+  // Handle known error codes
+  const errorCode = apiError?.data?.code;
+  if (errorCode && ERROR_MESSAGES[errorCode]) {
+    return ERROR_MESSAGES[errorCode];
+  }
+
+  // Fallback to server message or default
+  return apiError?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
+};
+
 export default function PartnerOrders(): React.JSX.Element {
   const [activeTab, setActiveTab] = React.useState<string>("ALL");
   const [page, setPage] = React.useState(0);
   const [size] = React.useState(10);
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  // Error toast state
+  const [errorToast, setErrorToast] = React.useState<string | null>(null);
+
+  // Auto-hide error toast after 5 seconds
+  React.useEffect(() => {
+    if (errorToast) {
+      const timer = setTimeout(() => setErrorToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorToast]);
 
   // Modal states
   const [accessCodeModal, setAccessCodeModal] = React.useState<{
@@ -89,25 +146,40 @@ export default function PartnerOrders(): React.JSX.Element {
   const {
     data: ordersData,
     isLoading,
+    isFetching,
     error,
     refetch,
-  } = useGetPartnerOrdersQuery({
-    status: activeTab === "ALL" ? undefined : (activeTab as any),
-    page,
-    size,
-    search: searchQuery || undefined,
-  });
+  } = useGetPartnerOrdersQuery(
+    {
+      status: activeTab === "ALL" ? undefined : (activeTab as any),
+      page,
+      size,
+      search: searchQuery || undefined,
+    },
+    {
+      // Polling: Tự động gọi lại API mỗi 10 giây
+      pollingInterval: POLLING_INTERVAL,
+      // Refetch khi tab browser được focus lại
+      refetchOnFocus: true,
+      // Refetch khi reconnect mạng
+      refetchOnReconnect: true,
+    },
+  );
 
   const [acceptOrder, { isLoading: isAccepting }] = useAcceptOrderMutation();
-  const [updateWeight, { isLoading: isUpdatingWeight }] = useUpdateOrderWeightMutation();
+  const [updateWeight, { isLoading: isUpdatingWeight }] =
+    useUpdateOrderWeightMutation();
   const [processOrder, { isLoading: isProcessing }] = useProcessOrderMutation();
-  const [markReady, { isLoading: isMarkingReady }] = useMarkOrderReadyMutation();
+  const [markReady, { isLoading: isMarkingReady }] =
+    useMarkOrderReadyMutation();
 
   const orders = ordersData?.content || [];
 
   // Get status badge class
   const getStatusBadgeClass = (status: string) => {
-    return ORDER_STATUS_COLORS[status as OrderStatus] || "bg-gray-100 text-gray-700";
+    return (
+      ORDER_STATUS_COLORS[status as OrderStatus] || "bg-gray-100 text-gray-700"
+    );
   };
 
   // Copy access code to clipboard
@@ -125,8 +197,9 @@ export default function PartnerOrders(): React.JSX.Element {
         code: result.staffAccessCode,
         action: "COLLECT",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to accept order:", err);
+      setErrorToast(getErrorMessage(err));
     }
   };
 
@@ -149,8 +222,9 @@ export default function PartnerOrders(): React.JSX.Element {
         weightUnit: "kg",
       }).unwrap();
       setWeightModal({ open: false, order: null, weight: "" });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update weight:", err);
+      setErrorToast(getErrorMessage(err));
     }
   };
 
@@ -158,8 +232,9 @@ export default function PartnerOrders(): React.JSX.Element {
   const handleProcessOrder = async (order: PartnerOrder) => {
     try {
       await processOrder(order.id).unwrap();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to process order:", err);
+      setErrorToast(getErrorMessage(err));
     }
   };
 
@@ -172,8 +247,9 @@ export default function PartnerOrders(): React.JSX.Element {
         code: result.staffAccessCode,
         action: "RETURN",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to mark order ready:", err);
+      setErrorToast(getErrorMessage(err));
     }
   };
 
@@ -232,7 +308,10 @@ export default function PartnerOrders(): React.JSX.Element {
 
       case OrderStatus.READY:
         return (
-          <Badge variant="outline" className="text-purple-600 border-purple-600">
+          <Badge
+            variant="outline"
+            className="text-purple-600 border-purple-600"
+          >
             Chờ Staff trả đồ
           </Badge>
         );
@@ -274,6 +353,32 @@ export default function PartnerOrders(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      {/* Error Toast */}
+      {errorToast && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <span className="text-red-500">⚠️</span>
+            <span>{errorToast}</span>
+            <button
+              onClick={() => setErrorToast(null)}
+              className="ml-2 text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Polling Indicator */}
+      {isFetching && !isLoading && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className="bg-blue-100 text-blue-700 px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            Đang cập nhật...
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -327,7 +432,9 @@ export default function PartnerOrders(): React.JSX.Element {
             <Table>
               <TableHeader className={tableHeader.bg}>
                 <TableRow>
-                  <TableHead className={`${tableHeader.text} ${tableHeader.radius}`}>
+                  <TableHead
+                    className={`${tableHeader.text} ${tableHeader.radius}`}
+                  >
                     Mã đơn
                   </TableHead>
                   <TableHead className={tableHeader.text}>Khách hàng</TableHead>
@@ -337,7 +444,9 @@ export default function PartnerOrders(): React.JSX.Element {
                   <TableHead className={tableHeader.text}>Cân nặng</TableHead>
                   <TableHead className={tableHeader.text}>Giá trị</TableHead>
                   <TableHead className={tableHeader.text}>Ngày tạo</TableHead>
-                  <TableHead className={`${tableHeader.text} ${tableHeader.radius} text-right`}>
+                  <TableHead
+                    className={`${tableHeader.text} ${tableHeader.radius} text-right`}
+                  >
                     Thao tác
                   </TableHead>
                 </TableRow>
@@ -351,13 +460,17 @@ export default function PartnerOrders(): React.JSX.Element {
                     <TableCell>
                       <div>
                         <p className="font-medium">{order.customerName}</p>
-                        <p className="text-sm text-gray-500">{order.customerPhone}</p>
+                        <p className="text-sm text-gray-500">
+                          {order.customerPhone}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium">{order.lockerName}</p>
-                        <p className="text-sm text-gray-500">Box {order.boxNumber}</p>
+                        <p className="text-sm text-gray-500">
+                          Box {order.boxNumber}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -372,7 +485,9 @@ export default function PartnerOrders(): React.JSX.Element {
                       {order.weight ? `${order.weight} kg` : "-"}
                     </TableCell>
                     <TableCell className="font-semibold">
-                      {order.totalPrice ? `${order.totalPrice.toLocaleString()}đ` : "-"}
+                      {order.totalPrice
+                        ? `${order.totalPrice.toLocaleString()}đ`
+                        : "-"}
                     </TableCell>
                     <TableCell className="text-sm">
                       {new Date(order.createdAt).toLocaleDateString("vi-VN")}
@@ -434,7 +549,7 @@ export default function PartnerOrders(): React.JSX.Element {
                   <span>
                     Hết hạn:{" "}
                     {new Date(accessCodeModal.code.expiresAt).toLocaleString(
-                      "vi-VN"
+                      "vi-VN",
                     )}
                   </span>
                 </div>
@@ -460,7 +575,11 @@ export default function PartnerOrders(): React.JSX.Element {
             <Button
               variant="outline"
               onClick={() =>
-                setAccessCodeModal({ open: false, code: null, action: "COLLECT" })
+                setAccessCodeModal({
+                  open: false,
+                  code: null,
+                  action: "COLLECT",
+                })
               }
             >
               Đóng
@@ -492,7 +611,10 @@ export default function PartnerOrders(): React.JSX.Element {
                 placeholder="VD: 3.5"
                 value={weightModal.weight}
                 onChange={(e) =>
-                  setWeightModal((prev) => ({ ...prev, weight: e.target.value }))
+                  setWeightModal((prev) => ({
+                    ...prev,
+                    weight: e.target.value,
+                  }))
                 }
               />
             </div>

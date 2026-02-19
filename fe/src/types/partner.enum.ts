@@ -66,7 +66,8 @@ export const AccessCodeAction = {
   RETURN: "RETURN",
 } as const;
 
-export type AccessCodeAction = (typeof AccessCodeAction)[keyof typeof AccessCodeAction];
+export type AccessCodeAction =
+  (typeof AccessCodeAction)[keyof typeof AccessCodeAction];
 
 export const AccessCodeStatus = {
   ACTIVE: "ACTIVE",
@@ -75,7 +76,8 @@ export const AccessCodeStatus = {
   CANCELLED: "CANCELLED",
 } as const;
 
-export type AccessCodeStatus = (typeof AccessCodeStatus)[keyof typeof AccessCodeStatus];
+export type AccessCodeStatus =
+  (typeof AccessCodeStatus)[keyof typeof AccessCodeStatus];
 
 // ============================================
 // Partner Status Enum

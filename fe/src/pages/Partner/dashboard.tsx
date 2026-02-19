@@ -20,22 +20,23 @@ import {
   PageLoading,
   ErrorState,
 } from "~/components/ui";
-import { useGetPartnerDashboardQuery, useGetPendingOrdersQuery } from "@/stores/apis/partnerApi";
+import {
+  useGetPartnerDashboardQuery,
+  useGetPendingOrdersQuery,
+} from "@/stores/apis/partnerApi";
 
 export default function PartnerDashboard(): React.JSX.Element {
   const navigate = useNavigate();
-  
+
   // RTK Query hooks
-  const { 
-    data: dashboardData, 
-    isLoading, 
-    error, 
-    refetch 
+  const {
+    data: dashboardData,
+    isLoading,
+    error,
+    refetch,
   } = useGetPartnerDashboardQuery();
-  
-  const { 
-    data: pendingOrders = [] 
-  } = useGetPendingOrdersQuery();
+
+  const { data: pendingOrders = [] } = useGetPendingOrdersQuery();
 
   if (isLoading) {
     return <PageLoading message="Đang tải dashboard..." />;
@@ -55,15 +56,22 @@ export default function PartnerDashboard(): React.JSX.Element {
   // Map API response to display data
   const displayData = {
     todayOrders: dashboardData.totalOrders || 0,
-    processingOrders: dashboardData.totalOrders - dashboardData.completedOrders - dashboardData.canceledOrders || 0,
+    processingOrders:
+      dashboardData.totalOrders -
+        dashboardData.completedOrders -
+        dashboardData.canceledOrders || 0,
     monthlyRevenue: dashboardData.monthRevenue || 0,
     activeLockers: dashboardData.totalStores || 0,
     pendingCollections: dashboardData.pendingOrders || 0,
     overdueOrders: 0, // Not in API response yet
     avgProcessingTime: "24h", // Static for now
-    completionRate: dashboardData.totalOrders > 0 
-      ? ((dashboardData.completedOrders / dashboardData.totalOrders) * 100).toFixed(1) 
-      : 0,
+    completionRate:
+      dashboardData.totalOrders > 0
+        ? (
+            (dashboardData.completedOrders / dashboardData.totalOrders) *
+            100
+          ).toFixed(1)
+        : 0,
     partnerRevenue: dashboardData.partnerRevenue || 0,
     platformFee: dashboardData.platformFee || 0,
   };
@@ -82,7 +90,7 @@ export default function PartnerDashboard(): React.JSX.Element {
       {(displayData.pendingCollections > 0 || pendingOrders.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {displayData.pendingCollections > 0 && (
-            <Card 
+            <Card
               className="border-l-4 border-l-yellow-500 cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => navigate("/partner/orders?status=WAITING")}
             >
@@ -129,7 +137,9 @@ export default function PartnerDashboard(): React.JSX.Element {
             </div>
             <Badge className="bg-blue-600 text-white">Tổng đơn</Badge>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Tổng đơn hàng</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Tổng đơn hàng
+          </h3>
           <p className="text-3xl font-bold text-blue-600">
             {displayData.todayOrders}
           </p>
@@ -214,17 +224,17 @@ export default function PartnerDashboard(): React.JSX.Element {
             <CardTitle>Hành động nhanh</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button 
-              size="sm" 
-              className="w-full" 
+            <Button
+              size="sm"
+              className="w-full"
               variant="outline"
               onClick={() => navigate("/partner/orders?status=WAITING")}
             >
               Xem đơn chờ chấp nhận ({displayData.pendingCollections})
             </Button>
-            <Button 
-              size="sm" 
-              className="w-full" 
+            <Button
+              size="sm"
+              className="w-full"
               variant="outline"
               onClick={() => navigate("/partner/orders?status=READY")}
             >
