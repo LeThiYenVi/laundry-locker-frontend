@@ -88,6 +88,26 @@ export const ADMIN_ENDPOINTS = {
   SCHEDULER_PICKUP_REMINDERS: `${ROOT_URI.ADMIN}/scheduler/pickup-reminders`,
   SCHEDULER_STATUS: `${ROOT_URI.ADMIN}/scheduler/status`,
 
+  // Loyalty Management
+  LOYALTY_USERS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
+  LOYALTY_POINTS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/points`,
+  LOYALTY_HISTORY: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
+  LOYALTY_STATISTICS: `${ROOT_URI.ADMIN}/loyalty/statistics`,
+
+  // Partner Management
+  PARTNERS: `${ROOT_URI.ADMIN}/partners`,
+  PARTNER_BY_ID: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}`,
+  PARTNER_APPROVE: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/approve`,
+  PARTNER_REJECT: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/reject`,
+  PARTNER_SUSPEND: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
+
   // Legacy (keep for backward compatibility)
   ANALYTICS: `${ROOT_URI.ADMIN}/analytics`,
   SCHEDULE: `${ROOT_URI.ADMIN}/schedule`,
