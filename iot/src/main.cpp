@@ -22,6 +22,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
+#include <PubSubClient.h>
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
 #include "config.h"
@@ -32,8 +33,11 @@
 // Global Variables
 // ============================================
 ESP8266WebServer server(SERVER_PORT);
+WiFiClient mqttWifiClient;
+PubSubClient mqttClient(mqttWifiClient);
 unsigned long lastStatusReport = 0;
 unsigned long lastWiFiCheck = 0;
+unsigned long lastMqttReconnect = 0;
 
 // Button handling variables
 unsigned long lastButtonPress = 0;
@@ -91,6 +95,7 @@ void handleApiInfo() {
     StaticJsonDocument<256> doc;
     doc["device"] = DEVICE_ID;
     doc["boxId"] = BOX_ID;
+    doc["lockerId"] = LOCKER_ID;
     doc["status"] = isUnlocked() ? "UNLOCKED" : "LOCKED";
     doc["uptime"] = millis() / 1000;
     doc["rssi"] = WiFi.RSSI();
@@ -312,22 +317,185 @@ void handleNotFound() {
     server.send(404, "application/json", "{\"error\":\"Not found\"}");
 }
 
+// ============================================
+// MQTT Functions
+// ============================================
+
+/**
+ * MQTT message callback - xử lý lệnh từ backend
+ * Topic: locker/commands/{DEVICE_ID}
+ * Payload: {"box_id": 1, "action": "OPEN"} hoặc {"box_id": 1, "action": "LOCK"}
+ */
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+    // Parse payload
+    char msg[length + 1];
+    memcpy(msg, payload, length);
+    msg[length] = '\0';
+    
+    Serial.printf("[MQTT] Message on [%s]: %s\n", topic, msg);
+    
+    StaticJsonDocument<256> doc;
+    DeserializationError err = deserializeJson(doc, msg);
+    if (err) {
+        Serial.printf("[MQTT] JSON parse error: %s\n", err.c_str());
+        return;
+    }
+    
+    int cmdBoxId = doc["box_id"] | -1;
+    const char* action = doc["action"] | "";
+    
+    // Kiểm tra box_id có đúng box này không
+    if (cmdBoxId != BOX_ID) {
+        Serial.printf("[MQTT] Ignored: box_id %d != my BOX_ID %d\n", cmdBoxId, BOX_ID);
+        return;
+    }
+    
+    if (strcmp(action, "OPEN") == 0) {
+        Serial.println("[MQTT] >>> OPEN command received! Unlocking...");
+        unlockBox();
+        
+        // Publish status update
+        StaticJsonDocument<128> status;
+        status["box_id"] = BOX_ID;
+        status["status"] = "UNLOCKED";
+        status["device"] = DEVICE_ID;
+        char statusMsg[128];
+        serializeJson(status, statusMsg);
+        mqttClient.publish(MQTT_TOPIC_STATUS, statusMsg);
+        
+    } else if (strcmp(action, "LOCK") == 0) {
+        Serial.println("[MQTT] >>> LOCK command received! Locking...");
+        lockBox();
+        
+        StaticJsonDocument<128> status;
+        status["box_id"] = BOX_ID;
+        status["status"] = "LOCKED";
+        status["device"] = DEVICE_ID;
+        char statusMsg[128];
+        serializeJson(status, statusMsg);
+        mqttClient.publish(MQTT_TOPIC_STATUS, statusMsg);
+        
+    } else {
+        Serial.printf("[MQTT] Unknown action: %s\n", action);
+    }
+}
+
+/**
+ * Kết nối tới MQTT Broker và subscribe topic lệnh
+ */
+void connectMQTT() {
+    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+    mqttClient.setCallback(mqttCallback);
+    
+    String clientId = String(DEVICE_ID) + "_" + String(random(0xffff), HEX);
+    Serial.printf("[MQTT] Connecting to %s:%d as %s...\n", MQTT_BROKER, MQTT_PORT, clientId.c_str());
+    
+    bool connected;
+    if (strlen(MQTT_USER) > 0) {
+        connected = mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD);
+    } else {
+        connected = mqttClient.connect(clientId.c_str());
+    }
+    
+    if (connected) {
+        Serial.println("[MQTT] Connected!");
+        mqttClient.subscribe(MQTT_TOPIC_CMD);
+        Serial.printf("[MQTT] Subscribed to: %s\n", MQTT_TOPIC_CMD);
+        
+        // Publish online status
+        StaticJsonDocument<128> status;
+        status["box_id"] = BOX_ID;
+        status["status"] = "ONLINE";
+        status["device"] = DEVICE_ID;
+        status["ip"] = WiFi.localIP().toString();
+        char statusMsg[128];
+        serializeJson(status, statusMsg);
+        mqttClient.publish(MQTT_TOPIC_STATUS, statusMsg);
+    } else {
+        Serial.printf("[MQTT] Failed, rc=%d. Retry in %ds\n", mqttClient.state(), MQTT_RECONNECT_INTERVAL / 1000);
+    }
+}
+
+// ============================================
+// Backend API Proxy Handlers
+// ESP8266 forwards web UI requests to backend
+// ============================================
+
+/**
+ * Generic proxy: forward request to backend API
+ * Reads Authorization header and body from web client,
+ * forwards to backend, returns response.
+ */
+void proxyToBackend(const char* method, const String& backendPath, const String& bodyOverride = "") {
+    String body = bodyOverride.length() > 0 ? bodyOverride 
+                 : (server.hasArg("plain") ? server.arg("plain") : "");
+    String auth = server.header("Authorization");
+    
+    WiFiClient wifiClient;
+    HTTPClient http;
+    String url = String(BACKEND_URL) + backendPath;
+    
+    Serial.printf("[PROXY] %s %s\n", method, url.c_str());
+    
+    http.begin(wifiClient, url);
+    http.addHeader("Content-Type", "application/json");
+    if (auth.length() > 0) {
+        http.addHeader("Authorization", auth);
+    }
+    http.setTimeout(HTTP_TIMEOUT);
+    
+    int httpCode;
+    String methodStr = String(method);
+    if (methodStr == "GET") httpCode = http.GET();
+    else if (methodStr == "PUT") httpCode = http.PUT(body);
+    else httpCode = http.POST(body);
+    
+    if (httpCode > 0) {
+        String response = http.getString();
+        server.send(httpCode, "application/json", response);
+        Serial.printf("[PROXY] Response: %d\n", httpCode);
+    } else {
+        Serial.printf("[PROXY] Error: %s\n", http.errorToString(httpCode).c_str());
+        server.send(502, "application/json", 
+            "{\"success\":false,\"message\":\"Không thể kết nối server\"}");
+    }
+    http.end();
+}
+
+// Auth proxy handlers
+void handleProxySendOtp() { proxyToBackend("POST", "/api/auth/email/send-otp"); }
+void handleProxyVerifyOtp() { proxyToBackend("POST", "/api/auth/email/verify-otp"); }
+void handleProxyRegister() { proxyToBackend("POST", "/api/auth/email/complete-registration"); }
+
 void setupServer() {
+    // Collect Authorization header from requests
+    server.collectHeaders("Authorization");
+    
+    // Core endpoints
     server.on("/", HTTP_GET, handleRoot);
     server.on("/api/info", HTTP_GET, handleApiInfo);
     server.on("/verify-and-unlock", HTTP_POST, handleVerifyAndUnlock);
     server.on("/unlock", HTTP_POST, handleUnlock);
     server.on("/status", HTTP_GET, handleStatus);
+    
+    // Auth proxy endpoints (for kiosk login/register)
+    server.on("/api/proxy/send-otp", HTTP_POST, handleProxySendOtp);
+    server.on("/api/proxy/verify-otp", HTTP_POST, handleProxyVerifyOtp);
+    server.on("/api/proxy/register", HTTP_POST, handleProxyRegister);
+    
     server.onNotFound(handleNotFound);
     
     server.begin();
     Serial.printf("[SERVER] HTTP server started on port %d\n", SERVER_PORT);
     Serial.println("[SERVER] Endpoints:");
-    Serial.println("  GET  /                    - Kiosk Web UI");
-    Serial.println("  GET  /api/info            - Device info (JSON)");
-    Serial.println("  POST /verify-and-unlock   - Verify PIN & unlock");
-    Serial.println("  POST /unlock              - Direct unlock/lock");
-    Serial.println("  GET  /status              - Current status");
+    Serial.println("  GET  /                       - Kiosk Web UI");
+    Serial.println("  GET  /api/info               - Device info");
+    Serial.println("  POST /verify-and-unlock       - PIN verify & unlock");
+    Serial.println("  POST /unlock                  - Direct unlock/lock");
+    Serial.println("  GET  /status                  - Current status");
+    Serial.println("  POST /api/proxy/send-otp      - Auth: Send OTP");
+    Serial.println("  POST /api/proxy/verify-otp    - Auth: Verify OTP");
+    Serial.println("  POST /api/proxy/register      - Auth: Register");
 }
 
 // ============================================
@@ -395,6 +563,9 @@ void setup() {
     if (WiFi.status() == WL_CONNECTED) {
         setupServer();
         
+        // Kết nối MQTT
+        connectMQTT();
+        
         // Báo cáo trạng thái ban đầu
         reportBoxStatus(STATUS_AVAILABLE, false);
     }
@@ -409,6 +580,15 @@ void loop() {
     
     // Xử lý HTTP requests
     server.handleClient();
+    
+    // Xử lý MQTT
+    if (mqttClient.connected()) {
+        mqttClient.loop();
+    } else if (currentMillis - lastMqttReconnect >= MQTT_RECONNECT_INTERVAL) {
+        lastMqttReconnect = currentMillis;
+        Serial.println("[MQTT] Reconnecting...");
+        connectMQTT();
+    }
     
     // Xử lý nút nhấn
     handleButton();
