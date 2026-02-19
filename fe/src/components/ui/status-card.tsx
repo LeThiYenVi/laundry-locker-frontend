@@ -1,6 +1,6 @@
 import * as React from "react";
 
-type Variant = "blue" | "indigo" | "violet" | "green";
+type Variant = "blue" | "indigo" | "violet" | "green" | "amber" | "red" | "gray";
 
 const VARIANT_STYLES: Record<Variant, { wrapper: string; overlay: string; accent: string; iconBg: string }> = {
   blue: {
@@ -26,6 +26,24 @@ const VARIANT_STYLES: Record<Variant, { wrapper: string; overlay: string; accent
     overlay: "from-green-700/30 via-green-600/20",
     accent: "border-green-500",
     iconBg: "bg-green-600",
+  },
+  amber: {
+    wrapper: "bg-gradient-to-br from-amber-950 via-amber-800/60 to-amber-700/20",
+    overlay: "from-amber-700/30 via-amber-600/20",
+    accent: "border-amber-500",
+    iconBg: "bg-amber-500",
+  },
+  red: {
+    wrapper: "bg-gradient-to-br from-red-950 via-red-800/60 to-red-700/20",
+    overlay: "from-red-700/30 via-red-600/20",
+    accent: "border-red-500",
+    iconBg: "bg-red-500",
+  },
+  gray: {
+    wrapper: "bg-gradient-to-br from-gray-950 via-gray-800/60 to-gray-700/20",
+    overlay: "from-gray-700/30 via-gray-600/20",
+    accent: "border-gray-500",
+    iconBg: "bg-gray-500",
   },
 };
 

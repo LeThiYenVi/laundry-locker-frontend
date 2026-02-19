@@ -1,0 +1,1713 @@
+{
+  "info": {
+    "name": "Laundry Locker - Full Flow API Collection v4",
+    "description": "🧺 BỘ SƯU TẬP API ĐẦY ĐỦ CHO HỆ THỐNG LAUNDRY LOCKER\n\n📋 TỔNG QUAN:\n- Tổng số API: 170+ endpoints\n- Phiên bản: 4.0\n- Cập nhật: 2026-02-03\n\n👥 ROLES TRONG HỆ THỐNG:\n- USER: Khách hàng sử dụng dịch vụ\n- PARTNER: Chủ cửa hàng giặt ủi\n- ADMIN: Quản trị viên hệ thống\n\n🔐 TEST ACCOUNTS:\n- Admin: admin@laundrylocker.com / Password@123\n- Partner: partner1@laundrylocker.com / Password@123\n- User: user1@laundrylocker.com / Password@123\n\n📦 SERVICE CATEGORIES:\n- STORAGE: Dịch vụ gửi đồ (giá cố định)\n- LAUNDRY: Dịch vụ giặt đồ (giá theo kg)\n\n📊 LUỒNG NGHIỆP VỤ:\n1. Luồng đăng nhập/đăng ký\n2. Luồng đặt đơn STORAGE\n3. Luồng đặt đơn LAUNDRY\n4. Luồng xử lý đơn (Partner/Staff)\n5. Luồng thanh toán\n6. Luồng nhận đồ\n7. Luồng Loyalty\n8. Luồng Admin",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "laundry-locker-full-flow-api-v4"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080", "type": "string"},
+    {"key": "accessToken", "value": "", "type": "string"},
+    {"key": "refreshToken", "value": "", "type": "string"},
+    {"key": "adminAccessToken", "value": "", "type": "string"},
+    {"key": "adminRefreshToken", "value": "", "type": "string"},
+    {"key": "partnerAccessToken", "value": "", "type": "string"},
+    {"key": "partnerRefreshToken", "value": "", "type": "string"},
+    {"key": "tempToken", "value": "", "type": "string"},
+    {"key": "orderId", "value": "", "type": "string"},
+    {"key": "orderCode", "value": "", "type": "string"},
+    {"key": "pinCode", "value": "", "type": "string"},
+    {"key": "paymentId", "value": "", "type": "string"},
+    {"key": "paymentUrl", "value": "", "type": "string"},
+    {"key": "refundId", "value": "", "type": "string"},
+    {"key": "storeId", "value": "1", "type": "string"},
+    {"key": "lockerId", "value": "1", "type": "string"},
+    {"key": "boxId", "value": "1", "type": "string"},
+    {"key": "serviceId", "value": "1", "type": "string"},
+    {"key": "userId", "value": "", "type": "string"},
+    {"key": "partnerId", "value": "", "type": "string"},
+    {"key": "accessCode", "value": "", "type": "string"},
+    {"key": "accessCodeId", "value": "", "type": "string"},
+    {"key": "notificationId", "value": "1", "type": "string"},
+    {"key": "stampCardId", "value": "", "type": "string"},
+    {"key": "promotionId", "value": "", "type": "string"}
+  ],
+  "item": [
+    {
+      "name": "🔐 1. Authentication",
+      "description": "APIs xác thực người dùng (3 roles: USER, PARTNER, ADMIN)",
+      "item": [
+        {
+          "name": "📧 1.1 Email Authentication",
+          "description": "Đăng nhập bằng email OTP",
+          "item": [
+            {
+              "name": "Step 1: Send OTP to Email",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/email/send-otp",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"user1@laundrylocker.com\"\n}"}
+              }
+            },
+            {
+              "name": "Step 2: Verify OTP (Existing User)",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/email/verify-otp",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"user1@laundrylocker.com\",\n  \"otp\": \"123456\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    if(jsonData.data.accessToken) {", "        pm.collectionVariables.set('accessToken', jsonData.data.accessToken);", "        pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);", "        console.log('✅ Login successful! Token saved.');", "    }", "    if(jsonData.data.tempToken) {", "        pm.collectionVariables.set('tempToken', jsonData.data.tempToken);", "        console.log('📝 New user! TempToken saved for registration.');", "    }", "}"]}}]
+            },
+            {
+              "name": "Step 3: Complete Registration (New User)",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/email/complete-registration",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"tempToken\": \"{{tempToken}}\",\n  \"fullName\": \"Nguyễn Văn Huy\",\n  \"phoneNumber\": \"+84901234567\",\n  \"password\": \"Password@123\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessToken) {", "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);", "    pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);", "    console.log('✅ Registration complete! Token saved.');", "}"]}}]
+            }
+          ]
+        },
+        {
+          "name": "📱 1.2 Phone Authentication (Firebase)",
+          "description": "Đăng nhập bằng số điện thoại qua Firebase",
+          "item": [
+            {
+              "name": "Step 1: Phone Login with Firebase Token",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/phone-login",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"phoneNumber\": \"+84901234567\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    if(jsonData.data.accessToken) {", "        pm.collectionVariables.set('accessToken', jsonData.data.accessToken);", "        pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);", "    }", "    if(jsonData.data.tempToken) {", "        pm.collectionVariables.set('tempToken', jsonData.data.tempToken);", "    }", "}"]}}]
+            },
+            {
+              "name": "Step 2: Complete Registration (New Phone User)",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/complete-registration",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"tempToken\": \"{{tempToken}}\",\n  \"fullName\": \"Nguyễn Văn A\",\n  \"email\": \"newuser@gmail.com\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessToken) {", "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);", "    pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);", "}"]}}]
+            }
+          ]
+        },
+        {
+          "name": "👔 1.3 Admin Authentication (2FA)",
+          "description": "Đăng nhập Admin với xác thực 2 bước",
+          "item": [
+            {
+              "name": "Step 1: Admin Login",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/auth/login",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@laundrylocker.com\",\n  \"password\": \"Password@123\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.tempToken) {", "    pm.collectionVariables.set('tempToken', jsonData.data.tempToken);", "    console.log('📧 OTP sent to email. Check your inbox.');", "}"]}}]
+            },
+            {
+              "name": "Step 2: Verify 2FA OTP",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/auth/verify-2fa",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"tempToken\": \"{{tempToken}}\",\n  \"otp\": \"123456\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessToken) {", "    pm.collectionVariables.set('adminAccessToken', jsonData.data.accessToken);", "    pm.collectionVariables.set('adminRefreshToken', jsonData.data.refreshToken);", "    console.log('✅ Admin login successful!');", "}"]}}]
+            },
+            {
+              "name": "Refresh Admin Token",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/auth/refresh",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"refreshToken\": \"{{adminRefreshToken}}\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessToken) {", "    pm.collectionVariables.set('adminAccessToken', jsonData.data.accessToken);", "}"]}}]
+            }
+          ]
+        },
+        {
+          "name": "🤝 1.4 Partner Authentication",
+          "description": "Đăng nhập Partner",
+          "item": [
+            {
+              "name": "Partner Login (Email OTP)",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/email/send-otp",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"partner1@laundrylocker.com\"\n}"}
+              }
+            },
+            {
+              "name": "Partner Verify OTP",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/email/verify-otp",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"partner1@laundrylocker.com\",\n  \"otp\": \"123456\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessToken) {", "    pm.collectionVariables.set('partnerAccessToken', jsonData.data.accessToken);", "    pm.collectionVariables.set('partnerRefreshToken', jsonData.data.refreshToken);", "    console.log('✅ Partner login successful!');", "}"]}}]
+            }
+          ]
+        },
+        {
+          "name": "🔄 1.5 Token Management",
+          "description": "Quản lý token",
+          "item": [
+            {
+              "name": "Refresh Token",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/refresh-token",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessToken) {", "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);", "}"]}}]
+            },
+            {
+              "name": "Logout",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/logout",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"}
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔑 1.6 Password Reset",
+          "description": "Quên/đặt lại mật khẩu",
+          "item": [
+            {
+              "name": "Forgot Password",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/forgot-password",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"user1@laundrylocker.com\"\n}"}
+              }
+            },
+            {
+              "name": "Reset Password",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/auth/reset-password",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"user1@laundrylocker.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"NewPassword@123\",\n  \"confirmPassword\": \"NewPassword@123\"\n}"}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 2. User Profile",
+      "description": "Quản lý thông tin người dùng",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/user/profile",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/user/profile",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"fullName\": \"Nguyễn Văn Huy Updated\",\n  \"phoneNumber\": \"+84901234567\",\n  \"address\": \"123 Nguyễn Huệ, Q.1, TP.HCM\"\n}"}
+          }
+        },
+        {
+          "name": "Update Avatar",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/user/avatar",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"imageUrl\": \"https://example.com/avatar.jpg\"\n}"}
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/user/password",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"currentPassword\": \"Password@123\",\n  \"newPassword\": \"NewPassword@456\"\n}"}
+          }
+        },
+        {
+          "name": "Register FCM Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/user/fcm-token",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"fcmToken\": \"dGVzdF9mY21fdG9rZW5fMTIzNDU2Nzg5\",\n  \"deviceType\": \"ANDROID\",\n  \"deviceId\": \"device-uuid-123\"\n}"}
+          }
+        },
+        {
+          "name": "Remove FCM Token",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/user/fcm-token?fcmToken=dGVzdF9mY21fdG9rZW5fMTIzNDU2Nzg5",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏪 3. Stores (Public)",
+      "description": "Tìm kiếm cửa hàng - API công khai",
+      "item": [
+        {
+          "name": "Get All Stores",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/stores"}
+        },
+        {
+          "name": "Get Store By ID",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/stores/{{storeId}}"}
+        },
+        {
+          "name": "Get Nearby Stores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/stores/nearby?latitude=10.7769&longitude=106.7009&radiusMeters=5000&limit=10"
+          }
+        },
+        {
+          "name": "Get Store Ratings",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/stores/{{storeId}}/ratings?page=0&size=10"}
+        }
+      ]
+    },
+    {
+      "name": "🔒 4. Lockers & Boxes (Public)",
+      "description": "Quản lý locker và box - API công khai",
+      "item": [
+        {
+          "name": "Get All Lockers",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers"}
+        },
+        {
+          "name": "Get Lockers By Store",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers?storeId={{storeId}}"}
+        },
+        {
+          "name": "Get Locker By ID",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers/{{lockerId}}"}
+        },
+        {
+          "name": "Get Boxes By Locker",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers/{{lockerId}}/boxes"}
+        },
+        {
+          "name": "Get Available Boxes",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers/{{lockerId}}/boxes/available"}
+        }
+      ]
+    },
+    {
+      "name": "🧺 5. Services (Public)",
+      "description": "Danh sách dịch vụ - API công khai\n\n📦 SERVICE CATEGORIES:\n- STORAGE: Dịch vụ gửi đồ (giá cố định)\n- LAUNDRY: Dịch vụ giặt đồ (giá theo kg)",
+      "item": [
+        {
+          "name": "Get All Services",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services"}
+        },
+        {
+          "name": "Get Services by Category: STORAGE",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services?category=STORAGE"}
+        },
+        {
+          "name": "Get Services by Category: LAUNDRY",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services?category=LAUNDRY"}
+        },
+        {
+          "name": "Get Services By Store",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services?storeId={{storeId}}"}
+        },
+        {
+          "name": "Get Services By Store & Category",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services?storeId={{storeId}}&category=LAUNDRY"}
+        },
+        {
+          "name": "Get Service By ID",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services/{{serviceId}}"}
+        }
+      ]
+    },
+    {
+      "name": "📦 6. FLOW: Customer Order STORAGE",
+      "description": "🔄 LUỒNG ĐẶT ĐƠN GỬI ĐỒ (STORAGE)\n\nBước 1: Tìm cửa hàng & locker gần nhất\nBước 2: Chọn dịch vụ gửi đồ (STORAGE)\nBước 3: Tạo đơn hàng\nBước 4: Thanh toán (bắt buộc trước khi gửi)\nBước 5: Nhận PIN, đến locker mở box, bỏ đồ vào\nBước 6: Xác nhận đã bỏ đồ\nBước 7: Theo dõi đơn hàng\nBước 8: Nhận đồ khi hết thời gian",
+      "item": [
+        {
+          "name": "Step 1: Find Nearby Stores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/stores/nearby?latitude=10.7769&longitude=106.7009&radiusMeters=5000"
+          }
+        },
+        {
+          "name": "Step 2: Get Available Lockers",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers?storeId={{storeId}}"}
+        },
+        {
+          "name": "Step 3: Get Available Boxes",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers/{{lockerId}}/boxes/available"}
+        },
+        {
+          "name": "Step 4: Get STORAGE Services",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services?category=STORAGE"}
+        },
+        {
+          "name": "Step 5: Create STORAGE Order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/orders",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"storeId\": 1,\n  \"sendBoxId\": 1,\n  \"notes\": \"Gửi túi xách và laptop\",\n  \"intendedReceiveAt\": \"2026-02-04T18:00:00\",\n  \"orderDetails\": [\n    {\n      \"serviceId\": 1,\n      \"quantity\": 4,\n      \"notes\": \"Gửi 4 giờ\"\n    }\n  ]\n}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    pm.collectionVariables.set('orderId', jsonData.data.id);", "    pm.collectionVariables.set('orderCode', jsonData.data.orderCode);", "    if(jsonData.data.pinCode) {", "        pm.collectionVariables.set('pinCode', jsonData.data.pinCode);", "    }", "    console.log('✅ Order created:', jsonData.data.orderCode);", "    console.log('📌 PIN Code:', jsonData.data.pinCode);", "}"]}}]
+        },
+        {
+          "name": "Step 6: Create Payment (VNPay)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/payments/create",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"orderId\": {{orderId}},\n  \"paymentMethod\": \"VNPAY\",\n  \"returnUrl\": \"https://app.laundrylocker.vn/payment/callback\"\n}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    pm.collectionVariables.set('paymentId', jsonData.data.paymentId);", "    pm.collectionVariables.set('paymentUrl', jsonData.data.paymentUrl);", "    console.log('💳 Payment URL:', jsonData.data.paymentUrl);", "}"]}}]
+        },
+        {
+          "name": "Step 7: Check Payment Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payments/{{paymentId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 8: Get Order with PIN",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 9: IoT - Verify PIN (Customer arrives at locker)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/verify-pin",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"pinCode\": \"{{pinCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "Step 10: IoT - Unlock Box (Customer)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/unlock",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"pinCode\": \"{{pinCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "Step 11: Confirm Order (After placing items)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/confirm",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 12: Get Order Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 13: Get Order Timeline",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/timeline",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 14: Complete Order (Pickup items)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/complete",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 15: Rate Order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/rate",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Dịch vụ gửi đồ tiện lợi, an toàn!\",\n  \"serviceRating\": 5,\n  \"qualityRating\": 5,\n  \"speedRating\": 5\n}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧺 7. FLOW: Customer Order LAUNDRY",
+      "description": "🔄 LUỒNG ĐẶT ĐƠN GIẶT ĐỒ (LAUNDRY)\n\nBước 1: Tìm cửa hàng & locker\nBước 2: Chọn dịch vụ giặt (LAUNDRY)\nBước 3: Tạo đơn với ước tính cân nặng\nBước 4: Nhận PIN, bỏ đồ vào locker\nBước 5: Xác nhận đã bỏ đồ → Partner nhận đơn\nBước 6: Partner cân thực tế & xử lý\nBước 7: Partner trả đồ vào locker\nBước 8: Thanh toán (sau khi có giá thực tế)\nBước 9: Nhận đồ & đánh giá",
+      "item": [
+        {
+          "name": "Step 1: Find Nearby Stores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/stores/nearby?latitude=10.7769&longitude=106.7009&radiusMeters=5000"
+          }
+        },
+        {
+          "name": "Step 2: Get Available Boxes",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/lockers/{{lockerId}}/boxes/available"}
+        },
+        {
+          "name": "Step 3: Get LAUNDRY Services",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/services?category=LAUNDRY"}
+        },
+        {
+          "name": "Step 4: Create LAUNDRY Order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/orders",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"storeId\": 1,\n  \"sendBoxId\": 2,\n  \"estimatedWeight\": 3.5,\n  \"notes\": \"Quần áo trắng giặt riêng, không sấy máy áo len\",\n  \"orderDetails\": [\n    {\n      \"serviceId\": 3,\n      \"quantity\": 2.5,\n      \"notes\": \"Giặt sấy thường\"\n    },\n    {\n      \"serviceId\": 4,\n      \"quantity\": 1.0,\n      \"notes\": \"Giặt khô áo vest\"\n    }\n  ]\n}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    pm.collectionVariables.set('orderId', jsonData.data.id);", "    pm.collectionVariables.set('orderCode', jsonData.data.orderCode);", "    if(jsonData.data.pinCode) {", "        pm.collectionVariables.set('pinCode', jsonData.data.pinCode);", "    }", "    console.log('✅ Laundry order created:', jsonData.data.orderCode);", "    console.log('📌 PIN Code:', jsonData.data.pinCode);", "    console.log('💰 Estimated Price:', jsonData.data.estimatedPrice);", "}"]}}]
+        },
+        {
+          "name": "Step 5: Get Order Details",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 6: IoT - Unlock Box & Place Items",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/unlock",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"pinCode\": \"{{pinCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "Step 7: Confirm Order (After placing items)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/confirm",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 8: Check Order Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 9: Get Order by Code",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/code/{{orderCode}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 10: Get My Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/orders/my-orders?page=0&size=10",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 11: Cancel Order (Optional)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/cancel?reason=Đổi ý không sử dụng dịch vụ",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏭 8. FLOW: Partner Process Order",
+      "description": "🔄 LUỒNG XỬ LÝ ĐƠN HÀNG (PARTNER)\n\nBước 1: Xem đơn hàng chờ xử lý\nBước 2: Chấp nhận đơn → Nhận Access Code\nBước 3: Gửi Access Code cho nhân viên\nBước 4: Nhân viên mở locker lấy đồ\nBước 5: Cập nhật cân nặng thực tế\nBước 6: Đánh dấu đang xử lý\nBước 7: Hoàn thành → Nhận Access Code trả đồ\nBước 8: Trả đồ vào locker",
+      "item": [
+        {
+          "name": "Step 1: Get Partner Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/dashboard",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 2: Get Pending Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/orders/pending?page=0&size=10",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 3: Get Order Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/orders/{{orderId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 4: Accept Order (Get Collection Code)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner/orders/{{orderId}}/accept?expirationHours=24&notes=Thu%20gom%20trước%2016h",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessCode) {", "    pm.collectionVariables.set('accessCode', jsonData.data.accessCode);", "    console.log('🔑 Collection Access Code:', jsonData.data.accessCode);", "}"]}}]
+        },
+        {
+          "name": "Step 5: IoT - Staff Unlock with Access Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/unlock-with-code",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"accessCode\": \"{{accessCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "Step 6: Mark Order Collected",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/collect",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 7: Update Actual Weight",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/partner/orders/{{orderId}}/weight",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"actualWeight\": 4.2,\n  \"weightDifference\": 0.7,\n  \"notes\": \"Khách gửi thêm 2 áo khoác\"\n}"}
+          }
+        },
+        {
+          "name": "Step 8: Start Processing",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner/orders/{{orderId}}/process",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Step 9: Mark Ready (Get Return Code)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner/orders/{{orderId}}/ready?expirationHours=48",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.accessCode) {", "    pm.collectionVariables.set('accessCode', jsonData.data.accessCode);", "    console.log('🔑 Return Access Code:', jsonData.data.accessCode);", "}"]}}]
+        },
+        {
+          "name": "Step 10: IoT - Staff Return Items to Locker",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/unlock-with-code",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": 5,\n  \"accessCode\": \"{{accessCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "Step 11: Mark Order Returned",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/return",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"returnBoxId\": 5\n}"}
+          }
+        },
+        {
+          "name": "Step 12: Get Order Statistics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/orders/statistics",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔑 9. Partner Access Code Management",
+      "description": "Quản lý Access Code cho nhân viên bên ngoài",
+      "item": [
+        {
+          "name": "Generate Access Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner/access-codes/generate",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"orderId\": {{orderId}},\n  \"purpose\": \"COLLECTION\",\n  \"expirationHours\": 24,\n  \"notes\": \"Mã cho nhân viên thu gom - Ca sáng\"\n}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    pm.collectionVariables.set('accessCode', jsonData.data.code);", "    pm.collectionVariables.set('accessCodeId', jsonData.data.id);", "}"]}}]
+        },
+        {
+          "name": "Get Access Codes List",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/access-codes?page=0&size=10",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Access Codes by Order",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/access-codes/order/{{orderId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Cancel Access Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner/access-codes/{{accessCodeId}}/cancel",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 10. FLOW: Payment",
+      "description": "🔄 LUỒNG THANH TOÁN\n\nSupport:\n- VNPay\n- MoMo\n\nLuồng:\n1. Tạo payment → Nhận URL thanh toán\n2. Redirect user đến trang thanh toán\n3. Callback xử lý kết quả\n4. Kiểm tra trạng thái",
+      "item": [
+        {
+          "name": "Create Payment (VNPay)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/payments/create",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"orderId\": {{orderId}},\n  \"paymentMethod\": \"VNPAY\",\n  \"bankCode\": \"VNBANK\",\n  \"returnUrl\": \"https://app.laundrylocker.vn/payment/callback\"\n}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    pm.collectionVariables.set('paymentId', jsonData.data.paymentId);", "    pm.collectionVariables.set('paymentUrl', jsonData.data.paymentUrl);", "    console.log('💳 Payment URL:', jsonData.data.paymentUrl);", "}"]}}]
+        },
+        {
+          "name": "Create Payment (MoMo)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/payments/create",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"orderId\": {{orderId}},\n  \"paymentMethod\": \"MOMO\",\n  \"returnUrl\": \"https://app.laundrylocker.vn/payment/callback\"\n}"}
+          }
+        },
+        {
+          "name": "VNPay IPN Callback (Server-to-Server)",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/payments/vnpay/ipn?vnp_ResponseCode=00&vnp_TxnRef={{orderId}}&vnp_Amount=10000000"}
+        },
+        {
+          "name": "VNPay Return URL",
+          "request": {"method": "GET", "url": "{{baseUrl}}/api/payments/vnpay/return?vnp_ResponseCode=00&vnp_TxnRef={{orderId}}"}
+        },
+        {
+          "name": "MoMo Callback",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/payments/momo/callback",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"partnerCode\": \"MOMO\",\n  \"orderId\": \"{{orderId}}\",\n  \"resultCode\": 0,\n  \"message\": \"Successful.\"\n}"}
+          }
+        },
+        {
+          "name": "Get Payment By ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payments/{{paymentId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Payments By Order",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payments/order/{{orderId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Request Refund",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/payments/{{paymentId}}/refund",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 50000,\n  \"reason\": \"Khách hủy một phần dịch vụ\"\n}"}
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data) {", "    pm.collectionVariables.set('refundId', jsonData.data.id);", "}"]}}]
+        },
+        {
+          "name": "Get Refund Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payments/refund/{{refundId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Order Refunds",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payments/order/{{orderId}}/refunds",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 11. Notifications",
+      "description": "Quản lý thông báo",
+      "item": [
+        {
+          "name": "Get Notifications (Paginated)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications?page=0&size=20",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/all",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Unread Notifications",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/unread",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/unread/count",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Mark As Read",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Mark All As Read",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/notifications/read-all",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎁 12. FLOW: Loyalty",
+      "description": "🔄 LUỒNG LOYALTY - ĐIỂM THƯỞNG\n\nTích điểm: Mỗi 10,000 VND = 1 điểm\nĐổi điểm: 1 điểm = 1 VND\nThẻ tem: 6 tem = 1 lần giặt miễn phí",
+      "item": [
+        {
+          "name": "Get Loyalty Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/loyalty/summary",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Points Account",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/loyalty/points",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Points History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/loyalty/points/history?page=0&size=20",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Redeem Points",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/loyalty/redeem-points",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"orderId\": {{orderId}},\n  \"points\": 5000\n}"}
+          }
+        },
+        {
+          "name": "Get Expiring Points",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/loyalty/expiring-points",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Stamp Cards",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/loyalty/stamps",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          },
+          "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.length > 0) {", "    pm.collectionVariables.set('stampCardId', jsonData.data[0].id);", "}"]}}]
+        },
+        {
+          "name": "Redeem Stamp",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/loyalty/redeem-stamp",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"stampCardId\": {{stampCardId}},\n  \"orderId\": {{orderId}}\n}"}
+          }
+        },
+        {
+          "name": "Get Available Rewards",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/loyalty/rewards",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 13. IoT APIs",
+      "description": "APIs cho IoT devices\n\nCustomer: Sử dụng PIN code\nStaff: Sử dụng Access Code",
+      "item": [
+        {
+          "name": "🔓 Customer - Verify PIN",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/verify-pin",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"pinCode\": \"{{pinCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "🔓 Customer - Unlock Box (PIN)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/unlock",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"pinCode\": \"{{pinCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "🔓 Customer - Confirm Pickup",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/pickup",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"orderId\": {{orderId}},\n  \"boxId\": {{boxId}}\n}"}
+          }
+        },
+        {
+          "name": "🔑 Staff - Unlock with Access Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/unlock-with-code",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"accessCode\": \"{{accessCode}}\"\n}"}
+          }
+        },
+        {
+          "name": "📡 Update Box Status",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/iot/box-status",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"status\": \"OCCUPIED\",\n  \"sensorData\": {\n    \"weight\": 3.5,\n    \"temperature\": 25,\n    \"humidity\": 60\n  }\n}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "👷 14. Staff APIs",
+      "description": "APIs cho staff operations (Role: ADMIN/PARTNER)",
+      "item": [
+        {
+          "name": "Get Orders Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/orders",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Waiting Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/orders/waiting",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Processing Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/orders/processing",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Ready Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/orders/ready",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Assign Order To Me",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/staff/orders/{{orderId}}/assign",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get My Assigned Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/orders/my-assigned",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Lockers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/staff/lockers",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Unlock Box (Master PIN)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/staff/unlock-box",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"boxId\": {{boxId}},\n  \"masterPin\": \"999999\"\n}"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤝 15. Partner Management",
+      "description": "APIs quản lý Partner",
+      "item": [
+        {
+          "name": "Register as Partner",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"businessName\": \"Tiệm Giặt ABC\",\n  \"businessLicense\": \"1234567890\",\n  \"taxId\": \"0123456789\",\n  \"address\": \"456 Lê Văn Sỹ, Q.3, TP.HCM\",\n  \"phoneNumber\": \"+84912345678\",\n  \"description\": \"Dịch vụ giặt ủi chuyên nghiệp từ năm 2010\"\n}"}
+          }
+        },
+        {
+          "name": "Get My Partner Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Update Partner Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/partner",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"businessName\": \"Tiệm Giặt ABC Premium\",\n  \"description\": \"Dịch vụ giặt ủi cao cấp\"\n}"}
+          }
+        },
+        {
+          "name": "Get Partner Stores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/stores",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Partner Lockers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/lockers",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Partner Revenue",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/revenue?fromDate=2026-02-01T00:00:00&toDate=2026-02-28T23:59:59",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Get Staff List",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partner/staff",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Add Staff",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/partner/staff/{{userId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        },
+        {
+          "name": "Remove Staff",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/partner/staff/{{userId}}",
+            "header": [{"key": "Authorization", "value": "Bearer {{partnerAccessToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 16. Admin APIs",
+      "description": "APIs cho Admin (Role: ADMIN)\nYêu cầu: adminAccessToken",
+      "item": [
+        {
+          "name": "📊 16.1 Dashboard",
+          "item": [
+            {
+              "name": "Get Dashboard Overview",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/dashboard/overview",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "👥 16.2 Users Management",
+          "item": [
+            {
+              "name": "Get All Users",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/users?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get User By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/users/{{userId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Create User",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/users",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"email\": \"newuser@gmail.com\",\n  \"password\": \"Password@123\",\n  \"fullName\": \"Người Dùng Mới\",\n  \"phoneNumber\": \"+84909999999\",\n  \"roles\": [\"USER\"]\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.id) {", "    pm.collectionVariables.set('userId', jsonData.data.id);", "}"]}}]
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/users/{{userId}}",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"fullName\": \"Người Dùng Updated\",\n  \"phoneNumber\": \"+84909999888\"\n}"}
+              }
+            },
+            {
+              "name": "Update User Status",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/users/{{userId}}/status",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"enabled\": false\n}"}
+              }
+            },
+            {
+              "name": "Update User Roles",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/users/{{userId}}/roles",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"roles\": [\"USER\", \"PARTNER\"]\n}"}
+              }
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "method": "DELETE",
+                "url": "{{baseUrl}}/api/admin/users/{{userId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🤝 16.3 Partners Management",
+          "item": [
+            {
+              "name": "Get All Partners",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/partners?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Partner By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/partners/{{partnerId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Approve Partner",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/partners/{{partnerId}}/approve",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Reject Partner",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/partners/{{partnerId}}/reject?reason=Thiếu giấy phép kinh doanh",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Suspend Partner",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/partners/{{partnerId}}/suspend?reason=Vi phạm điều khoản",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🏪 16.4 Stores Management",
+          "item": [
+            {
+              "name": "Get All Stores",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/stores?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Store By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/stores/{{storeId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Create Store",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/stores",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Laundry Express Quận 7\",\n  \"address\": \"789 Nguyễn Văn Linh, Q.7\",\n  \"phoneNumber\": \"+84901234567\",\n  \"latitude\": 10.7315,\n  \"longitude\": 106.7219,\n  \"partnerId\": 1,\n  \"openTime\": \"07:00\",\n  \"closeTime\": \"22:00\"\n}"}
+              }
+            },
+            {
+              "name": "Update Store",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/stores/{{storeId}}",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Laundry Express Updated\",\n  \"address\": \"789 Nguyễn Văn Linh, Q.7\"\n}"}
+              }
+            },
+            {
+              "name": "Update Store Status",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/stores/{{storeId}}/status",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"active\": false\n}"}
+              }
+            },
+            {
+              "name": "Delete Store",
+              "request": {
+                "method": "DELETE",
+                "url": "{{baseUrl}}/api/admin/stores/{{storeId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔒 16.5 Lockers Management",
+          "item": [
+            {
+              "name": "Get All Lockers",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/lockers?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Create Locker",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/lockers",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Locker C - Tầng 3\",\n  \"storeId\": 1,\n  \"location\": \"Tầng 3, cạnh thang máy\"\n}"}
+              }
+            },
+            {
+              "name": "Update Locker",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/lockers/{{lockerId}}",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Locker C Updated\",\n  \"location\": \"Tầng 3 - Updated\"\n}"}
+              }
+            },
+            {
+              "name": "Set Locker Maintenance",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/lockers/{{lockerId}}/maintenance",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"maintenance\": true\n}"}
+              }
+            },
+            {
+              "name": "Add Box to Locker",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/lockers/{{lockerId}}/boxes",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"boxNumber\": \"C01\",\n  \"size\": \"LARGE\"\n}"}
+              }
+            },
+            {
+              "name": "Update Box Status",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/lockers/boxes/{{boxId}}/status",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"status\": \"MAINTENANCE\"\n}"}
+              }
+            },
+            {
+              "name": "Delete Locker",
+              "request": {
+                "method": "DELETE",
+                "url": "{{baseUrl}}/api/admin/lockers/{{lockerId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🧺 16.6 Services Management",
+          "item": [
+            {
+              "name": "Get All Services",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/services?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Service By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/services/{{serviceId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Create Service (LAUNDRY)",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/services",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Giặt khô cao cấp\",\n  \"description\": \"Giặt khô cho vest và áo dài\",\n  \"category\": \"LAUNDRY\",\n  \"serviceType\": \"LAUNDRY\",\n  \"pricePerKg\": 80000,\n  \"maxPrice\": 250000,\n  \"estimatedHours\": 72,\n  \"active\": true\n}"}
+              }
+            },
+            {
+              "name": "Create Service (STORAGE)",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/services",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Gửi đồ VIP\",\n  \"description\": \"Gửi đồ hộp lớn có bảo hiểm\",\n  \"category\": \"STORAGE\",\n  \"serviceType\": \"STANDARD_DROPOFF\",\n  \"pricePerHour\": 10000,\n  \"active\": true\n}"}
+              }
+            },
+            {
+              "name": "Update Service",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/services/{{serviceId}}",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"Giặt khô Premium\",\n  \"description\": \"Giặt khô chuyên nghiệp\"\n}"}
+              }
+            },
+            {
+              "name": "Update Service Price",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/services/{{serviceId}}/price",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"pricePerKg\": 90000\n}"}
+              }
+            },
+            {
+              "name": "Update Service Status",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/services/{{serviceId}}/status",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"active\": false\n}"}
+              }
+            },
+            {
+              "name": "Delete Service",
+              "request": {
+                "method": "DELETE",
+                "url": "{{baseUrl}}/api/admin/services/{{serviceId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "📦 16.7 Orders Management",
+          "item": [
+            {
+              "name": "Get All Orders",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/orders?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Order By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/orders/{{orderId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Update Order Status",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"status\": \"PROCESSING\"\n}"}
+              }
+            },
+            {
+              "name": "Get Order Statistics",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/orders/statistics",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Revenue Report",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/orders/revenue?fromDate=2026-02-01&toDate=2026-02-28",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "💳 16.8 Payments Management",
+          "item": [
+            {
+              "name": "Get All Payments",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/payments?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Payment By ID",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/payments/{{paymentId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Update Payment Status",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/payments/{{paymentId}}/status",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"status\": \"COMPLETED\"\n}"}
+              }
+            }
+          ]
+        },
+        {
+          "name": "🎁 16.9 Promotions Management",
+          "item": [
+            {
+              "name": "Get All Promotions",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/promotions?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Active Promotions",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/promotions/active",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Validate Promotion Code",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/promotions/validate/NEWUSER50",
+                "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}]
+              }
+            },
+            {
+              "name": "Create Promotion",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/promotions",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"code\": \"NEWUSER50\",\n  \"description\": \"Giảm 50% cho người dùng mới\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 50,\n  \"minOrderAmount\": 100000,\n  \"maxDiscount\": 100000,\n  \"usageLimit\": 1000,\n  \"startDate\": \"2026-02-01T00:00:00\",\n  \"endDate\": \"2026-02-28T23:59:59\",\n  \"active\": true\n}"}
+              },
+              "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if(jsonData.data && jsonData.data.id) {", "    pm.collectionVariables.set('promotionId', jsonData.data.id);", "}"]}}]
+            },
+            {
+              "name": "Update Promotion",
+              "request": {
+                "method": "PUT",
+                "url": "{{baseUrl}}/api/admin/promotions/{{promotionId}}",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"description\": \"Giảm 50% cho người dùng mới - Updated\",\n  \"maxDiscount\": 150000\n}"}
+              }
+            },
+            {
+              "name": "Delete Promotion",
+              "request": {
+                "method": "DELETE",
+                "url": "{{baseUrl}}/api/admin/promotions/{{promotionId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🎁 16.10 Loyalty Management",
+          "item": [
+            {
+              "name": "Get User Loyalty Summary",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/loyalty/users/{{userId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Adjust User Points",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/loyalty/users/{{userId}}/adjust-points",
+                "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}],
+                "body": {"mode": "raw", "raw": "{\n  \"points\": 1000,\n  \"reason\": \"Bonus thưởng khách hàng thân thiết\"\n}"}
+              }
+            },
+            {
+              "name": "Get User Points History",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/loyalty/users/{{userId}}/history?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Loyalty Statistics",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/loyalty/statistics",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "⏰ 16.11 Scheduler Management",
+          "item": [
+            {
+              "name": "Get Scheduler Status",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/scheduler/status",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Trigger Auto-Cancel Job",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/scheduler/auto-cancel",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Trigger Box Release Job",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/scheduler/release-boxes",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Trigger Pickup Reminders",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/admin/scheduler/pickup-reminders",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "🔧 16.12 System",
+          "item": [
+            {
+              "name": "Get System Health",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/system/health",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        },
+        {
+          "name": "📋 16.13 Audit Logs",
+          "item": [
+            {
+              "name": "Get All Audit Logs",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/audit-logs?page=0&size=20",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Audit Logs By Entity",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/audit-logs/entity/ORDER/{{orderId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Audit Logs By User",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/audit-logs/user/{{userId}}",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            },
+            {
+              "name": "Get Audit Log Statistics",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/admin/audit-logs/statistics",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminAccessToken}}"}]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

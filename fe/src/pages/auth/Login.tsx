@@ -2,17 +2,17 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import { t, withLocale } from "@/lib/i18n";
-import { mockCredentials } from "~/mockdata";
+
 import { Button, Card, CardContent, Input } from "~/components/ui";
 import { LOCKER_IMAGE, LOGIN_IMAGE } from "~/constants/login-page.constants";
-import LockrIcon from "~/components/ui/LockrIcon";
+import Logo from "~/assets/images/logo/Logo.svg";
 
 export default function LoginPage(): React.JSX.Element {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = React.useState<string>(mockCredentials.admin.username);
-  const [password, setPassword] = React.useState<string>(mockCredentials.admin.password);
+  const [email, setEmail] = React.useState<string>("admin@laundry.com");
+  const [password, setPassword] = React.useState<string>("admin123");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -32,7 +32,6 @@ export default function LoginPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-900 via-transparent to-orange-200  relative overflow-hidden w-full">
-      {/* Background abstract waves */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="g1" x1="0" x2="1">
@@ -47,19 +46,15 @@ export default function LoginPage(): React.JSX.Element {
       </svg>
 
       <div className="relative z-10 w-full max-w-6xl mx-6 rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
-        {/* Left: Form (use shared Card) */}
         <Card className="bg-white p-8 md:p-12">
           <CardContent className="flex flex-col gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 flex items-center justify-center  bg-linear-to-br from-primary to-secondary rounded-full">
-                <LockrIcon size={56} />
-              </div>
+            <div className="flex items-center gap-4">
+              <img src={Logo} alt="Logo" className="h-16 w-auto" />
               <div>
                 <div className="text-2xl font-bold">{t("brand.title")}</div>
                 <div className="text-sm text-muted-foreground">{t("brand.subtitle")}</div>
               </div>
             </div>
-            
 
             <h2 className="text-2xl font-semibold">{t("signin.title")}</h2>
 
@@ -86,10 +81,13 @@ export default function LoginPage(): React.JSX.Element {
           </CardContent>
         </Card>
 
-        {/* Right: Branding + Illustration (use Card for consistent styling) */}
         <div className="relative flex items-center justify-center p-8 md:p-12 bg-linear-to-br from-primary to-secondary text-white">
           <Card className="bg-transparent shadow-none">
-            <CardContent className="max-w-sm text-white">
+            <CardContent className="max-w-sm text-white text-center">
+              <div className="mb-6">
+                <img src={Logo} alt="Logo" className="h-32 w-auto mx-auto drop-shadow-lg" />
+              </div>
+              
               <h3 className="text-xl font-semibold mb-2">{t("right.title")}</h3>
               <p className="mb-4 text-sm opacity-90">{t("right.subtitle")}</p>
 

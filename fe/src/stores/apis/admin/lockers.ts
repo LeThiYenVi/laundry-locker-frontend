@@ -1,5 +1,5 @@
-import { baseApi } from "../../baseAPi";
-import { ADMIN_ENDPOINTS } from "../../../constants";
+import { baseApi } from '../../baseAPi';
+import { ADMIN_ENDPOINTS } from '../../../constants';
 import type {
   ApiResponse,
   Page,
@@ -9,11 +9,24 @@ import type {
   CreateBoxRequest,
   UpdateLockerMaintenanceRequest,
   UpdateBoxStatusRequest,
-} from "../../../types";
+} from '../../../types';
+import {
+  CreateLockerRequestSchema,
+  CreateBoxRequestSchema,
+  UpdateLockerMaintenanceRequestSchema,
+  UpdateBoxStatusRequestSchema,
+  createValidator,
+} from '../../../schemas';
 
 const TAGS = {
-  LOCKERS: "Lockers",
+  LOCKERS: 'Lockers',
 } as const;
+
+// Create validators
+const createLockerValidator = createValidator(CreateLockerRequestSchema);
+const createBoxValidator = createValidator(CreateBoxRequestSchema);
+const updateLockerMaintenanceValidator = createValidator(UpdateLockerMaintenanceRequestSchema);
+const updateBoxStatusValidator = createValidator(UpdateBoxStatusRequestSchema);
 
 export const lockerManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -36,11 +49,15 @@ export const lockerManagementApi = baseApi.injectEndpoints({
     }),
 
     createLocker: builder.mutation<ApiResponse<AdminLockerResponse>, CreateLockerRequest>({
-      query: (lockerData) => ({
-        url: ADMIN_ENDPOINTS.LOCKERS,
-        method: "POST",
-        body: lockerData,
-      }),
+      query: (lockerData) => {
+        // Validate with Zod before sending
+        createLockerValidator.validateRequestBody(lockerData);
+        return {
+          url: ADMIN_ENDPOINTS.LOCKERS,
+          method: 'POST',
+          body: lockerData,
+        };
+      },
       invalidatesTags: [TAGS.LOCKERS],
     }),
 
@@ -48,11 +65,15 @@ export const lockerManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminLockerResponse>,
       { id: number; data: CreateLockerRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.LOCKER_BY_ID(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        createLockerValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.LOCKER_BY_ID(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.LOCKERS, id }, TAGS.LOCKERS],
     }),
 
@@ -60,11 +81,15 @@ export const lockerManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminLockerResponse>,
       { id: number; data: UpdateLockerMaintenanceRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.LOCKER_MAINTENANCE(id),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        updateLockerMaintenanceValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.LOCKER_MAINTENANCE(id),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.LOCKERS, id }, TAGS.LOCKERS],
     }),
 
@@ -72,11 +97,15 @@ export const lockerManagementApi = baseApi.injectEndpoints({
       ApiResponse<AdminLockerResponse>,
       { id: number; data: CreateBoxRequest }
     >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.LOCKER_BOXES(id),
-        method: "POST",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Validate with Zod before sending
+        createBoxValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.LOCKER_BOXES(id),
+          method: 'POST',
+          body: data,
+        };
+      },
       invalidatesTags: (result, error, { id }) => [{ type: TAGS.LOCKERS, id }, TAGS.LOCKERS],
     }),
 
@@ -84,18 +113,22 @@ export const lockerManagementApi = baseApi.injectEndpoints({
       ApiResponse<void>,
       { boxId: number; data: UpdateBoxStatusRequest }
     >({
-      query: ({ boxId, data }) => ({
-        url: ADMIN_ENDPOINTS.BOX_STATUS(boxId),
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ boxId, data }) => {
+        // Validate with Zod before sending
+        updateBoxStatusValidator.validateRequestBody(data);
+        return {
+          url: ADMIN_ENDPOINTS.BOX_STATUS(boxId),
+          method: 'PUT',
+          body: data,
+        };
+      },
       invalidatesTags: [TAGS.LOCKERS],
     }),
 
     deleteLocker: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
         url: ADMIN_ENDPOINTS.LOCKER_BY_ID(id),
-        method: "DELETE",
+        method: 'DELETE',
       }),
       invalidatesTags: [TAGS.LOCKERS],
     }),

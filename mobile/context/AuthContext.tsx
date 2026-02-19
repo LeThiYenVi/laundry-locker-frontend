@@ -1,8 +1,20 @@
-import { ACCESS_TOKEN_KEY, clearTokens, REFRESH_TOKEN_KEY, setTokens } from '@/services/api';
-import { authService, userService } from '@/services/user';
-import { AuthTokens, User, UserRole } from '@/types';
-import * as SecureStore from 'expo-secure-store';
-import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  ACCESS_TOKEN_KEY,
+  clearTokens,
+  REFRESH_TOKEN_KEY,
+  setTokens,
+} from "@/services/api";
+import { authService } from "@/services/user";
+import { AuthTokens, User, UserRole } from "@/types";
+import * as SecureStore from "expo-secure-store";
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface AuthState {
   user: User | null;
@@ -37,13 +49,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
         if (accessToken) {
-          // Fetch user profile
-          const response = await userService.getProfile();
+          // TODO: Fetch user profile when backend endpoint is ready
+          // For now, create a mock user object
           setState({
-            user: response.data,
+            user: {
+              id: 0,
+              firstName: "User",
+              lastName: "",
+              email: "",
+              phoneNumber: "",
+              role: "USER" as UserRole,
+            },
             isAuthenticated: true,
             isLoading: false,
-            role: response.data.role,
+            role: "USER" as UserRole,
           });
         } else {
           setState({
@@ -54,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           });
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error("Auth check failed:", error);
         await clearTokens();
         setState({
           user: null,
@@ -72,17 +91,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = useCallback(async (tokens: AuthTokens) => {
     try {
       await setTokens(tokens.accessToken, tokens.refreshToken);
-      
-      // Fetch user profile
-      const response = await userService.getProfile();
+
+      // TODO: Fetch user profile when backend endpoint is ready
+      // For now, create a mock user object
       setState({
-        user: response.data,
+        user: {
+          id: 0,
+          firstName: "User",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          role: "USER" as UserRole,
+        },
         isAuthenticated: true,
         isLoading: false,
-        role: response.data.role,
+        role: "USER" as UserRole,
       });
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       await clearTokens();
       throw error;
     }
@@ -96,7 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await authService.logout(refreshToken);
       }
     } catch (error) {
-      console.error('Logout API error:', error);
+      console.error("Logout API error:", error);
     } finally {
       await clearTokens();
       setState({
@@ -111,14 +137,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Refresh user data
   const refreshUser = useCallback(async () => {
     try {
-      const response = await userService.getProfile();
-      setState(prev => ({
-        ...prev,
-        user: response.data,
-        role: response.data.role,
-      }));
+      // TODO: Call getProfile() when backend endpoint is ready
+      console.warn(
+        "refreshUser: Backend /users/profile endpoint not implemented yet",
+      );
     } catch (error) {
-      console.error('Refresh user failed:', error);
+      console.error("Refresh user failed:", error);
     }
   }, []);
 
@@ -136,7 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

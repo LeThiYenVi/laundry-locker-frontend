@@ -3,68 +3,116 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { storeService } from "@/services/user";
+import { Store } from "@/types";
 import { Avatar, Icon, SearchBar } from "@rneui/themed";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export default function HomeScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const backgroundColor = Colors[colorScheme ?? "light"].background;
   const textColor = Colors[colorScheme ?? "light"].text;
   const [search, setSearch] = useState("");
+  const [stores, setStores] = useState<Store[]>([]);
+  const [isLoadingStores, setIsLoadingStores] = useState(true);
+  const [storeError, setStoreError] = useState<string | null>(null);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStores = async () => {
+    try {
+      setIsLoadingStores(true);
+      setStoreError(null);
+      const response = await storeService.getAllStores();
+      if (response.success && response.data) {
+        setStores(response.data);
+      } else {
+        setStoreError("Không thể tải danh sách cửa hàng");
+      }
+    } catch (error) {
+      console.error("Error fetching stores:", error);
+      setStoreError("Đã xảy ra lỗi khi tải danh sách cửa hàng");
+    } finally {
+      setIsLoadingStores(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch stores on mount
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchStores();
+  };
+
+  // Get the first store or use default data
+  const firstStore = stores.length > 0 ? stores[0] : null;
 
   return (
     <View style={styles.wrapper}>
       <StatusBar barStyle="dark-content" />
       <ScrollView
         style={[styles.container, { backgroundColor }]}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#003D5B"]} />
+        }
       >
-        {/* Header */}
-        <ThemedView style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Lock.R
-          </ThemedText>
-        </ThemedView>
-
-        {/* Greeting Section */}
-        <ThemedView style={styles.greetingSection}>
-          <View style={styles.greetingRow}>
-            <Avatar
-              size={56}
-              rounded
-              source={{ uri: "https://randomuser.me/api/portraits/men/36.jpg" }}
-              containerStyle={styles.avatarContainer}
-            />
-            <View style={styles.greetingTextContainer}>
-              <ThemedText type="title" style={styles.greeting}>
-                Hi Lertermer!
-              </ThemedText>
-              <ThemedText style={styles.subGreeting}>Good Morning</ThemedText>
+        {/* Gradient Wave Header */}
+        <LinearGradient
+          colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.greetingRow}>
+              <View style={{ width: '80%', flexDirection: 'row', alignItems: 'center' }}>
+                <Avatar
+                  size={56}
+                  rounded
+                  source={{ uri: "https://randomuser.me/api/portraits/men/36.jpg" }}
+                  containerStyle={styles.avatarContainer}
+                />
+                <View style={[styles.greetingTextContainer, { marginLeft: 12 }]}>
+                  <ThemedText type="title" style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
+                    Hi Lertermer!
+                  </ThemedText>
+                  <ThemedText style={styles.subGreeting}>Good Morning</ThemedText>
+                </View>
+              </View>
+              <View style={{ width: '20%', alignItems: 'flex-end' }}>
+              <Image
+                source={require("@/assets/images/logo.svg")}
+                style={{ width: "100%", height: 60 }}
+                contentFit="contain"
+              />
+              </View>
             </View>
           </View>
-          <ThemedView style={styles.locationRow}>
-            <View style={styles.locationBadge}>
-              <IconSymbol size={14} name="mappin.circle.fill" color="#003D5B" />
-              <ThemedText style={styles.locationText}>
-                9 District, HCMC
-              </ThemedText>
-            </View>
-          </ThemedView>
-        </ThemedView>
+        </LinearGradient>
 
         {/* Search Bar */}
-        <View style={styles.searchWrapper}>
+        <View style={styles.searchContainer}>
           <SearchBar
-            placeholder="Search stores, services..."
+            placeholder="Tìm kiếm địa điểm, dịch vụ..."
             onChangeText={setSearch}
             value={search}
             platform="default"
@@ -88,7 +136,7 @@ export default function HomeScreen() {
           >
             <ThemedText style={styles.welcomeTitle}>Welcome!</ThemedText>
             <ThemedText style={styles.welcomeSubtitle}>
-              Let us be your safe haven.
+              Hãy để chúng tôi là nơi an toàn của bạn.
             </ThemedText>
           </LinearGradient>
           <View style={styles.welcomeRight}>
@@ -106,52 +154,118 @@ export default function HomeScreen() {
             <View style={styles.iconWrapper}>
               <IconSymbol size={18} name="building.2.fill" color="#003D5B" />
             </View>
-            <ThemedText style={styles.sectionTitle}>Our Store</ThemedText>
+            <ThemedText style={styles.sectionTitle}>Các nơi đặt locker</ThemedText>
           </View>
-          <TouchableOpacity style={styles.seeAllButton}>
-            <ThemedText style={styles.seeAllText}>SEE ALL</ThemedText>
+          <TouchableOpacity
+            style={styles.seeAllButton}
+            onPress={() => router.push("/user/stores")}
+          >
+            <ThemedText style={styles.seeAllText}>XEM TẤT CẢ</ThemedText>
             <IconSymbol size={14} name="chevron.right" color="#003D5B" />
           </TouchableOpacity>
         </ThemedView>
 
         {/* Store Card */}
-        <View style={styles.storeCard}>
-          <View style={styles.storeCardHeader}>
-            <View style={styles.activeBadge}>
-              <View style={styles.activeDot} />
-              <ThemedText style={styles.activeBadgeText}>ACTIVE</ThemedText>
+        {isLoadingStores ? (
+          <View style={[styles.storeCard, styles.storeCardLoading]}>
+             <ActivityIndicator size="large" color="#003D5B" />
+             <ThemedText style={styles.loadingText}>Loading stores...</ThemedText>
+          </View>
+        ) : storeError ? (
+          <View style={styles.storeCard}>
+            <View style={styles.errorContainer}>
+              <IconSymbol size={48} name="exclamationmark.triangle" color="#FF6B6B" />
+              <ThemedText style={styles.errorText}>{storeError}</ThemedText>
             </View>
-            <TouchableOpacity style={styles.chevronButton}>
-              <IconSymbol size={18} name="chevron.right" color="#666" />
-            </TouchableOpacity>
           </View>
+        ) : firstStore ? (
+          <TouchableOpacity
+            style={styles.storeCard}
+            onPress={() => router.push({
+              pathname: "/user/store-detail",
+              params: {
+                id: firstStore.id,
+                name: firstStore.name,
+                address: firstStore.address,
+                phone: firstStore.phone,
+                openTime: firstStore.openTime,
+                closeTime: firstStore.closeTime,
+                latitude: firstStore.latitude,
+                longitude: firstStore.longitude,
+              } as any
+            })}
+            activeOpacity={0.9}
+          >
+            <View style={styles.storeCardHeader}>
+              <View style={styles.statusBadge}>
+                <View style={styles.statusDot} />
+                <ThemedText style={styles.statusText}>Hoạt động</ThemedText>
+              </View>
+              {firstStore.latitude && firstStore.longitude && (
+                 <View style={styles.distanceBadge}>
+                    <IconSymbol size={12} name="location.fill" color="#003D5B" />
+                    <ThemedText style={styles.distanceText}>1.2 km</ThemedText>
+                 </View>
+              )}
+            </View>
 
-          <View style={styles.storeImagePlaceholder}>
-            {/* Map will be imported here later */}
-            <IconSymbol size={70} name="map.fill" color="#B0B0B0" />
-            <ThemedText style={styles.mapPlaceholderText}>Map View</ThemedText>
-          </View>
+            {/* Map Placeholder or Real Map or Store Image */}
+            <View style={styles.mapContainer}>
+              {firstStore.image || firstStore.imageUrl ? (
+                  <Image
+                    source={{ uri: firstStore.image || firstStore.imageUrl }}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
+                    transition={1000}
+                  />
+              ) : firstStore.latitude && firstStore.longitude ? (
+                  <View style={styles.mapPlaceholderContent}>
+                     <IconSymbol size={40} name="map.fill" color="#A0AEC0" />
+                     <ThemedText style={styles.mapPlaceholderLabel}>Map Preview</ThemedText>
+                  </View>
+              ) : (
+                  <View style={styles.mapPlaceholderContent}>
+                      <IconSymbol size={40} name="map.fill" color="#CBD5E0" />
+                      <ThemedText style={styles.mapPlaceholderLabel}>No Location Data</ThemedText>
+                  </View>
+              )}
+            </View>
 
-          <View style={styles.storeInfo}>
-            <View style={styles.storeNameRow}>
-              <ThemedText style={styles.storeName}>STORE A</ThemedText>
-              <View style={styles.distanceBadge}>
-                <IconSymbol size={12} name="location.fill" color="#003D5B" />
-                <ThemedText style={styles.distanceText}>2.5 km</ThemedText>
+            <View style={styles.cardContent}>
+              <ThemedText style={styles.storeTitle}>{firstStore.name}</ThemedText>
+              <ThemedText style={styles.storeAddress}>{firstStore.address}</ThemedText>
+              
+              <View style={styles.cardFooter}>
+                 {firstStore.phone && (
+                   <View style={styles.infoRow}>
+                     <IconSymbol size={14} name="phone.fill" color="#718096" />
+                     <ThemedText style={styles.infoText}>{firstStore.phone}</ThemedText>
+                   </View>
+                 )}
+                 {firstStore.openTime && (
+                   <View style={styles.infoRow}>
+                     <IconSymbol size={14} name="clock.fill" color="#718096" />
+                     <ThemedText style={styles.infoText}>{firstStore.openTime} - {firstStore.closeTime}</ThemedText>
+                   </View>
+                 )}
               </View>
             </View>
-            <ThemedText style={styles.storeAddress}>
-              Tower D - Masteri Centre Point, Long Binh, Quận 9, TP.HCM
-            </ThemedText>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.storeCard}>
+            <View style={styles.emptyContainer}>
+              <IconSymbol size={48} name="building.2.fill" color="#CBD5E0" />
+              <ThemedText style={styles.emptyText}>Chưa có nơi đặt locker nào</ThemedText>
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* Pagination Dots */}
+        {/* Pagination Dots
         <View style={styles.paginationContainer}>
           <View style={[styles.dot, styles.dotActive]} />
           <View style={styles.dot} />
           <View style={styles.dot} />
-        </View>
+        </View> */}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -178,14 +292,15 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   greetingSection: {
+    paddingTop: 60,
     paddingHorizontal: 24,
     marginBottom: 20,
   },
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    marginBottom: 12,
+    marginBottom: 0,
+    justifyContent: "space-between",
   },
   avatarContainer: {
     shadowColor: "#000",
@@ -199,18 +314,26 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 28,
-    fontWeight: "800",
+    fontFamily: "DancingScript_400Regular",
     marginBottom: 2,
     letterSpacing: -0.5,
+    color: "#003D5B",
   },
   subGreeting: {
     fontSize: 14,
-    opacity: 0.6,
+    opacity: 0.8,
     fontWeight: "400",
+    color: "#003D5B",
   },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  brandText: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 2,
   },
   locationBadge: {
     flexDirection: "row",
@@ -226,7 +349,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#003D5B",
   },
-  searchWrapper: {
+  searchContainer: {
     paddingHorizontal: 24,
     marginBottom: 24,
   },
@@ -237,14 +360,36 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   searchBarInputContainer: {
-    backgroundColor: "#003D5B",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: 16,
     paddingHorizontal: 12,
     height: 52,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchBarInput: {
-    color: "#fff",
+    color: "#003D5B",
     fontSize: 15,
+  },
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  headerContent: {
+    paddingHorizontal: 24,
   },
   welcomeCard: {
     flexDirection: "row",
@@ -284,10 +429,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
   },
   welcomeImage: {
     width: "100%",
     height: "100%",
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
   },
   storeSectionHeader: {
     flexDirection: "row",
@@ -295,153 +446,189 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 24,
     marginBottom: 16,
+    marginTop: 8,
   },
   storeHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
   },
   iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "rgba(0, 61, 91, 0.08)",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#F0F4F8",
     justifyContent: "center",
     alignItems: "center",
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#000",
+    color: "#1A202C",
+    letterSpacing: 0.5,
   },
   seeAllButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    minWidth: 120,
+    justifyContent: 'flex-end',
   },
   seeAllText: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "600",
     color: "#003D5B",
-    letterSpacing: 0.5,
   },
+  
+  /* Store Card Styles */
   storeCard: {
     marginHorizontal: 24,
-    backgroundColor: "#E8E8E8",
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    marginBottom: 24,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 16,
+    elevation: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F0F4F8',
+  },
+  storeCardLoading: {
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   storeCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    zIndex: 10,
   },
-  activeBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#000",
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
     gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#4CAF50",
-  },
-  activeBadgeText: {
-    color: "#000",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
-  chevronButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  storeImagePlaceholder: {
-    backgroundColor: "#D5D5D5",
-    height: 190,
-    borderRadius: 16,
-    marginBottom: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mapPlaceholderText: {
-    color: "#888",
-    fontSize: 13,
-    marginTop: 8,
-    fontWeight: "500",
-  },
-  storeInfo: {
-    gap: 6,
-  },
-  storeNameRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  storeName: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#000",
-    letterSpacing: 0.5,
-  },
-  distanceBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 61, 91, 0.1)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  distanceText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#003D5B",
-  },
-  storeAddress: {
-    fontSize: 13,
-    color: "#666",
-    lineHeight: 19,
-    fontWeight: "400",
-  },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  dot: {
+  statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#D0D0D0",
+    backgroundColor: "#48BB78",
   },
-  dotActive: {
-    width: 24,
-    backgroundColor: "#003D5B",
+  statusText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2F855A",
   },
+  distanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 100,
+    gap: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  distanceText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#003D5B",
+  },
+  
+  mapContainer: {
+    height: 200,
+    width: '100%',
+    backgroundColor: '#F7FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapPlaceholderContent: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  mapPlaceholderLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#A0AEC0',
+  },
+  
+  cardContent: {
+    padding: 20,
+  },
+  storeTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1A202C",
+    marginBottom: 4,
+  },
+  storeAddress: { 
+    fontSize: 14,
+    color: "#718096",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  infoText: {
+    fontSize: 13,
+    color: "#4A5568",
+    fontWeight: "500",
+  },
+  
+  /* Fallback States */
+  loadingContainer: {
+    gap: 12,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#718096',
+    fontSize: 14, 
+  },
+  errorContainer: {
+    padding: 40,
+    alignItems: 'center',
+    gap: 12,
+  },
+  errorText: {
+    color: '#E53E3E',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyText: {
+      color: '#A0AEC0',
+  },
+  
   bottomSpacer: {
-    height: 30,
+      height: 100,
   },
 });

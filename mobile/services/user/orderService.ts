@@ -1,4 +1,4 @@
-import type { ApiResponse, CreateOrderRequest, Order, PaginatedResponse, PaymentMethod } from '@/types';
+import type { ApiResponse, CreateOrderRequest, Order, OrderTrackingDetail, PaginatedResponse, PaymentMethod } from '@/types';
 import api from '../api';
 
 /**
@@ -17,7 +17,7 @@ export const getOrders = async (
     size: number = 10
 ): Promise<ApiResponse<PaginatedResponse<Order>>> => {
     const response = await api.get<ApiResponse<PaginatedResponse<Order>>>(
-        `/orders?page=${page}&size=${size}`
+        `/orders/my-orders?page=${page}&size=${size}`
     );
     return response.data;
 };
@@ -65,8 +65,49 @@ export const checkoutOrder = async (
  */
 export const cancelOrder = async (id: number, reason: string): Promise<ApiResponse<Order>> => {
     const response = await api.put<ApiResponse<Order>>(
-        `/orders/${id}/cancel?reason=${encodeURIComponent(reason)}`
+        `/orders/${id}/cancel`,
+        { reason }
     );
+    return response.data;
+};
+
+/**
+ * Get detailed order status tracking
+ */
+export const getOrderStatus = async (id: number): Promise<ApiResponse<OrderTrackingDetail>> => {
+    const response = await api.get<ApiResponse<OrderTrackingDetail>>(`/orders/${id}/status`);
+    return response.data;
+};
+
+/**
+ * Apply promotion code to an order
+ * API: PUT /api/v1/orders/{orderId}/promotion?code={promotionCode}
+ */
+export const applyPromotion = async (
+    orderId: number,
+    promotionCode: string
+): Promise<ApiResponse<Order>> => {
+    const response = await api.put<ApiResponse<Order>>(
+        `/orders/${orderId}/promotion?code=${promotionCode}`
+    );
+    return response.data;
+};
+
+/**
+ * Remove promotion code from an order
+ * API: DELETE /api/v1/orders/{orderId}/promotion
+ */
+export const removePromotion = async (orderId: number): Promise<ApiResponse<Order>> => {
+    const response = await api.delete<ApiResponse<Order>>(`/orders/${orderId}/promotion`);
+    return response.data;
+};
+
+/**
+ * Complete order (customer picks up items)
+ * API: PUT /api/v1/orders/{orderId}/complete
+ */
+export const completeOrder = async (orderId: number): Promise<ApiResponse<Order>> => {
+    const response = await api.put<ApiResponse<Order>>(`/orders/${orderId}/complete`);
     return response.data;
 };
 
@@ -75,9 +116,13 @@ export const orderService = {
     getOrders,
     getOrderById,
     getOrderByPin,
+    getOrderStatus,
     confirmOrder,
     checkoutOrder,
     cancelOrder,
+    applyPromotion,
+    removePromotion,
+    completeOrder,
 };
 
 export default orderService;
