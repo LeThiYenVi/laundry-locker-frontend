@@ -75,12 +75,12 @@ const ERROR_CODES = {
   E_AUTH001: "E_AUTH001", // Không có quyền
 } as const;
 
-// Error messages mapping
+// Error messages mapping - Match requirement specification
 const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.E_ORDER002]:
-    "Trạng thái đơn hàng không hợp lệ để thực hiện thao tác này.",
+    "Lỗi: Trạng thái đơn hàng đã thay đổi, không thể cấp mã.",
   [ERROR_CODES.E_BOX003]:
-    "Tủ Locker hiện không khả dụng (đang mở hoặc kẹt khóa).",
+    "Lỗi: Tủ Locker hiện đang bận hoặc gặp sự cố kỹ thuật.",
   [ERROR_CODES.E_ORDER001]: "Không tìm thấy đơn hàng.",
   [ERROR_CODES.E_AUTH001]: "Bạn không có quyền truy cập cửa hàng này.",
 };
@@ -151,7 +151,7 @@ export default function PartnerOrders(): React.JSX.Element {
     refetch,
   } = useGetPartnerOrdersQuery(
     {
-      status: activeTab === "ALL" ? undefined : (activeTab as any),
+      status: activeTab === "ALL" ? undefined : (activeTab as OrderStatus),
       page,
       size,
       search: searchQuery || undefined,
@@ -197,7 +197,7 @@ export default function PartnerOrders(): React.JSX.Element {
         code: result.staffAccessCode,
         action: "COLLECT",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to accept order:", err);
       setErrorToast(getErrorMessage(err));
     }
@@ -222,7 +222,7 @@ export default function PartnerOrders(): React.JSX.Element {
         weightUnit: "kg",
       }).unwrap();
       setWeightModal({ open: false, order: null, weight: "" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to update weight:", err);
       setErrorToast(getErrorMessage(err));
     }
@@ -232,7 +232,7 @@ export default function PartnerOrders(): React.JSX.Element {
   const handleProcessOrder = async (order: PartnerOrder) => {
     try {
       await processOrder(order.id).unwrap();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to process order:", err);
       setErrorToast(getErrorMessage(err));
     }
@@ -247,15 +247,19 @@ export default function PartnerOrders(): React.JSX.Element {
         code: result.staffAccessCode,
         action: "RETURN",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to mark order ready:", err);
       setErrorToast(getErrorMessage(err));
     }
   };
 
   // Get action buttons based on order status
+  // Business Flow Mapping:
+  // - WAITING (= DROPPED_OFF in business terms) → Cấp mã COLLECT
+  // - PROCESSING (= IN_PROGRESS in business terms) → Cấp mã RETURN
   const getOrderActions = (order: PartnerOrder) => {
     switch (order.status) {
+      // WAITING = DROPPED_OFF: Khách đã bỏ đồ vào tủ, Partner cấp mã cho Staff đi lấy
       case OrderStatus.WAITING:
         return (
           <Button
@@ -265,7 +269,7 @@ export default function PartnerOrders(): React.JSX.Element {
             className="bg-green-600 hover:bg-green-700"
           >
             <Check size={14} className="mr-1" />
-            Chấp nhận
+            Cấp mã lấy đồ
           </Button>
         );
 
@@ -292,6 +296,7 @@ export default function PartnerOrders(): React.JSX.Element {
           </div>
         );
 
+      // PROCESSING/PROCESSED = IN_PROGRESS: Đang giặt xong, Partner cấp mã cho Staff đi trả đồ
       case OrderStatus.PROCESSING:
       case OrderStatus.PROCESSED:
         return (
@@ -299,10 +304,10 @@ export default function PartnerOrders(): React.JSX.Element {
             size="sm"
             onClick={() => handleMarkReady(order)}
             disabled={isMarkingReady}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-orange-500 hover:bg-orange-600"
           >
             <CheckCircle size={14} className="mr-1" />
-            Hoàn thành
+            Cấp mã trả đồ
           </Button>
         );
 
