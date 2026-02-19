@@ -18,13 +18,14 @@
 // ============================================
 // Backend API Configuration
 // ============================================
-#define BACKEND_URL "http://192.168.1.100:8080"  // Thay bằng IP của backend server
+#define BACKEND_URL "http://192.168.1.10:8080"  // IP của máy chạy backend Docker
 #define HTTP_TIMEOUT 10000  // Timeout 10 giây
 
 // ============================================
 // Box/Device Configuration
 // ============================================
 #define BOX_ID 1                                // ID của box mà ESP8266 này điều khiển
+#define LOCKER_ID 1                             // ID của locker chứa box này
 #define DEVICE_ID "ESP8266_LOCKER_01"           // ID định danh của thiết bị
 
 // ============================================
@@ -54,5 +55,20 @@
 // Relay thường sử dụng active LOW (bật khi LOW, tắt khi HIGH)
 // Thay đổi nếu relay của bạn hoạt động khác
 #define RELAY_ACTIVE_LOW false  // Thử đổi thành false nếu relay không hoạt động
+
+// ============================================
+// MQTT Configuration
+// ============================================
+#define MQTT_BROKER "broker.hivemq.com"      // MQTT Broker (thay bằng broker riêng nếu có)
+#define MQTT_PORT 1883                        // MQTT Port
+#define MQTT_USER ""                          // Username (để trống nếu public broker)
+#define MQTT_PASSWORD ""                      // Password (để trống nếu public broker)
+
+// MQTT Topics - dựa trên DEVICE_ID
+// Command topic: backend gửi lệnh mở khóa tới ESP
+// Status topic: ESP gửi trạng thái về cho backend
+#define MQTT_TOPIC_CMD "locker/commands/" DEVICE_ID
+#define MQTT_TOPIC_STATUS "locker/status/" DEVICE_ID
+#define MQTT_RECONNECT_INTERVAL 5000          // Thử kết nối lại MQTT sau 5 giây
 
 #endif // CONFIG_H
