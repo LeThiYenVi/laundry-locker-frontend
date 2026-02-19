@@ -7,7 +7,6 @@ import {
   Settings,
   Bell,
   Briefcase,
-  UserCircle,
 } from "lucide-react";
 
 export const PARTNER_NAV_ITEMS = [
@@ -47,13 +46,8 @@ export const PARTNER_NAV_ITEMS = [
     icon: Bell,
   },
   {
-    path: "/partner/profile",
-    label: "Profile",
-    icon: UserCircle,
-  },
-  {
     path: "/partner/settings",
-    label: "Settings",
+    label: "Profile & Settings",
     icon: Settings,
   },
 ] as const;
