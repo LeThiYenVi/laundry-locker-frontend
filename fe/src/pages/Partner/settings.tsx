@@ -16,15 +16,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Camera, Building2, Phone, Mail, MapPin, CreditCard, Bell, Clock } from "lucide-react";
+import {
+  Camera,
+  Building2,
+  Phone,
+  Mail,
+  MapPin,
+  CreditCard,
+  Bell,
+  Clock,
+} from "lucide-react";
 import {
   useGetPartnerProfileQuery,
   useUpdatePartnerProfileMutation,
 } from "@/stores/apis/partnerApi";
 
 export default function PartnerSettingsPage(): React.JSX.Element {
-  const { data: profile, isLoading, error, refetch } = useGetPartnerProfileQuery();
-  const [updateProfile, { isLoading: isSaving }] = useUpdatePartnerProfileMutation();
+  const {
+    data: profile,
+    isLoading,
+    error,
+    refetch,
+  } = useGetPartnerProfileQuery();
+  const [updateProfile, { isLoading: isSaving }] =
+    useUpdatePartnerProfileMutation();
 
   // Business Info (local state for editing)
   const [businessInfo, setBusinessInfo] = React.useState({
@@ -99,9 +114,9 @@ export default function PartnerSettingsPage(): React.JSX.Element {
     try {
       await updateProfile({
         businessName: businessInfo.businessName,
-        phoneNumber: contactInfo.phone,
-        email: contactInfo.email,
-        address: contactInfo.address,
+        contactPhone: contactInfo.phone,
+        contactEmail: contactInfo.email,
+        businessAddress: contactInfo.address,
       }).unwrap();
       alert("Lưu cài đặt thành công!");
     } catch (err) {
@@ -133,7 +148,9 @@ export default function PartnerSettingsPage(): React.JSX.Element {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#326B9C]">Hồ sơ & Cài đặt</h1>
+            <h1 className="text-3xl font-bold text-[#326B9C]">
+              Hồ sơ & Cài đặt
+            </h1>
             <p className="text-[#7BAAD1] mt-1">
               Quản lý thông tin và cài đặt tài khoản của bạn
             </p>
@@ -156,9 +173,11 @@ export default function PartnerSettingsPage(): React.JSX.Element {
               {/* Avatar */}
               <div className="relative">
                 <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.businessName || 'P'}`} />
+                  <AvatarImage
+                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile?.businessName || "P"}`}
+                  />
                   <AvatarFallback className="bg-[#B0C8DA] text-[#326B9C] text-3xl font-bold">
-                    {profile?.businessName?.substring(0, 2) || 'P'}
+                    {profile?.businessName?.substring(0, 2) || "P"}
                   </AvatarFallback>
                 </Avatar>
                 <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-[#E8E9EB] hover:bg-[#FAFCFF]">
@@ -170,35 +189,48 @@ export default function PartnerSettingsPage(): React.JSX.Element {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h2 className="text-2xl font-bold text-[#326B9C]">
-                    {profile?.businessName || businessInfo.businessName || "Chưa cập nhật"}
+                    {profile?.businessName ||
+                      businessInfo.businessName ||
+                      "Chưa cập nhật"}
                   </h2>
-                  <Badge 
+                  <Badge
                     className={
-                      profile?.status === "APPROVED" 
-                        ? "bg-green-100 text-green-700 border-green-200" 
+                      profile?.status === "APPROVED"
+                        ? "bg-green-100 text-green-700 border-green-200"
                         : profile?.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                        : "bg-gray-100 text-gray-700 border-gray-200"
+                          ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                          : "bg-gray-100 text-gray-700 border-gray-200"
                     }
                   >
-                    {profile?.status === "APPROVED" ? "Đã xác thực" : 
-                     profile?.status === "PENDING" ? "Chờ duyệt" : profile?.status || "N/A"}
+                    {profile?.status === "APPROVED"
+                      ? "Đã xác thực"
+                      : profile?.status === "PENDING"
+                        ? "Chờ duyệt"
+                        : profile?.status || "N/A"}
                   </Badge>
                 </div>
-                <p className="text-[#7BAAD1] mb-4">Partner ID: #{profile?.id || "---"}</p>
-                
+                <p className="text-[#7BAAD1] mb-4">
+                  Partner ID: #{profile?.id || "---"}
+                </p>
+
                 {/* Quick Stats */}
                 <div className="flex flex-wrap gap-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-[#326B9C]">{profile?.storeCount || 0}</p>
+                    <p className="text-2xl font-bold text-[#326B9C]">
+                      {profile?.storeCount || 0}
+                    </p>
                     <p className="text-xs text-[#7BAAD1]">Cửa hàng</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-[#326B9C]">{profile?.staffCount || 0}</p>
+                    <p className="text-2xl font-bold text-[#326B9C]">
+                      {profile?.staffCount || 0}
+                    </p>
                     <p className="text-xs text-[#7BAAD1]">Nhân viên</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">{profile?.revenueSharePercent || 70}%</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {profile?.revenueSharePercent || 70}%
+                    </p>
                     <p className="text-xs text-[#7BAAD1]">Tỷ lệ chia sẻ</p>
                   </div>
                 </div>

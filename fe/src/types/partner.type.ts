@@ -286,23 +286,13 @@ export interface PartnerProfile {
 }
 
 export interface UpdatePartnerProfileRequest {
+  // Fields matching backend PartnerUpdateRequest
   businessName?: string;
-  contactPerson?: string;
-  email?: string;
-  phoneNumber?: string;
-  address?: string;
-  city?: string;
-  district?: string;
-  ward?: string;
-  taxCode?: string;
-  bankName?: string;
-  bankAccountNumber?: string;
-  bankAccountName?: string;
-  description?: string;
-  workingHours?: {
-    open: string;
-    close: string;
-  };
+  businessAddress?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  notes?: string;
+}
   serviceArea?: string[];
 }
 

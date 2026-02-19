@@ -47,9 +47,14 @@ export default function PartnerStaffPage(): React.JSX.Element {
   });
 
   // RTK Query hooks
-  const { data: staffList = [], isLoading, refetch } = useGetStaffContactsQuery();
+  const {
+    data: staffList = [],
+    isLoading,
+    refetch,
+  } = useGetStaffContactsQuery();
   const [addStaff, { isLoading: isAdding }] = useAddStaffContactMutation();
-  const [deleteStaff, { isLoading: isDeleting }] = useDeleteStaffContactMutation();
+  const [deleteStaff, { isLoading: isDeleting }] =
+    useDeleteStaffContactMutation();
 
   // Filter staff by search
   const filteredStaff = React.useMemo(() => {
@@ -57,7 +62,7 @@ export default function PartnerStaffPage(): React.JSX.Element {
     return staffList.filter(
       (s) =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.phoneNumber.includes(searchQuery)
+        s.phoneNumber.includes(searchQuery),
     );
   }, [staffList, searchQuery]);
 
@@ -307,7 +312,9 @@ export default function PartnerStaffPage(): React.JSX.Element {
 
                       <TableCell>
                         <span className="text-[#7BAAD1] text-sm">
-                          {new Date(staff.createdAt).toLocaleDateString("vi-VN")}
+                          {new Date(staff.createdAt).toLocaleDateString(
+                            "vi-VN",
+                          )}
                         </span>
                       </TableCell>
 

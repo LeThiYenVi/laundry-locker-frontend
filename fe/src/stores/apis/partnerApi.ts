@@ -13,6 +13,7 @@ import type {
   UpdateWeightRequest,
   UpdateWeightResponse,
   PartnerLocker,
+  LockerBox,
   StaffContact,
   CreateStaffContactRequest,
   UpdatePartnerProfileRequest,
@@ -45,6 +46,13 @@ interface ApiResponse<T> {
 }
 
 // ============================================
+// Polling Configuration
+// ============================================
+
+/** Polling interval: 10 seconds (in milliseconds) */
+export const POLLING_INTERVAL = 10_000;
+
+// ============================================
 // Partner API Endpoints
 // ============================================
 
@@ -53,20 +61,25 @@ export const partnerApi = baseApi.injectEndpoints({
     // ============================================
     // Profile Endpoints
     // ============================================
-    
+
     getPartnerProfile: builder.query<PartnerResponse, void>({
       query: () => PARTNER_ENDPOINTS.PROFILE,
-      transformResponse: (response: ApiResponse<PartnerResponse>) => response.data,
+      transformResponse: (response: ApiResponse<PartnerResponse>) =>
+        response.data,
       providesTags: ["User"],
     }),
 
-    updatePartnerProfile: builder.mutation<PartnerResponse, UpdatePartnerProfileRequest>({
+    updatePartnerProfile: builder.mutation<
+      PartnerResponse,
+      UpdatePartnerProfileRequest
+    >({
       query: (data) => ({
         url: PARTNER_ENDPOINTS.PROFILE,
         method: "PUT",
         body: data,
       }),
-      transformResponse: (response: ApiResponse<PartnerResponse>) => response.data,
+      transformResponse: (response: ApiResponse<PartnerResponse>) =>
+        response.data,
       invalidatesTags: ["User"],
     }),
 
@@ -76,7 +89,8 @@ export const partnerApi = baseApi.injectEndpoints({
 
     getPartnerDashboard: builder.query<PartnerDashboardResponse, void>({
       query: () => PARTNER_ENDPOINTS.DASHBOARD,
-      transformResponse: (response: ApiResponse<PartnerDashboardResponse>) => response.data,
+      transformResponse: (response: ApiResponse<PartnerDashboardResponse>) =>
+        response.data,
       providesTags: ["Dashboard"],
     }),
 
@@ -84,7 +98,10 @@ export const partnerApi = baseApi.injectEndpoints({
     // Order Endpoints
     // ============================================
 
-    getPartnerOrders: builder.query<PaginatedResponse<PartnerOrder>, GetOrdersParams>({
+    getPartnerOrders: builder.query<
+      PaginatedResponse<PartnerOrder>,
+      GetOrdersParams
+    >({
       query: ({ status, page = 0, size = 10, search }) => {
         const params = new URLSearchParams();
         if (status && status !== "ALL") params.append("status", status);
@@ -93,13 +110,26 @@ export const partnerApi = baseApi.injectEndpoints({
         if (search) params.append("search", search);
         return `${PARTNER_ENDPOINTS.ORDERS}?${params.toString()}`;
       },
-      transformResponse: (response: ApiResponse<PaginatedResponse<PartnerOrder>>) => response.data,
-      providesTags: ["Orders"],
+      transformResponse: (
+        response: ApiResponse<PaginatedResponse<PartnerOrder>>,
+      ) => response.data,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.content.map(({ id }) => ({
+                type: "PartnerOrder" as const,
+                id,
+              })),
+              { type: "PartnerOrder", id: "LIST" },
+              "Orders",
+            ]
+          : [{ type: "PartnerOrder", id: "LIST" }, "Orders"],
     }),
 
     getPendingOrders: builder.query<PartnerOrder[], void>({
       query: () => PARTNER_ENDPOINTS.ORDERS_PENDING,
-      transformResponse: (response: ApiResponse<PartnerOrder[]>) => response.data,
+      transformResponse: (response: ApiResponse<PartnerOrder[]>) =>
+        response.data,
       providesTags: ["Orders"],
     }),
 
@@ -115,19 +145,31 @@ export const partnerApi = baseApi.injectEndpoints({
         url: PARTNER_ENDPOINTS.ORDER_ACCEPT(orderId),
         method: "POST",
       }),
-      transformResponse: (response: ApiResponse<AcceptOrderResponse>) => response.data,
-      invalidatesTags: ["Orders", "Dashboard"],
+      transformResponse: (response: ApiResponse<AcceptOrderResponse>) =>
+        response.data,
+      invalidatesTags: (_result, _error, orderId) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
+        "Orders",
+        "Dashboard",
+      ],
     }),
 
     // Update order weight after collection
-    updateOrderWeight: builder.mutation<UpdateWeightResponse, UpdateWeightRequest>({
+    updateOrderWeight: builder.mutation<
+      UpdateWeightResponse,
+      UpdateWeightRequest
+    >({
       query: ({ orderId, ...data }) => ({
         url: PARTNER_ENDPOINTS.ORDER_WEIGHT(orderId),
         method: "PUT",
         body: data,
       }),
-      transformResponse: (response: ApiResponse<UpdateWeightResponse>) => response.data,
+      transformResponse: (response: ApiResponse<UpdateWeightResponse>) =>
+        response.data,
       invalidatesTags: (_result, _error, { orderId }) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
         { type: "Orders", id: orderId },
         "Orders",
       ],
@@ -140,7 +182,12 @@ export const partnerApi = baseApi.injectEndpoints({
         method: "POST",
       }),
       transformResponse: (response: ApiResponse<PartnerOrder>) => response.data,
-      invalidatesTags: ["Orders", "Dashboard"],
+      invalidatesTags: (_result, _error, orderId) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
+        "Orders",
+        "Dashboard",
+      ],
     }),
 
     // Mark order ready and generate RETURN access code
@@ -149,26 +196,44 @@ export const partnerApi = baseApi.injectEndpoints({
         url: PARTNER_ENDPOINTS.ORDER_READY(orderId),
         method: "POST",
       }),
-      transformResponse: (response: ApiResponse<MarkReadyResponse>) => response.data,
-      invalidatesTags: ["Orders", "Dashboard"],
+      transformResponse: (response: ApiResponse<MarkReadyResponse>) =>
+        response.data,
+      invalidatesTags: (_result, _error, orderId) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
+        "Orders",
+        "Dashboard",
+      ],
     }),
 
     // ============================================
     // Access Code Endpoints
     // ============================================
 
-    generateAccessCode: builder.mutation<StaffAccessCode, GenerateAccessCodeRequest>({
+    generateAccessCode: builder.mutation<
+      StaffAccessCode,
+      GenerateAccessCodeRequest
+    >({
       query: (data) => ({
         url: PARTNER_ENDPOINTS.ACCESS_CODE_GENERATE,
         method: "POST",
         body: data,
       }),
-      transformResponse: (response: ApiResponse<StaffAccessCode>) => response.data,
+      transformResponse: (response: ApiResponse<StaffAccessCode>) =>
+        response.data,
+      // Invalidate cache to refresh order list after code generation
+      invalidatesTags: (_result, _error, { orderId }) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
+        "Orders",
+        "AccessCodes",
+      ],
     }),
 
     getAccessCodesByOrder: builder.query<StaffAccessCode[], number>({
       query: (orderId) => PARTNER_ENDPOINTS.ACCESS_CODES_BY_ORDER(orderId),
-      transformResponse: (response: ApiResponse<StaffAccessCode[]>) => response.data,
+      transformResponse: (response: ApiResponse<StaffAccessCode[]>) =>
+        response.data,
     }),
 
     cancelAccessCode: builder.mutation<void, number>({
@@ -184,7 +249,8 @@ export const partnerApi = baseApi.injectEndpoints({
 
     getStaffContacts: builder.query<StaffContact[], void>({
       query: () => PARTNER_ENDPOINTS.STAFF,
-      transformResponse: (response: ApiResponse<StaffContact[]>) => response.data,
+      transformResponse: (response: ApiResponse<StaffContact[]>) =>
+        response.data,
     }),
 
     addStaffContact: builder.mutation<StaffContact, CreateStaffContactRequest>({
@@ -209,27 +275,32 @@ export const partnerApi = baseApi.injectEndpoints({
 
     getPartnerLockers: builder.query<PartnerLocker[], void>({
       query: () => PARTNER_ENDPOINTS.LOCKERS,
-      transformResponse: (response: ApiResponse<PartnerLocker[]>) => response.data,
+      transformResponse: (response: ApiResponse<PartnerLocker[]>) =>
+        response.data,
       providesTags: ["Lockers"],
     }),
 
-    getAvailableBoxes: builder.query<any[], number>({
+    getAvailableBoxes: builder.query<LockerBox[], number>({
       query: (lockerId) => PARTNER_ENDPOINTS.LOCKER_AVAILABLE_BOXES(lockerId),
-      transformResponse: (response: ApiResponse<any[]>) => response.data,
+      transformResponse: (response: ApiResponse<LockerBox[]>) => response.data,
     }),
 
     // ============================================
     // Revenue Endpoints
     // ============================================
 
-    getPartnerRevenue: builder.query<PartnerRevenueResponse, { fromDate?: string; toDate?: string }>({
+    getPartnerRevenue: builder.query<
+      PartnerRevenueResponse,
+      { fromDate?: string; toDate?: string }
+    >({
       query: ({ fromDate, toDate }) => {
         const params = new URLSearchParams();
         if (fromDate) params.append("fromDate", fromDate);
         if (toDate) params.append("toDate", toDate);
         return `${PARTNER_ENDPOINTS.REVENUE}?${params.toString()}`;
       },
-      transformResponse: (response: ApiResponse<PartnerRevenueResponse>) => response.data,
+      transformResponse: (response: ApiResponse<PartnerRevenueResponse>) =>
+        response.data,
     }),
   }),
 });
@@ -239,10 +310,10 @@ export const {
   // Profile
   useGetPartnerProfileQuery,
   useUpdatePartnerProfileMutation,
-  
+
   // Dashboard
   useGetPartnerDashboardQuery,
-  
+
   // Orders
   useGetPartnerOrdersQuery,
   useGetPendingOrdersQuery,
@@ -251,21 +322,21 @@ export const {
   useUpdateOrderWeightMutation,
   useProcessOrderMutation,
   useMarkOrderReadyMutation,
-  
+
   // Access Codes
   useGenerateAccessCodeMutation,
   useGetAccessCodesByOrderQuery,
   useCancelAccessCodeMutation,
-  
+
   // Staff Directory
   useGetStaffContactsQuery,
   useAddStaffContactMutation,
   useDeleteStaffContactMutation,
-  
+
   // Lockers
   useGetPartnerLockersQuery,
   useGetAvailableBoxesQuery,
-  
+
   // Revenue
   useGetPartnerRevenueQuery,
 } = partnerApi;
