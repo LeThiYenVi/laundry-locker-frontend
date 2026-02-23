@@ -19,6 +19,8 @@ const auth = getAuth(app);
 // For local development ONLY: bypass reCAPTCHA verification
 // auth.settings.appVerificationDisabledForTesting = true;
 
+///
+
 /**
  * Setup invisible reCAPTCHA verifier on a button element.
  * Must be called before signInWithPhoneNumber.
