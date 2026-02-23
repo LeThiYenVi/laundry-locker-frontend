@@ -3,7 +3,7 @@
  * Base URL cấu hình tại đây
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://192.168.1.10:8080';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://10.87.20.161:8080';
 
 async function request(method, path, body = null, token = null) {
   const opts = {
@@ -39,9 +39,19 @@ export const phoneCompleteRegistration = (tempToken, firstName, lastName, birthd
     tempToken, firstName, lastName, birthday,
   });
 
+export const kioskQuickRegister = (tempToken) =>
+  request('POST', '/api/auth/kiosk/quick-register', { tempToken });
+
 // ===== Services =====
-export const getServices = (token, category = 'LAUNDRY') =>
-  request('GET', `/api/services?category=${category}`, null, token);
+export const getServices = (token, lockerId, category = 'STORAGE') =>
+  request('GET', `/api/services?lockerId=${lockerId}&category=${category}`, null, token);
+
+// ===== Lockers & Boxes =====
+export const getAvailableBoxes = (lockerId, token) =>
+  request('GET', `/api/lockers/${lockerId}/boxes/available`, null, token);
+
+export const getLockerById = (lockerId, token) =>
+  request('GET', `/api/lockers/${lockerId}`, null, token);
 
 // ===== Orders =====
 export const createOrder = (token, orderData) =>
@@ -52,11 +62,15 @@ export const createPayment = (token, orderId, paymentMethod) =>
   request('POST', '/api/payments/create', { orderId, paymentMethod }, token);
 
 // ===== IoT (public) =====
-export const verifyPin = (pinCode, boxId, lockerCode) =>
-  request('POST', '/api/iot/verify-pin', { pinCode, boxId, lockerCode });
+export const verifyPin = (pinCode, boxId) =>
+  request('POST', '/api/iot/verify-pin', { pinCode, boxId });
 
-export const unlockBox = (pinCode, boxId, lockerCode) =>
-  request('POST', '/api/iot/unlock', { pinCode, boxId, lockerCode });
+export const unlockBox = (pinCode, boxId, actionType) =>
+  request('POST', '/api/iot/unlock', { pinCode, boxId, actionType });
 
 export const unlockWithCode = (orderId, accessCode, staffName) =>
   request('POST', '/api/iot/unlock-with-code', { orderId, accessCode, staffName });
+
+// ===== Order Lookup =====
+export const getOrderByPin = (pinCode, token) =>
+  request('GET', `/api/orders/pin/${pinCode}`, null, token);

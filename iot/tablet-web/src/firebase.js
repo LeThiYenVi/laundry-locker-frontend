@@ -1,24 +1,24 @@
-/**
- * Firebase Configuration for Tablet Web Kiosk
- * Used for Phone OTP Authentication via Firebase Auth
- */
+// Firebase configuration
 import { initializeApp } from 'firebase/app';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCqdITzgaApbsPeFn2aAbtKbOEVLIQvYo8',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'laundry-locker-19a9d.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'laundry-locker-19a9d',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'laundry-locker-19a9d.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1007589685877',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    apiKey: "AIzaSyBSP18zNPDCdi1aS9cwtaaUbS8cR81OFrI",
+    authDomain: "laundry-locker-19a9d.firebaseapp.com",
+    projectId: "laundry-locker-19a9d",
+    storageBucket: "laundry-locker-19a9d.firebasestorage.app",
+    messagingSenderId: "1007589685877",
+    appId: "1:1007589685877:web:f258a35d706034b740963c",
+    measurementId: "G-JH37YDBZ5L"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Use Vietnamese for OTP SMS
-auth.languageCode = 'vi';
+// For local development: bypass reCAPTCHA verification
+// IMPORTANT: Remove/comment this line in production!
+auth.settings.appVerificationDisabledForTesting = true;
 
 /**
  * Setup invisible reCAPTCHA verifier on a button element.
@@ -53,4 +53,4 @@ export async function sendPhoneOtp(phoneNumber) {
   return result;
 }
 
-export { auth };
+export { auth, RecaptchaVerifier, signInWithPhoneNumber };
