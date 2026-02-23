@@ -7,7 +7,7 @@
 
 ## ✅ Ưu điểm (Đã hoạt động tốt)
 
-### 1. Toàn bộ 13 API calls đều khớp với Backend
+### 1. Toàn bộ 19 API calls đều khớp với Backend
 | # | Frontend API | Backend Endpoint | Status |
 |---|---|---|---|
 | 1 | `sendOtp(email)` | `POST /api/auth/email/send-otp` | ✅ |
@@ -25,6 +25,10 @@
 | 13 | `unlockBox(pinCode, boxId, actionType)` | `POST /api/iot/unlock` | ✅ |
 | 14 | `unlockWithCode(orderId, accessCode, staffName)` | `POST /api/iot/unlock-with-code` | ✅ |
 | 15 | `getOrderByPin(pinCode)` | `GET /api/orders/pin/{pinCode}` | ✅ |
+| 16 | `confirmOrder(token, orderId)` | `PUT /api/orders/{id}/confirm` | ✅ |
+| 17 | `getOrderById(token, orderId)` | `GET /api/orders/{id}` | ✅ |
+| 18 | `getOrderStatus(token, orderId)` | `GET /api/orders/{id}/status` | ✅ |
+| 19 | `getAllBoxes(lockerId, token)` | `GET /api/lockers/{id}/boxes` | ✅ |
 
 ### 2. Kiến trúc triển khai linh hoạt
 - Kiosk đọc `lockerId` từ **URL Params** (`?lockerId=1`) hoặc **`.env`**
@@ -128,7 +132,7 @@ iot/
 └── tablet-web/
     ├── .env              ← VITE_LOCKER_ID, VITE_API_URL
     ├── src/
-    │   ├── api.js        ← All API calls (13 functions)
+    │   ├── api.js        ← All API calls (19 functions)
     │   └── App.jsx       ← Kiosk UI (all screens)
     └── README_SYNC_STATUS.md ← (this file)
 ```
