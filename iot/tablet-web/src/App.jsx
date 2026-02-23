@@ -5,10 +5,12 @@ import './App.css';
 
 // ============================================
 // Config
+// Đọc URL Params trước (dành cho production/deploy) -> Fallback về .env (dành cho Dev)
 // ============================================
-const LOCKER_CODE = 'LOCKER_01';
-const BOX_ID = 1;
-const LOCKER_ID = 1;
+const urlParams = new URLSearchParams(window.location.search);
+
+const LOCKER_CODE = urlParams.get('lockerCode') || import.meta.env.VITE_LOCKER_CODE || 'LOC-01-001';
+const LOCKER_ID = parseInt(urlParams.get('lockerId') || import.meta.env.VITE_LOCKER_ID || '1', 10);
 const AUTO_HOME_SEC = 20;
 
 // ============================================
@@ -23,6 +25,7 @@ export default function App() {
   const [loginMethod, setLoginMethod] = useState('phone');
   const [tempToken, setTempToken] = useState('');
   const [userName, setUserName] = useState('');
+  const [selectedBox, setSelectedBox] = useState(null);
   const [selectedSvcs, setSelectedSvcs] = useState([]);
   const [services, setServices] = useState([]);
   const [orderId, setOrderId] = useState(null);
@@ -32,7 +35,19 @@ export default function App() {
   const [successTitle, setSuccessTitle] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const [lockerInfo, setLockerInfo] = useState(null);
   const cdRef = useRef(null);
+
+  // Fetch locker info (includes store name) — retry when jwt becomes available
+  useEffect(() => {
+    if (lockerInfo) return; // already fetched
+    (async () => {
+      try {
+        const res = await api.getLockerById(LOCKER_ID, jwt || undefined);
+        if (res.success && res.data) setLockerInfo(res.data);
+      } catch { /* ignore */ }
+    })();
+  }, [jwt]);
 
   // Navigate
   const go = useCallback((s) => {
@@ -51,7 +66,7 @@ export default function App() {
 
   const goHome = useCallback(() => {
     setJwt(''); setEmail(''); setPhone(''); setLoginMethod('phone'); setTempToken(''); setUserName('');
-    setSelectedSvcs([]); setServices([]); setOrderId(null);
+    setSelectedBox(null); setSelectedSvcs([]); setServices([]); setOrderId(null);
     setOrderPin(''); setOrderCode(''); setTotalPrice(0);
     setScreen('home'); setHistory(['home']);
     if (cdRef.current) clearInterval(cdRef.current);
@@ -73,14 +88,15 @@ export default function App() {
 
   return (
     <>
-      {screen === 'home' && <HomeScreen go={go} />}
+      {screen === 'home' && <HomeScreen go={go} lockerInfo={lockerInfo} />}
       {screen === 'login' && <LoginScreen go={go} goHome={goHome} email={email} setEmail={setEmail} phone={phone} setPhone={setPhone} loginMethod={loginMethod} setLoginMethod={setLoginMethod} />}
       {screen === 'otp' && <OtpScreen go={go} back={back} email={email} setJwt={setJwt} setTempToken={setTempToken} setUserName={setUserName} />}
       {screen === 'phone-otp' && <PhoneOtpScreen go={go} back={back} phone={phone} setJwt={setJwt} setTempToken={setTempToken} setUserName={setUserName} />}
-      {screen === 'register' && <RegisterScreen go={go} goHome={goHome} tempToken={tempToken} setJwt={setJwt} setUserName={setUserName} loginMethod={loginMethod} />}
+      {screen === 'register' && <RegisterScreen go={go} goHome={goHome} tempToken={tempToken} setJwt={setJwt} setUserName={setUserName} />}
+      {screen === 'boxes' && <BoxSelectionScreen go={go} goHome={goHome} jwt={jwt} userName={userName} selectedBox={selectedBox} setSelectedBox={setSelectedBox} lockerInfo={lockerInfo} />}
       {screen === 'services' && <ServicesScreen go={go} goHome={goHome} jwt={jwt} userName={userName} services={services} setServices={setServices} selectedSvcs={selectedSvcs} setSelectedSvcs={setSelectedSvcs} />}
-      {screen === 'order-info' && <OrderInfoScreen go={go} back={back} jwt={jwt} selectedSvcs={selectedSvcs} setOrderId={setOrderId} setOrderPin={setOrderPin} setOrderCode={setOrderCode} setTotalPrice={setTotalPrice} />}
-      {screen === 'payment' && <PaymentScreen go={go} goHome={goHome} jwt={jwt} orderId={orderId} orderPin={orderPin} orderCode={orderCode} totalPrice={totalPrice} showSuccess={showSuccess} />}
+      {screen === 'order-info' && <OrderInfoScreen go={go} back={back} jwt={jwt} selectedSvcs={selectedSvcs} selectedBox={selectedBox} setOrderId={setOrderId} setOrderPin={setOrderPin} setOrderCode={setOrderCode} setTotalPrice={setTotalPrice} />}
+      {screen === 'payment' && <PaymentScreen go={go} goHome={goHome} jwt={jwt} orderId={orderId} orderPin={orderPin} orderCode={orderCode} totalPrice={totalPrice} selectedBox={selectedBox} showSuccess={showSuccess} />}
       {screen === 'pin' && <PinScreen goHome={goHome} showSuccess={showSuccess} />}
       {screen === 'staff' && <StaffScreen goHome={goHome} showSuccess={showSuccess} />}
       {screen === 'success' && <SuccessScreen goHome={goHome} title={successTitle} msg={successMsg} countdown={countdown} />}
@@ -116,7 +132,7 @@ function Btn({ children, onClick, loading, disabled, variant = 'primary', style,
 // ============================================
 // HOME
 // ============================================
-function HomeScreen({ go }) {
+function HomeScreen({ go, lockerInfo }) {
   return (
     <div className="screen">
       <div className="home-logo">
@@ -124,9 +140,22 @@ function HomeScreen({ go }) {
         <h1>LAUNDRY LOCKER</h1>
         <p className="sub">Hệ thống tủ giặt thông minh</p>
       </div>
+      {lockerInfo && (
+        <div style={{
+          background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px',
+          marginBottom: 16, textAlign: 'center', border: '1px solid rgba(255,255,255,0.12)'
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+            📍 {lockerInfo.storeName || lockerInfo.name}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            {lockerInfo.address}
+          </div>
+        </div>
+      )}
       <div className="home-status">📡 Kiosk sẵn sàng phục vụ</div>
       <div className="home-actions">
-        <Btn onClick={() => go('login')}>📱 Đặt dịch vụ mới</Btn>
+        <Btn onClick={() => go('login')}>📦 Gửi đồ mới</Btn>
         <Btn variant="secondary" onClick={() => go('pin')}>🔢 Nhập mã PIN</Btn>
         <Btn variant="outline" onClick={() => go('staff')}>👷 Mã nhân viên</Btn>
       </div>
@@ -267,7 +296,7 @@ function PhoneOtpScreen({ go, back, phone, setJwt, setTempToken, setUserName }) 
           setJwt(res.data.accessToken);
           const name = res.data.userInfo?.fullName || phone;
           setUserName(name);
-          go('services');
+          go('boxes');
         }
       } else {
         setMsg(res.message || 'Lỗi đăng nhập');
@@ -325,7 +354,7 @@ function OtpScreen({ go, back, email, setJwt, setTempToken, setUserName }) {
           setJwt(res.data.accessToken);
           const name = res.data.userInfo?.fullName || email;
           setUserName(name);
-          go('services');
+          go('boxes');
         }
       } else {
         setMsg(res.message || 'OTP không hợp lệ');
@@ -354,55 +383,131 @@ function OtpScreen({ go, back, email, setJwt, setTempToken, setUserName }) {
 }
 
 // ============================================
-// REGISTER
+// REGISTER (Kiosk Quick Register — API 1.4)
 // ============================================
-function RegisterScreen({ go, goHome, tempToken, setJwt, setUserName, loginMethod }) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [birthday, setBirthday] = useState('');
+function RegisterScreen({ go, goHome, tempToken, setJwt, setUserName }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const handleRegister = async () => {
-    if (!firstName || !lastName || !birthday) { setMsg('Vui lòng nhập đầy đủ thông tin'); return; }
-    setLoading(true); setMsg('');
-    try {
-      // Use different API based on login method
-      const registerFn = loginMethod === 'phone'
-        ? api.phoneCompleteRegistration
-        : api.completeRegistration;
-      const res = await registerFn(tempToken, firstName, lastName, birthday);
-      if (res.success && res.data) {
-        setJwt(res.data.accessToken);
-        setUserName(`${lastName} ${firstName}`);
-        go('services');
-      } else {
-        setMsg(res.message || 'Lỗi đăng ký');
-      }
-    } catch { setMsg('Lỗi kết nối server'); }
-    setLoading(false);
-  };
+  // Auto quick-register on mount
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      setLoading(true); setMsg('');
+      try {
+        const res = await api.kioskQuickRegister(tempToken);
+        if (!ignore && res.success && res.data) {
+          setJwt(res.data.accessToken);
+          setUserName('Khách');
+          go('boxes');
+        } else if (!ignore) {
+          setMsg(res.message || 'Lỗi đăng ký nhanh');
+        }
+      } catch { if (!ignore) setMsg('Lỗi kết nối server'); }
+      if (!ignore) setLoading(false);
+    })();
+    return () => { ignore = true; };
+  }, [tempToken, setJwt, setUserName, go]);
 
   return (
     <div className="screen">
-      <Header onBack={goHome} title="Đăng ký tài khoản" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
-        Tài khoản mới! Vui lòng nhập thông tin cá nhân.
-      </p>
-      <div className="form-group">
-        <label>Họ</label>
-        <input className="input" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Nguyễn" />
-      </div>
-      <div className="form-group">
-        <label>Tên</label>
-        <input className="input" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Văn A" />
-      </div>
-      <div className="form-group">
-        <label>Ngày sinh</label>
-        <input className="input" type="date" value={birthday} onChange={e => setBirthday(e.target.value)} style={{ colorScheme: 'dark' }} />
-      </div>
-      <Btn onClick={handleRegister} loading={loading}>📝 Đăng ký</Btn>
+      <Header onBack={goHome} title="Đăng ký nhanh" />
+      {loading && (
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <span className="spinner" style={{ width: 32, height: 32 }} />
+          <p style={{ color: 'var(--text-secondary)', marginTop: 16 }}>Đang tạo tài khoản...</p>
+        </div>
+      )}
       {msg && <Msg type="error" text={msg} />}
+      {msg && <Btn onClick={goHome} variant="secondary" style={{ marginTop: 16 }}>← Quay lại</Btn>}
+    </div>
+  );
+}
+
+// ============================================
+// BOX SELECTION
+// ============================================
+const SIZE_INFO = {
+  SMALL:       { icon: '📦', label: 'Nhỏ',     color: '#4ade80' },
+  MEDIUM:      { icon: '📦', label: 'Vừa',     color: '#60a5fa' },
+  LARGE:       { icon: '📦', label: 'Lớn',     color: '#f59e0b' },
+  EXTRA_LARGE: { icon: '📦', label: 'Rất lớn', color: '#ef4444' },
+};
+
+function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelectedBox, lockerInfo }) {
+  const [boxes, setBoxes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      setLoading(true); setMsg('');
+      try {
+        const res = await api.getAvailableBoxes(LOCKER_ID, jwt);
+        if (!ignore && res.success && res.data) {
+          setBoxes(res.data);
+          if (res.data.length === 0) setMsg('Không có ô tủ trống');
+        } else if (!ignore) {
+          setMsg(res.message || 'Lỗi tải danh sách ô tủ');
+        }
+      } catch { if (!ignore) setMsg('Lỗi kết nối server'); }
+      if (!ignore) setLoading(false);
+    })();
+    return () => { ignore = true; };
+  }, []);
+
+  const info = (size) => SIZE_INFO[size] || SIZE_INFO.MEDIUM;
+
+  return (
+    <div className="screen">
+      <Header onBack={goHome} title="Chọn ô tủ" />
+      {userName && <div className="user-info">👤 {userName}</div>}
+      {lockerInfo && (
+        <div style={{
+          background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px',
+          marginBottom: 12, border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
+            📍 {lockerInfo.storeName || lockerInfo.name}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+            {lockerInfo.address} • Tủ: {lockerInfo.code}
+          </div>
+        </div>
+      )}
+      {!lockerInfo && (
+        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>
+          Chọn 1 ô tủ trống để gửi đồ
+        </p>
+      )}
+
+      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>⏳ Đang tải...</p>}
+      {msg && !loading && <Msg type="error" text={msg} />}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+        {boxes.map(box => {
+          const s = info(box.size);
+          const sel = selectedBox?.id === box.id;
+          return (
+            <button key={box.id} onClick={() => setSelectedBox(box)}
+              style={{
+                padding: '14px 8px', borderRadius: 12,
+                border: sel ? `2px solid ${s.color}` : '2px solid rgba(255,255,255,0.1)',
+                background: sel ? `${s.color}22` : 'rgba(255,255,255,0.05)',
+                cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
+              }}>
+              <div style={{ fontSize: 28 }}>{s.icon}</div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#fff', marginTop: 4 }}>Ô {box.boxNumber}</div>
+              <div style={{ fontSize: 11, color: s.color, marginTop: 2 }}>{s.label}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <Btn onClick={() => go('services')} disabled={!selectedBox}>
+        Tiếp tục → Chọn dịch vụ
+      </Btn>
     </div>
   );
 }
@@ -418,7 +523,7 @@ function ServicesScreen({ go, goHome, jwt, userName, services, setServices, sele
     (async () => {
       setLoading(true);
       try {
-        const res = await api.getServices(jwt);
+        const res = await api.getServices(jwt, LOCKER_ID);
         if (!ignore && res.success && res.data) setServices(res.data);
       } catch { /* ignore */ }
       if (!ignore) setLoading(false);
@@ -460,7 +565,7 @@ function ServicesScreen({ go, goHome, jwt, userName, services, setServices, sele
 // ============================================
 // ORDER INFO
 // ============================================
-function OrderInfoScreen({ go, back, jwt, selectedSvcs, setOrderId, setOrderPin, setOrderCode, setTotalPrice }) {
+function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId, setOrderPin, setOrderCode, setTotalPrice }) {
   const [note, setNote] = useState('');
   const [recvName, setRecvName] = useState('');
   const [recvPhone, setRecvPhone] = useState('');
@@ -468,12 +573,13 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, setOrderId, setOrderPin,
   const [msg, setMsg] = useState('');
 
   const handleCreate = async () => {
+    if (!selectedBox) { setMsg('Chưa chọn ô tủ'); return; }
     setLoading(true); setMsg('');
     try {
       const res = await api.createOrder(jwt, {
-        type: 'LAUNDRY',
+        type: 'STORAGE',
         lockerId: LOCKER_ID,
-        boxId: BOX_ID,
+        boxIds: [selectedBox.id],
         serviceIds: selectedSvcs,
         customerNote: note || undefined,
         receiverName: recvName || undefined,
@@ -497,7 +603,7 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, setOrderId, setOrderPin,
       <Header onBack={back} title="Thông tin đơn hàng" />
       <div className="form-group">
         <label>Ghi chú (tùy chọn)</label>
-        <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Ví dụ: Giặt nhẹ tay, không sấy..." />
+        <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Ví dụ: Đồ dễ vỡ, cần cẩn thận..." />
       </div>
       <div className="divider">Người nhận (tùy chọn)</div>
       <div className="form-group">
@@ -517,7 +623,7 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, setOrderId, setOrderPin,
 // ============================================
 // PAYMENT
 // ============================================
-function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPrice, showSuccess }) {
+function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPrice, selectedBox, showSuccess }) {
   const [loading, setLoading] = useState('');
   const [payUrl, setPayUrl] = useState('');
   const [msg, setMsg] = useState('');
@@ -527,9 +633,9 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
   const skipPay = async () => {
     setLoading('skip');
     try {
-      const res = await api.unlockBox(orderPin, BOX_ID, LOCKER_CODE);
+      const res = await api.unlockBox(orderPin, selectedBox?.id, 'DROP_OFF');
       if (res.success || res.data?.success) {
-        showSuccess('Tủ đã mở!', `Vui lòng bỏ đồ vào box và đóng cửa.\nPIN: ${orderPin}`);
+        showSuccess('Tủ đã mở!', `Vui lòng gửi đồ vào box và đóng cửa.\nPIN: ${orderPin}`);
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi mở tủ');
       }
@@ -553,9 +659,9 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
   const openAfterPay = async () => {
     setLoading('open');
     try {
-      const res = await api.unlockBox(orderPin, BOX_ID, LOCKER_CODE);
+      const res = await api.unlockBox(orderPin, selectedBox?.id, 'DROP_OFF');
       if (res.success || res.data?.success) {
-        showSuccess('Thanh toán thành công!', 'Tủ đã mở. Vui lòng bỏ đồ vào và đóng cửa.');
+        showSuccess('Thanh toán thành công!', 'Tủ đã mở. Vui lòng gửi đồ vào và đóng cửa.');
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi mở tủ');
       }
@@ -626,10 +732,22 @@ function PinScreen({ goHome, showSuccess }) {
     if (code.length !== 6) return;
     setLoading(true);
     try {
-      // First verify, then unlock
-      const verifyRes = await api.verifyPin(code, BOX_ID, LOCKER_CODE);
+      // Step 1: Look up order by PIN to get boxId
+      const orderRes = await api.getOrderByPin(code);
+      if (!orderRes.success || !orderRes.data) {
+        setPinState('error');
+        setMsg('Mã PIN không hợp lệ hoặc đã hết hạn');
+        setTimeout(clearAll, 2000);
+        setLoading(false);
+        return;
+      }
+      const boxId = orderRes.data.box?.id || orderRes.data.boxId;
+
+      // Step 2: Verify PIN
+      const verifyRes = await api.verifyPin(code, boxId);
       if (verifyRes.success && verifyRes.data?.valid) {
-        const unlockRes = await api.unlockBox(code, BOX_ID, LOCKER_CODE);
+        // Step 3: Unlock box
+        const unlockRes = await api.unlockBox(code, boxId, 'PICKUP');
         if (unlockRes.success || unlockRes.data?.success) {
           setPinState('success');
           setTimeout(() => showSuccess('Đã mở khóa!', unlockRes.data?.message || 'Hộp đã được mở. Tự khóa sau 5 giây.'), 500);
