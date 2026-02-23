@@ -34,6 +34,7 @@ export default function App() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [successTitle, setSuccessTitle] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [successExtra, setSuccessExtra] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const [lockerInfo, setLockerInfo] = useState(null);
   const cdRef = useRef(null);
@@ -51,6 +52,7 @@ export default function App() {
 
   // Navigate
   const go = useCallback((s) => {
+    console.log(`%c[NAV] → ${s}`, 'color:#c084fc;font-weight:bold');
     setScreen(s);
     setHistory(h => [...h, s]);
   }, []);
@@ -65,6 +67,7 @@ export default function App() {
   }, []);
 
   const goHome = useCallback(() => {
+    console.log('%c[NAV] → home (reset)', 'color:#c084fc;font-weight:bold');
     setJwt(''); setEmail(''); setPhone(''); setLoginMethod('phone'); setTempToken(''); setUserName('');
     setSelectedBox(null); setSelectedSvcs([]); setServices([]); setOrderId(null);
     setOrderPin(''); setOrderCode(''); setTotalPrice(0);
@@ -72,9 +75,10 @@ export default function App() {
     if (cdRef.current) clearInterval(cdRef.current);
   }, []);
 
-  const showSuccess = useCallback((title, msg) => {
+  const showSuccess = useCallback((title, msg, extra = null) => {
     setSuccessTitle(title);
     setSuccessMsg(msg);
+    setSuccessExtra(extra);
     go('success');
     let sec = AUTO_HOME_SEC;
     setCountdown(sec);
@@ -99,7 +103,7 @@ export default function App() {
       {screen === 'payment' && <PaymentScreen go={go} goHome={goHome} jwt={jwt} orderId={orderId} orderPin={orderPin} orderCode={orderCode} totalPrice={totalPrice} selectedBox={selectedBox} showSuccess={showSuccess} />}
       {screen === 'pin' && <PinScreen goHome={goHome} showSuccess={showSuccess} />}
       {screen === 'staff' && <StaffScreen goHome={goHome} showSuccess={showSuccess} />}
-      {screen === 'success' && <SuccessScreen goHome={goHome} title={successTitle} msg={successMsg} countdown={countdown} />}
+      {screen === 'success' && <SuccessScreen goHome={goHome} title={successTitle} msg={successMsg} extra={successExtra} countdown={countdown} />}
     </>
   );
 }
@@ -148,9 +152,18 @@ function HomeScreen({ go, lockerInfo }) {
           <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
             📍 {lockerInfo.storeName || lockerInfo.name}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
             {lockerInfo.address}
           </div>
+          {lockerInfo.totalBoxes != null && (
+            <div style={{
+              display: 'flex', justifyContent: 'center', gap: 16, marginTop: 6,
+              fontSize: 13, fontWeight: 600
+            }}>
+              <span style={{ color: '#4ade80' }}>✅ Trống: {lockerInfo.availableBoxes ?? '—'}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>/ {lockerInfo.totalBoxes} ô</span>
+            </div>
+          )}
         </div>
       )}
       <div className="home-status">📡 Kiosk sẵn sàng phục vụ</div>
@@ -191,6 +204,7 @@ function LoginScreen({ go, goHome, email, setEmail, phone, setPhone, loginMethod
     if (!email || !email.includes('@')) { setMsg('Vui lòng nhập email hợp lệ'); return; }
     setLoading(true); setMsg('');
     try {
+      console.log('%c[LOGIN] Sending email OTP to:', 'color:#fbbf24', email);
       const res = await api.sendOtp(email);
       if (res.success) go('otp');
       else setMsg(res.message || 'Lỗi gửi OTP');
@@ -285,6 +299,7 @@ function PhoneOtpScreen({ go, back, phone, setJwt, setTempToken, setUserName }) 
 
       const userCredential = await confirmation.confirm(otp);
       const idToken = await userCredential.user.getIdToken();
+      console.log('%c[AUTH] Firebase phone verified, sending to backend', 'color:#fbbf24');
 
       // Send Firebase ID token to backend
       const res = await api.phoneLogin(idToken);
@@ -427,13 +442,6 @@ function RegisterScreen({ go, goHome, tempToken, setJwt, setUserName }) {
 // ============================================
 // BOX SELECTION
 // ============================================
-const SIZE_INFO = {
-  SMALL:       { icon: '📦', label: 'Nhỏ',     color: '#4ade80' },
-  MEDIUM:      { icon: '📦', label: 'Vừa',     color: '#60a5fa' },
-  LARGE:       { icon: '📦', label: 'Lớn',     color: '#f59e0b' },
-  EXTRA_LARGE: { icon: '📦', label: 'Rất lớn', color: '#ef4444' },
-};
-
 function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelectedBox, lockerInfo }) {
   const [boxes, setBoxes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -443,10 +451,12 @@ function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelecte
     let ignore = false;
     (async () => {
       setLoading(true); setMsg('');
+      console.log('%c[BOX] Loading available boxes for locker:', 'color:#fbbf24', LOCKER_ID);
       try {
         const res = await api.getAvailableBoxes(LOCKER_ID, jwt);
         if (!ignore && res.success && res.data) {
           setBoxes(res.data);
+          console.log('%c[BOX] Available boxes:', 'color:#4ade80', res.data.length, res.data);
           if (res.data.length === 0) setMsg('Không có ô tủ trống');
         } else if (!ignore) {
           setMsg(res.message || 'Lỗi tải danh sách ô tủ');
@@ -457,7 +467,7 @@ function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelecte
     return () => { ignore = true; };
   }, []);
 
-  const info = (size) => SIZE_INFO[size] || SIZE_INFO.MEDIUM;
+  const boxColor = '#60a5fa';
 
   return (
     <div className="screen">
@@ -474,6 +484,11 @@ function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelecte
           <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
             {lockerInfo.address} • Tủ: {lockerInfo.code}
           </div>
+          {lockerInfo.totalBoxes != null && (
+            <div style={{ fontSize: 11, color: '#4ade80', marginTop: 4 }}>
+              ✅ {lockerInfo.availableBoxes ?? boxes.length} ô trống / {lockerInfo.totalBoxes} ô
+            </div>
+          )}
         </div>
       )}
       {!lockerInfo && (
@@ -487,19 +502,18 @@ function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelecte
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
         {boxes.map(box => {
-          const s = info(box.size);
           const sel = selectedBox?.id === box.id;
           return (
             <button key={box.id} onClick={() => setSelectedBox(box)}
               style={{
                 padding: '14px 8px', borderRadius: 12,
-                border: sel ? `2px solid ${s.color}` : '2px solid rgba(255,255,255,0.1)',
-                background: sel ? `${s.color}22` : 'rgba(255,255,255,0.05)',
+                border: sel ? `2px solid ${boxColor}` : '2px solid rgba(255,255,255,0.1)',
+                background: sel ? `${boxColor}22` : 'rgba(255,255,255,0.05)',
                 cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               }}>
-              <div style={{ fontSize: 28 }}>{s.icon}</div>
+              <div style={{ fontSize: 28 }}>📦</div>
               <div style={{ fontWeight: 700, fontSize: 16, color: '#fff', marginTop: 4 }}>Ô {box.boxNumber}</div>
-              <div style={{ fontSize: 11, color: s.color, marginTop: 2 }}>{s.label}</div>
+              <div style={{ fontSize: 11, color: '#4ade80', marginTop: 2 }}>Trống</div>
             </button>
           );
         })}
@@ -576,6 +590,7 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId,
     if (!selectedBox) { setMsg('Chưa chọn ô tủ'); return; }
     setLoading(true); setMsg('');
     try {
+      console.log('%c[ORDER] Creating order:', 'color:#fbbf24', { lockerId: LOCKER_ID, boxId: selectedBox?.id, services: selectedSvcs });
       const res = await api.createOrder(jwt, {
         type: 'STORAGE',
         lockerId: LOCKER_ID,
@@ -586,6 +601,7 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId,
         receiverPhone: recvPhone || undefined,
       });
       if (res.success && res.data) {
+        console.log('%c[ORDER] ✅ Created:', 'color:#4ade80', { id: res.data.id, pin: res.data.pinCode, code: res.data.orderCode });
         setOrderId(res.data.id);
         setOrderPin(res.data.pinCode || '');
         setOrderCode(res.data.orderCode || '');
@@ -627,15 +643,33 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
   const [loading, setLoading] = useState('');
   const [payUrl, setPayUrl] = useState('');
   const [msg, setMsg] = useState('');
+  const [polling, setPolling] = useState(false);
+  const pollRef = useRef(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
 
   const fmt = (p) => new Intl.NumberFormat('vi-VN').format(p) + 'đ';
 
+  const successExtra = { orderCode, orderPin, boxNumber: selectedBox?.boxNumber };
+
+  // Confirm order after successful unlock (DROP_OFF)
+  const confirmAfterUnlock = async () => {
+    try {
+      await api.confirmOrder(jwt, orderId);
+    } catch { /* best-effort, don't block success screen */ }
+  };
+
   const skipPay = async () => {
     setLoading('skip');
+    console.log('%c[UNLOCK] Skip pay → unlock box:', 'color:#fbbf24', { pin: orderPin, boxId: selectedBox?.id });
     try {
       const res = await api.unlockBox(orderPin, selectedBox?.id, 'DROP_OFF');
       if (res.success || res.data?.success) {
-        showSuccess('Tủ đã mở!', `Vui lòng gửi đồ vào box và đóng cửa.\nPIN: ${orderPin}`);
+        await confirmAfterUnlock();
+        showSuccess('Tủ đã mở!', 'Vui lòng gửi đồ vào box và đóng cửa.', successExtra);
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi mở tủ');
       }
@@ -649,6 +683,8 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
       const res = await api.createPayment(jwt, orderId, method);
       if (res.success && res.data?.paymentUrl) {
         setPayUrl(res.data.paymentUrl);
+        // Start polling payment status
+        startPaymentPolling();
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi tạo thanh toán');
       }
@@ -656,12 +692,30 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
     setLoading('');
   };
 
+  const startPaymentPolling = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    setPolling(true);
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await api.getOrderStatus(orderId, jwt);
+        if (res.success && res.data?.isPaid) {
+          clearInterval(pollRef.current);
+          setPolling(false);
+          // Payment confirmed → auto unlock
+          await openAfterPay();
+        }
+      } catch { /* ignore polling errors */ }
+    }, 3000);
+  };
+
   const openAfterPay = async () => {
     setLoading('open');
+    if (pollRef.current) { clearInterval(pollRef.current); setPolling(false); }
     try {
       const res = await api.unlockBox(orderPin, selectedBox?.id, 'DROP_OFF');
       if (res.success || res.data?.success) {
-        showSuccess('Thanh toán thành công!', 'Tủ đã mở. Vui lòng gửi đồ vào và đóng cửa.');
+        await confirmAfterUnlock();
+        showSuccess('Thanh toán thành công!', 'Tủ đã mở. Vui lòng gửi đồ vào và đóng cửa.', successExtra);
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi mở tủ');
       }
@@ -676,6 +730,7 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
         <p>📋 Mã đơn: <strong>{orderCode}</strong></p>
         <p>🔑 PIN: <strong>{orderPin}</strong></p>
         <p>💰 Tổng: <strong>{fmt(totalPrice)}</strong></p>
+        {selectedBox && <p>📦 Ô tủ: <strong>#{selectedBox.boxNumber}</strong></p>}
       </div>
       <Btn variant="secondary" onClick={skipPay} loading={loading === 'skip'} style={{ marginBottom: 12 }}>
         🔓 Mở tủ trước — Thanh toán sau
@@ -693,7 +748,8 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
         <div className="pay-link">
           <p style={{ color: '#c8d6e5', fontSize: 13, marginBottom: 8 }}>📱 Quét QR hoặc mở link để thanh toán:</p>
           <a href={payUrl} target="_blank" rel="noreferrer">{payUrl}</a>
-          <p>Sau khi thanh toán xong, nhấn nút bên dưới.</p>
+          {polling && <p style={{ color: '#f59e0b', marginTop: 6, fontSize: 13 }}>⏳ Đang chờ xác nhận thanh toán...</p>}
+          {!polling && <p>Sau khi thanh toán xong, nhấn nút bên dưới.</p>}
         </div>
       )}
       {payUrl && (
@@ -733,6 +789,7 @@ function PinScreen({ goHome, showSuccess }) {
     setLoading(true);
     try {
       // Step 1: Look up order by PIN to get boxId
+      console.log('%c[PIN] Looking up order by PIN:', 'color:#fbbf24', code);
       const orderRes = await api.getOrderByPin(code);
       if (!orderRes.success || !orderRes.data) {
         setPinState('error');
@@ -742,6 +799,7 @@ function PinScreen({ goHome, showSuccess }) {
         return;
       }
       const boxId = orderRes.data.box?.id || orderRes.data.boxId;
+      console.log('%c[PIN] Found order → boxId:', 'color:#4ade80', boxId, orderRes.data);
 
       // Step 2: Verify PIN
       const verifyRes = await api.verifyPin(code, boxId);
@@ -750,7 +808,13 @@ function PinScreen({ goHome, showSuccess }) {
         const unlockRes = await api.unlockBox(code, boxId, 'PICKUP');
         if (unlockRes.success || unlockRes.data?.success) {
           setPinState('success');
-          setTimeout(() => showSuccess('Đã mở khóa!', unlockRes.data?.message || 'Hộp đã được mở. Tự khóa sau 5 giây.'), 500);
+          const boxNum = orderRes.data.sendBoxNumber || orderRes.data.box?.boxNumber || '';
+          const oCode = orderRes.data.orderCode || '';
+          setTimeout(() => showSuccess(
+            'Đã mở khóa!',
+            unlockRes.data?.message || 'Hộp đã được mở. Tự khóa sau 5 giây.',
+            { orderCode: oCode, boxNumber: boxNum }
+          ), 500);
         } else {
           setPinState('error');
           setMsg(unlockRes.data?.message || 'Lỗi mở khóa');
@@ -849,7 +913,7 @@ function StaffScreen({ goHome, showSuccess }) {
 // ============================================
 // SUCCESS
 // ============================================
-function SuccessScreen({ goHome, title, msg, countdown }) {
+function SuccessScreen({ goHome, title, msg, extra, countdown }) {
   return (
     <div className="screen">
       <div className="success-box">
@@ -857,6 +921,28 @@ function SuccessScreen({ goHome, title, msg, countdown }) {
         <h2>{title}</h2>
         <p>{msg}</p>
       </div>
+      {extra && (
+        <div style={{
+          background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 18px',
+          marginTop: 16, border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left'
+        }}>
+          {extra.orderCode && (
+            <div style={{ fontSize: 14, color: '#fff', marginBottom: 6 }}>
+              📋 Mã đơn: <strong>{extra.orderCode}</strong>
+            </div>
+          )}
+          {extra.orderPin && (
+            <div style={{ fontSize: 14, color: '#f59e0b', marginBottom: 6 }}>
+              🔑 Mã PIN lấy đồ: <strong style={{ fontSize: 18, letterSpacing: 2 }}>{extra.orderPin}</strong>
+            </div>
+          )}
+          {extra.boxNumber && (
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+              📦 Ô tủ: <strong>#{extra.boxNumber}</strong>
+            </div>
+          )}
+        </div>
+      )}
       <div className="countdown">Về trang chủ sau {countdown}s</div>
       <Btn variant="secondary" onClick={goHome} style={{ marginTop: 20 }}>🏠 Về trang chủ</Btn>
     </div>
