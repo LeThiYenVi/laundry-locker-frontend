@@ -26,7 +26,7 @@
 // ============================================
 #define BOX_ID 1                                // ID của box mà ESP8266 này điều khiển
 #define LOCKER_ID 1                             // ID của locker chứa box này
-#define DEVICE_ID "ESP8266_LOCKER_01"           // ID định danh của thiết bị
+#define DEVICE_ID "LOC-01-001"                  // Phải khớp với locker.code ở backend (MQTT topic)
 
 // ============================================
 // GPIO Pin Configuration (ESP8266 NodeMCU)
