@@ -6,6 +6,13 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://10.87.20.161:8080';
 
 async function request(method, path, body = null, token = null) {
+  const url = `${API_BASE}${path}`;
+  console.log(`%c[API] ${method} ${path}`, 'color:#60a5fa;font-weight:bold', {
+    url,
+    body,
+    hasToken: !!token,
+  });
+
   const opts = {
     method,
     headers: { 'Content-Type': 'application/json' },
@@ -13,9 +20,21 @@ async function request(method, path, body = null, token = null) {
   if (token) opts.headers['Authorization'] = `Bearer ${token}`;
   if (body) opts.body = JSON.stringify(body);
 
-  const res = await fetch(`${API_BASE}${path}`, opts);
-  const data = await res.json();
-  return data;
+  try {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+
+    if (data.success) {
+      console.log(`%c[API] ✅ ${method} ${path}`, 'color:#4ade80;font-weight:bold', data);
+    } else {
+      console.warn(`%c[API] ⚠️ ${method} ${path}`, 'color:#f59e0b;font-weight:bold', data);
+    }
+
+    return data;
+  } catch (err) {
+    console.error(`%c[API] ❌ ${method} ${path}`, 'color:#ef4444;font-weight:bold', err);
+    throw err;
+  }
 }
 
 // ===== Auth =====
@@ -74,3 +93,17 @@ export const unlockWithCode = (orderId, accessCode, staffName) =>
 // ===== Order Lookup =====
 export const getOrderByPin = (pinCode, token) =>
   request('GET', `/api/orders/pin/${pinCode}`, null, token);
+
+export const getOrderById = (orderId, token) =>
+  request('GET', `/api/orders/${orderId}`, null, token);
+
+export const getOrderStatus = (orderId, token) =>
+  request('GET', `/api/orders/${orderId}/status`, null, token);
+
+// ===== Order Actions =====
+export const confirmOrder = (token, orderId) =>
+  request('PUT', `/api/orders/${orderId}/confirm`, null, token);
+
+// ===== All Boxes (incl. occupied) =====
+export const getAllBoxes = (lockerId, token) =>
+  request('GET', `/api/lockers/${lockerId}/boxes`, null, token);
