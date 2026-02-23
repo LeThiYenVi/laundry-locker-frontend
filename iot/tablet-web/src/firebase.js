@@ -16,9 +16,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// For local development: bypass reCAPTCHA verification
-// IMPORTANT: Remove/comment this line in production!
-auth.settings.appVerificationDisabledForTesting = true;
+// For local development ONLY: bypass reCAPTCHA verification
+// auth.settings.appVerificationDisabledForTesting = true;
 
 /**
  * Setup invisible reCAPTCHA verifier on a button element.
