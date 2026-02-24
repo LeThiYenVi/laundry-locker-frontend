@@ -18,10 +18,10 @@ export interface AuthContextType {
   isWaitingForOTP: boolean;
   partnerContactInfo: string;
   partnerSendOTP: (
-    contact: string,
+    email: string,
     contactType: "EMAIL" | "PHONE",
   ) => Promise<void>;
-  partnerVerifyOTP: (otpCode: string) => Promise<void>;
+  partnerVerifyOTP: (email: string, otp: string) => Promise<void>;
   cancelPartnerOTP: () => void;
 }
 
