@@ -1,13 +1,14 @@
 // API Base URLs
 // Lưu ý: Mặc định là localhost cho Web. Nếu dùng Emulator Android, hãy đổi trong file .env thành 10.0.2.2
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // Root URIs
 export const ROOT_URI = {
-  AUTH: '/api/auth',
-  USERS: '/api/user',
-  ADMIN: '/api/admin',
-  PARTNER: '/api/partner',
+  AUTH: "/api/auth",
+  USERS: "/api/user",
+  ADMIN: "/api/admin",
+  PARTNER: "/api/partner",
 } as const;
 
 // Authentication Endpoints
@@ -27,6 +28,11 @@ export const AUTH_ENDPOINTS = {
   EMAIL_SEND_OTP: `${ROOT_URI.AUTH}/email/send-otp`,
   EMAIL_VERIFY_OTP: `${ROOT_URI.AUTH}/email/verify-otp`,
   EMAIL_COMPLETE_REGISTRATION: `${ROOT_URI.AUTH}/email/complete-registration`,
+
+  // Admin Authentication (2FA)
+  ADMIN_LOGIN: `${ROOT_URI.ADMIN}/auth/login`,
+  ADMIN_VERIFY_2FA: `${ROOT_URI.ADMIN}/auth/verify-2fa`,
+  ADMIN_REFRESH: `${ROOT_URI.ADMIN}/auth/refresh`,
 } as const;
 
 // User Endpoints
@@ -63,10 +69,13 @@ export const ADMIN_ENDPOINTS = {
   // Lockers Management
   LOCKERS: `${ROOT_URI.ADMIN}/lockers`,
   LOCKER_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/lockers/${id}`,
-  LOCKERS_BY_STORE: (storeId: number) => `${ROOT_URI.ADMIN}/lockers/store/${storeId}`,
-  LOCKER_MAINTENANCE: (id: number) => `${ROOT_URI.ADMIN}/lockers/${id}/maintenance`,
+  LOCKERS_BY_STORE: (storeId: number) =>
+    `${ROOT_URI.ADMIN}/lockers/store/${storeId}`,
+  LOCKER_MAINTENANCE: (id: number) =>
+    `${ROOT_URI.ADMIN}/lockers/${id}/maintenance`,
   LOCKER_BOXES: (id: number) => `${ROOT_URI.ADMIN}/lockers/${id}/boxes`,
-  BOX_STATUS: (boxId: number) => `${ROOT_URI.ADMIN}/lockers/boxes/${boxId}/status`,
+  BOX_STATUS: (boxId: number) =>
+    `${ROOT_URI.ADMIN}/lockers/boxes/${boxId}/status`,
 
   // Orders Management
   ORDERS: `${ROOT_URI.ADMIN}/orders`,
@@ -77,8 +86,10 @@ export const ADMIN_ENDPOINTS = {
 
   // Payments Management
   PAYMENTS: `${ROOT_URI.ADMIN}/payments`,
-  PAYMENT_BY_ID: (paymentId: number) => `${ROOT_URI.ADMIN}/payments/${paymentId}`,
-  PAYMENT_STATUS: (paymentId: number) => `${ROOT_URI.ADMIN}/payments/${paymentId}/status`,
+  PAYMENT_BY_ID: (paymentId: number) =>
+    `${ROOT_URI.ADMIN}/payments/${paymentId}`,
+  PAYMENT_STATUS: (paymentId: number) =>
+    `${ROOT_URI.ADMIN}/payments/${paymentId}/status`,
 
   // Scheduler Management
   SCHEDULER_AUTO_CANCEL: `${ROOT_URI.ADMIN}/scheduler/auto-cancel`,
@@ -87,17 +98,24 @@ export const ADMIN_ENDPOINTS = {
   SCHEDULER_STATUS: `${ROOT_URI.ADMIN}/scheduler/status`,
 
   // Loyalty Management
-  LOYALTY_USERS: (userId: number) => `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
-  LOYALTY_POINTS: (userId: number) => `${ROOT_URI.ADMIN}/loyalty/users/${userId}/points`,
-  LOYALTY_HISTORY: (userId: number) => `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
+  LOYALTY_USERS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
+  LOYALTY_POINTS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/points`,
+  LOYALTY_HISTORY: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
   LOYALTY_STATISTICS: `${ROOT_URI.ADMIN}/loyalty/statistics`,
 
   // Partner Management
   PARTNERS: `${ROOT_URI.ADMIN}/partners`,
-  PARTNER_BY_ID: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}`,
-  PARTNER_APPROVE: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/approve`,
-  PARTNER_REJECT: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/reject`,
-  PARTNER_SUSPEND: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
+  PARTNER_BY_ID: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}`,
+  PARTNER_APPROVE: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/approve`,
+  PARTNER_REJECT: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/reject`,
+  PARTNER_SUSPEND: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
 
   // Legacy
   ANALYTICS: `${ROOT_URI.ADMIN}/analytics`,
@@ -121,13 +139,16 @@ export const PARTNER_ENDPOINTS = {
   ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
   ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
   ACCESS_CODE_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
-  ACCESS_CODES_BY_ORDER: (orderId: number) => `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
-  ACCESS_CODE_CANCEL: (codeId: number) => `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
+  ACCESS_CODES_BY_ORDER: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
+  ACCESS_CODE_CANCEL: (codeId: number) =>
+    `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
   STAFF: `${ROOT_URI.PARTNER}/staff`,
   STAFF_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/staff/${id}`,
   STORES: `${ROOT_URI.PARTNER}/stores`,
   LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
-  LOCKER_AVAILABLE_BOXES: (lockerId: number) => `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+  LOCKER_AVAILABLE_BOXES: (lockerId: number) =>
+    `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
   REVENUE: `${ROOT_URI.PARTNER}/revenue`,
 } as const;
 
@@ -140,14 +161,23 @@ export const API_PATHS = {
 } as const;
 
 // HTTP Methods & Metadata
-export const HTTP_METHODS = { GET: 'GET', POST: 'POST', PUT: 'PUT', PATCH: 'PATCH', DELETE: 'DELETE' } as const;
-export const CONTENT_TYPES = { JSON: 'application/json', FORM_DATA: 'multipart/form-data' } as const;
+export const HTTP_METHODS = {
+  GET: "GET",
+  POST: "POST",
+  PUT: "PUT",
+  PATCH: "PATCH",
+  DELETE: "DELETE",
+} as const;
+export const CONTENT_TYPES = {
+  JSON: "application/json",
+  FORM_DATA: "multipart/form-data",
+} as const;
 
 export const API_ERROR_MESSAGES = {
-  NETWORK_ERROR: 'Network error occurred',
-  UNAUTHORIZED: 'Unauthorized access',
-  FORBIDDEN: 'Access forbidden',
-  NOT_FOUND: 'Resource not found',
-  SERVER_ERROR: 'Internal server error',
-  UNKNOWN_ERROR: 'An unknown error occurred',
+  NETWORK_ERROR: "Network error occurred",
+  UNAUTHORIZED: "Unauthorized access",
+  FORBIDDEN: "Access forbidden",
+  NOT_FOUND: "Resource not found",
+  SERVER_ERROR: "Internal server error",
+  UNKNOWN_ERROR: "An unknown error occurred",
 } as const;
