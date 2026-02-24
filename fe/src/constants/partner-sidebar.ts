@@ -40,8 +40,13 @@ export const PARTNER_NAV_ITEMS = [
     icon: Briefcase,
   },
   {
+    path: "/partner/notifications",
+    label: "Notifications",
+    icon: Bell,
+  },
+  {
     path: "/partner/settings",
-    label: "Settings",
+    label: "Profile & Settings",
     icon: Settings,
   },
 ] as const;

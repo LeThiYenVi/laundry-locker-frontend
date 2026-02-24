@@ -1,12 +1,14 @@
 // API Base URLs
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://10.0.2.2:8080';
+// Lưu ý: Mặc định là localhost cho Web. Nếu dùng Emulator Android, hãy đổi trong file .env thành 10.0.2.2
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // Root URIs
 export const ROOT_URI = {
-  AUTH: '/api/auth',
-  USERS: '/api/user',
-  ADMIN: '/api/admin',
-  PARTNER: '/api/partner',
+  AUTH: "/api/auth",
+  USERS: "/api/user",
+  ADMIN: "/api/admin",
+  PARTNER: "/api/partner",
 } as const;
 
 // Authentication Endpoints
@@ -79,10 +81,13 @@ export const ADMIN_ENDPOINTS = {
   // Lockers Management
   LOCKERS: `${ROOT_URI.ADMIN}/lockers`,
   LOCKER_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/lockers/${id}`,
-  LOCKERS_BY_STORE: (storeId: number) => `${ROOT_URI.ADMIN}/lockers/store/${storeId}`,
-  LOCKER_MAINTENANCE: (id: number) => `${ROOT_URI.ADMIN}/lockers/${id}/maintenance`,
+  LOCKERS_BY_STORE: (storeId: number) =>
+    `${ROOT_URI.ADMIN}/lockers/store/${storeId}`,
+  LOCKER_MAINTENANCE: (id: number) =>
+    `${ROOT_URI.ADMIN}/lockers/${id}/maintenance`,
   LOCKER_BOXES: (id: number) => `${ROOT_URI.ADMIN}/lockers/${id}/boxes`,
-  BOX_STATUS: (boxId: number) => `${ROOT_URI.ADMIN}/lockers/boxes/${boxId}/status`,
+  BOX_STATUS: (boxId: number) =>
+    `${ROOT_URI.ADMIN}/lockers/boxes/${boxId}/status`,
 
   // Orders Management
   ORDERS: `${ROOT_URI.ADMIN}/orders`,
@@ -93,8 +98,10 @@ export const ADMIN_ENDPOINTS = {
 
   // Payments Management
   PAYMENTS: `${ROOT_URI.ADMIN}/payments`,
-  PAYMENT_BY_ID: (paymentId: number) => `${ROOT_URI.ADMIN}/payments/${paymentId}`,
-  PAYMENT_STATUS: (paymentId: number) => `${ROOT_URI.ADMIN}/payments/${paymentId}/status`,
+  PAYMENT_BY_ID: (paymentId: number) =>
+    `${ROOT_URI.ADMIN}/payments/${paymentId}`,
+  PAYMENT_STATUS: (paymentId: number) =>
+    `${ROOT_URI.ADMIN}/payments/${paymentId}/status`,
 
   // Scheduler Management
   SCHEDULER_AUTO_CANCEL: `${ROOT_URI.ADMIN}/scheduler/auto-cancel`,
@@ -103,19 +110,26 @@ export const ADMIN_ENDPOINTS = {
   SCHEDULER_STATUS: `${ROOT_URI.ADMIN}/scheduler/status`,
 
   // Loyalty Management
-  LOYALTY_USERS: (userId: number) => `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
-  LOYALTY_POINTS: (userId: number) => `${ROOT_URI.ADMIN}/loyalty/users/${userId}/points`,
-  LOYALTY_HISTORY: (userId: number) => `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
+  LOYALTY_USERS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
+  LOYALTY_POINTS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/points`,
+  LOYALTY_HISTORY: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
   LOYALTY_STATISTICS: `${ROOT_URI.ADMIN}/loyalty/statistics`,
 
   // Partner Management
   PARTNERS: `${ROOT_URI.ADMIN}/partners`,
-  PARTNER_BY_ID: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}`,
-  PARTNER_APPROVE: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/approve`,
-  PARTNER_REJECT: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/reject`,
-  PARTNER_SUSPEND: (partnerId: number) => `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
+  PARTNER_BY_ID: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}`,
+  PARTNER_APPROVE: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/approve`,
+  PARTNER_REJECT: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/reject`,
+  PARTNER_SUSPEND: (partnerId: number) =>
+    `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
 
-  // Legacy (keep for backward compatibility)
+  // Legacy
   ANALYTICS: `${ROOT_URI.ADMIN}/analytics`,
   SCHEDULE: `${ROOT_URI.ADMIN}/schedule`,
   INTEGRATIONS: `${ROOT_URI.ADMIN}/integrations`,
@@ -128,87 +142,107 @@ export const PARTNER_ENDPOINTS = {
   PARTNER_PROFILE: `${ROOT_URI.PARTNER}`,
   PARTNER_REGISTER: `${ROOT_URI.PARTNER}`,
   PARTNER_UPDATE: `${ROOT_URI.PARTNER}`,
-  
+
   // Dashboard
   PARTNER_DASHBOARD: `${ROOT_URI.PARTNER}/dashboard`,
-  
+
   // Orders
   PARTNER_ORDERS_PENDING: `${ROOT_URI.PARTNER}/orders/pending`,
   PARTNER_ORDERS: `${ROOT_URI.PARTNER}/orders`,
-  PARTNER_ORDER_BY_ID: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}`,
-  PARTNER_ORDER_ACCEPT: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/accept`,
-  PARTNER_ORDER_PROCESS: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/process`,
-  PARTNER_ORDER_READY: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/ready`,
-  PARTNER_ORDER_WEIGHT: (orderId: number) => `${ROOT_URI.PARTNER}/orders/${orderId}/weight`,
-  
+  PARTNER_ORDER_BY_ID: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/orders/${orderId}`,
+  PARTNER_ORDER_ACCEPT: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/orders/${orderId}/accept`,
+  PARTNER_ORDER_PROCESS: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/orders/${orderId}/process`,
+  PARTNER_ORDER_READY: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/orders/${orderId}/ready`,
+  PARTNER_ORDER_WEIGHT: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/orders/${orderId}/weight`,
+
   // Access Codes
   PARTNER_ACCESS_CODES_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
   PARTNER_ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
-  PARTNER_ACCESS_CODES_BY_ORDER: (orderId: number) => `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
-  PARTNER_ACCESS_CODE_CANCEL: (codeId: number) => `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
-  
+  PARTNER_ACCESS_CODES_BY_ORDER: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
+  PARTNER_ACCESS_CODE_CANCEL: (codeId: number) =>
+    `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
+
   // Stores
   PARTNER_STORES: `${ROOT_URI.PARTNER}/stores`,
-  
+
   // Staff
   PARTNER_STAFF: `${ROOT_URI.PARTNER}/staff`,
-  PARTNER_STAFF_ADD: (staffId: number) => `${ROOT_URI.PARTNER}/staff/${staffId}`,
-  PARTNER_STAFF_REMOVE: (staffId: number) => `${ROOT_URI.PARTNER}/staff/${staffId}`,
-  
+  PARTNER_STAFF_ADD: (staffId: number) =>
+    `${ROOT_URI.PARTNER}/staff/${staffId}`,
+  PARTNER_STAFF_REMOVE: (staffId: number) =>
+    `${ROOT_URI.PARTNER}/staff/${staffId}`,
+
   // Lockers
   PARTNER_LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
-  PARTNER_LOCKER_AVAILABLE_BOXES: (lockerId: number) => `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
-  
+  PARTNER_LOCKER_AVAILABLE_BOXES: (lockerId: number) =>
+    `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+
   // Revenue & Statistics
   PARTNER_REVENUE: `${ROOT_URI.PARTNER}/revenue`,
   PARTNER_ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
 } as const;
 
-// Combined API Paths for RTK Query
+// Partner Endpoints
+export const PARTNER_ENDPOINTS = {
+  PROFILE: `${ROOT_URI.PARTNER}`,
+  REGISTER: `${ROOT_URI.PARTNER}/register`,
+  DASHBOARD: `${ROOT_URI.PARTNER}/dashboard`,
+  ORDERS: `${ROOT_URI.PARTNER}/orders`,
+  ORDERS_PENDING: `${ROOT_URI.PARTNER}/orders/pending`,
+  ORDER_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}`,
+  ORDER_ACCEPT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/accept`,
+  ORDER_PROCESS: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/process`,
+  ORDER_READY: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/ready`,
+  ORDER_WEIGHT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/weight`,
+  ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
+  ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
+  ACCESS_CODE_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
+  ACCESS_CODES_BY_ORDER: (orderId: number) =>
+    `${ROOT_URI.PARTNER}/access-codes/order/${orderId}`,
+  ACCESS_CODE_CANCEL: (codeId: number) =>
+    `${ROOT_URI.PARTNER}/access-codes/${codeId}/cancel`,
+  STAFF: `${ROOT_URI.PARTNER}/staff`,
+  STAFF_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/staff/${id}`,
+  STORES: `${ROOT_URI.PARTNER}/stores`,
+  LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
+  LOCKER_AVAILABLE_BOXES: (lockerId: number) =>
+    `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+  REVENUE: `${ROOT_URI.PARTNER}/revenue`,
+} as const;
+
+// Combined API Paths
 export const API_PATHS = {
   ...AUTH_ENDPOINTS,
   ...USER_ENDPOINTS,
   ...ADMIN_AUTH_ENDPOINTS,
   ...ADMIN_ENDPOINTS,
-  ...PARTNER_AUTH_ENDPOINTS,
   ...PARTNER_ENDPOINTS,
 } as const;
 
-// HTTP Methods
+// HTTP Methods & Metadata
 export const HTTP_METHODS = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  PATCH: 'PATCH',
-  DELETE: 'DELETE',
+  GET: "GET",
+  POST: "POST",
+  PUT: "PUT",
+  PATCH: "PATCH",
+  DELETE: "DELETE",
 } as const;
-
-// Content Types
 export const CONTENT_TYPES = {
-  JSON: 'application/json',
-  FORM_DATA: 'multipart/form-data',
-  URL_ENCODED: 'application/x-www-form-urlencoded',
+  JSON: "application/json",
+  FORM_DATA: "multipart/form-data",
 } as const;
 
-// API Response Status
-export const API_STATUS = {
-  SUCCESS: 200,
-  CREATED: 201,
-  NO_CONTENT: 204,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  CONFLICT: 409,
-  INTERNAL_SERVER_ERROR: 500,
-} as const;
-
-// API Error Messages
 export const API_ERROR_MESSAGES = {
-  NETWORK_ERROR: 'Network error occurred',
-  UNAUTHORIZED: 'Unauthorized access',
-  FORBIDDEN: 'Access forbidden',
-  NOT_FOUND: 'Resource not found',
-  SERVER_ERROR: 'Internal server error',
-  UNKNOWN_ERROR: 'An unknown error occurred',
+  NETWORK_ERROR: "Network error occurred",
+  UNAUTHORIZED: "Unauthorized access",
+  FORBIDDEN: "Access forbidden",
+  NOT_FOUND: "Resource not found",
+  SERVER_ERROR: "Internal server error",
+  UNKNOWN_ERROR: "An unknown error occurred",
 } as const;

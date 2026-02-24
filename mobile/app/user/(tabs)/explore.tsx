@@ -1,17 +1,70 @@
 import { ThemedText } from "@/components/themed-text";
+import { serviceService } from "@/services/user";
+import { LaundryService } from "@/types";
 import { Icon } from "@rneui/themed";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
 import {
-  Dimensions,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
 
+// Format price to VND
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
+};
+
 export default function ExploreScreen() {
+  const [services, setServices] = useState<LaundryService[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fetch services on mount
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
+
+      const response = await serviceService.getAllServices();
+      if (response.success && response.data) {
+        // Filter only active services
+        const activeServices = response.data.filter((s) => s.isActive);
+        setServices(activeServices);
+      } else {
+        setError("Không thể tải danh sách dịch vụ");
+      }
+    } catch (err) {
+      console.error("Error fetching services:", err);
+      setError("Đã xảy ra lỗi khi tải danh sách dịch vụ");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchServices(true);
+  };
   const featuredServices = [
     {
       id: 1,
@@ -95,24 +148,37 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <View style={styles.headerContent}>
           <View>
             <ThemedText style={styles.headerGreeting}>Khám phá</ThemedText>
             <ThemedText style={styles.headerTitle}>Dịch vụ & Ưu đãi</ThemedText>
           </View>
           <TouchableOpacity style={styles.searchButton}>
-            <Icon name="search" type="material" size={24} color="#fff" />
+            <Icon name="search" type="material" size={24} color="#003D5B" />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={["#003D5B"]}
+            tintColor="#003D5B"
+          />
+        }
       >
         {/* Featured Services Banner */}
         <View style={styles.section}>
@@ -168,68 +234,77 @@ export default function ExploreScreen() {
             </TouchableOpacity>
           </View>
 
-          {popularServices.map((service) => (
-            <TouchableOpacity
-              key={service.id}
-              style={styles.serviceCard}
-              activeOpacity={0.7}
-            >
-              <View style={styles.serviceIconContainer}>
-                <Icon
-                  name={service.icon}
-                  type="material"
-                  size={32}
-                  color="#003D5B"
-                />
-              </View>
-              <View style={styles.serviceInfo}>
-                <View style={styles.serviceHeader}>
-                  <ThemedText style={styles.serviceName}>
-                    {service.name}
-                  </ThemedText>
-                  {service.tag && (
-                    <View
-                      style={[
-                        styles.serviceTag,
-                        service.tag === "Phổ biến" && styles.popularTag,
-                        service.tag === "Mới" && styles.newTag,
-                        service.tag === "Ưu đãi" && styles.discountTag,
-                      ]}
-                    >
-                      <ThemedText style={styles.serviceTagText}>
-                        {service.tag}
-                      </ThemedText>
-                    </View>
-                  )}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#003D5B" />
+              <ThemedText style={styles.loadingText}>Đang tải dịch vụ...</ThemedText>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Icon name="error-outline" type="material" size={48} color="#FF6B6B" />
+              <ThemedText style={styles.errorText}>{error}</ThemedText>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={() => fetchServices()}
+              >
+                <ThemedText style={styles.retryButtonText}>Thử lại</ThemedText>
+              </TouchableOpacity>
+            </View>
+          ) : services.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Icon name="inbox" type="material" size={48} color="#CCC" />
+              <ThemedText style={styles.emptyText}>Chưa có dịch vụ nào</ThemedText>
+            </View>
+          ) : (
+            services.map((service) => (
+              <TouchableOpacity
+                key={service.id}
+                style={styles.serviceCard}
+                activeOpacity={0.7}
+              >
+                <View style={styles.serviceIconContainer}>
+                  <Icon
+                    name="local-laundry-service"
+                    type="material"
+                    size={32}
+                    color="#003D5B"
+                  />
                 </View>
-                <View style={styles.serviceDetails}>
-                  <View style={styles.serviceRating}>
-                    <Icon
-                      name="star"
-                      type="material"
-                      size={14}
-                      color="#FFD700"
-                    />
-                    <ThemedText style={styles.ratingText}>
-                      {service.rating}
-                    </ThemedText>
-                    <ThemedText style={styles.reviewsText}>
-                      ({service.reviews})
+                <View style={styles.serviceInfo}>
+                  <View style={styles.serviceHeader}>
+                    <ThemedText style={styles.serviceName}>
+                      {service.name}
                     </ThemedText>
                   </View>
-                  <ThemedText style={styles.servicePrice}>
-                    {service.price}
+                  <ThemedText style={styles.serviceDescription} numberOfLines={1}>
+                    {service.description || ""}
                   </ThemedText>
+                  <View style={styles.serviceDetails}>
+                    <View style={styles.serviceRating}>
+                      <Icon
+                        name="schedule"
+                        type="material"
+                        size={14}
+                        color="#666"
+                      />
+                      <ThemedText style={styles.reviewsText}>
+                        {service.estimatedTime ? `${service.estimatedTime}h` : "-"}
+                      </ThemedText>
+                    </View>
+                    <ThemedText style={styles.servicePrice}>
+                      {formatPrice(service.price)}/{service.unit}
+                    </ThemedText>
+                  </View>
                 </View>
-              </View>
-              <Icon
-                name="chevron-right"
-                type="material"
-                size={24}
-                color="#999"
-              />
-            </TouchableOpacity>
-          ))}
+                <Icon
+                  name="chevron-right"
+                  type="material"
+                  size={24}
+                  color="#999"
+                />
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         {/* Promotional Banner */}
@@ -392,9 +467,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
   },
   header: {
-    backgroundColor: "#003D5B",
     paddingTop: 60,
     paddingBottom: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: "row",
@@ -404,21 +486,28 @@ const styles = StyleSheet.create({
   },
   headerGreeting: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: "#003D5B",
+    opacity: 0.8,
     marginBottom: 4,
+    fontWeight: "500",
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#fff",
+    color: "#003D5B",
   },
   searchButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollContent: {
     flex: 1,
@@ -702,5 +791,51 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  errorContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+  },
+  retryButton: {
+    backgroundColor: "#003D5B",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  serviceDescription: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 2,
+    marginBottom: 4,
   },
 });

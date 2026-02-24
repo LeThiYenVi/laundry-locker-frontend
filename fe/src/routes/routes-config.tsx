@@ -22,30 +22,15 @@ const PaymentsPage = lazy(() => import("../pages/Admin/payments"));
 const LoyaltyPage = lazy(() => import("../pages/Admin/loyalty"));
 
 // Partner Pages
-const PartnerDashboard = lazy(() => import("../pages/Partner/dashboard"));
-const PartnerOrders = lazy(() => import("../pages/Partner/orders"));
-const PartnerProfile = lazy(() => import("../pages/Partner/profile"));
-const PartnerStaff = lazy(() => import("../pages/Partner/staff"));
-const PartnerRevenue = lazy(() => import("../pages/Partner/revenue"));
-const PartnerLockers = lazy(() => import("../pages/Partner/lockers"));
-const PartnerServices = lazy(() => import("../pages/Partner/services"));
-const PartnerNotifications = lazy(() => import("../pages/Partner/notifications"));
-const PartnerSettings = lazy(() => import("../pages/Partner/settings"));
-
-// Auth Pages
-const LoginPage = lazy(() => import("~/pages/auth/Login"));
-
-// Error Pages
-const MaintenancePage = lazy(() => import("../pages/Error/Maintenance"));
-const NotFoundPage = lazy(() => import("../pages/Error/NotFound"));
-const UnauthorizedPage = lazy(() => import("../pages/Error/Unauthorized"));
-
-// Wrapper component for Suspense
-const withSuspense = (Component: React.ComponentType) => (
-  <Suspense fallback={<PageLoading />}>
-    <Component />
-  </Suspense>
-);
+import PartnerLayout from "../pages/Partner/layout";
+import PartnerDashboard from "../pages/Partner/dashboard";
+import PartnerOrders from "../pages/Partner/orders";
+import PartnerStaff from "../pages/Partner/staff";
+import PartnerRevenue from "../pages/Partner/revenue";
+import PartnerLockers from "../pages/Partner/lockers";
+import PartnerServices from "../pages/Partner/services";
+import PartnerNotifications from "../pages/Partner/notifications";
+import PartnerSettings from "../pages/Partner/settings";
 
 const routesConfig: RouteObject[] = [
   {
@@ -95,15 +80,15 @@ const routesConfig: RouteObject[] = [
           </ProtectedRoute>
         ),
         children: [
-          { path: "dashboard", element: withSuspense(PartnerDashboard) },
-          { path: "orders", element: withSuspense(PartnerOrders) },
-          { path: "staff", element: withSuspense(PartnerStaff) },
-          { path: "revenue", element: withSuspense(PartnerRevenue) },
-          { path: "lockers", element: withSuspense(PartnerLockers) },
-          { path: "services", element: withSuspense(PartnerServices) },
-          { path: "notifications", element: withSuspense(PartnerNotifications) },
-          { path: "settings", element: withSuspense(PartnerSettings) },
-          { path: "profile", element: withSuspense(PartnerProfile) },
+          { path: "dashboard", element: <PartnerDashboard /> },
+          { path: "orders", element: <PartnerOrders /> },
+          { path: "staff", element: <PartnerStaff /> },
+          { path: "revenue", element: <PartnerRevenue /> },
+          { path: "lockers", element: <PartnerLockers /> },
+          { path: "services", element: <PartnerServices /> },
+          { path: "notifications", element: <PartnerNotifications /> },
+          { path: "settings", element: <PartnerSettings /> },
+          { path: "profile", element: <Navigate to="../settings" replace /> },
         ],
       },
 
