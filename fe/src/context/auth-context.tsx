@@ -1,117 +1,216 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 import type { AuthContextType, User } from "../types";
+import { API_BASE_URL, AUTH_ENDPOINTS } from "../constants/api-paths";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Development mode - Auto login as admin
-const DEV_MODE = true;
+// Helper: call API with JSON
+async function apiFetch<T>(endpoint: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const accessToken = localStorage.getItem("accessToken");
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
-// Mock admin user
-const mockAdminUser: User = {
-  id: "1",
-  fullName: "Admin User",
-  email: "admin@laundry.com",
-  role: ["SUPER_ADMIN"],
-  permissions: ["*"],
-  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin",
-};
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: body ? "POST" : "GET",
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const json = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(json?.message || `Request failed (${res.status})`);
+  }
+  return (json?.data ?? json) as T;
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Admin 2FA state ──
+  const [isWaitingFor2FA, setIsWaitingFor2FA] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [tempToken, setTempToken] = useState("");
+
+  // ── Partner OTP state ──
+  const [isWaitingForOTP, setIsWaitingForOTP] = useState(false);
+  const [partnerContactInfo, setPartnerContactInfo] = useState("");
+
+  // ── Initialise from localStorage ──
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // In development mode, auto-login with mock admin
-        if (DEV_MODE) {
-          setUser(mockAdminUser);
-          localStorage.setItem("accessToken", `dev-token-${Date.now()}`);
-          localStorage.setItem("user", JSON.stringify(mockAdminUser));
-          setLoading(false);
-          return;
-        }
-
-        // Production mode: Check localStorage
-        const accessToken = localStorage.getItem("accessToken");
-        const userStr = localStorage.getItem("user");
-
-        if (accessToken && userStr) {
-          const parsedUser = JSON.parse(userStr);
-          setUser(parsedUser);
-        }
-      } catch (error) {
-        console.error("Lỗi khi khởi tạo auth:", error);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("user");
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  const login = async (username: string, password: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Mock login - accept any credentials in dev mode
-      if (DEV_MODE) {
-        setUser(mockAdminUser);
-        localStorage.setItem("accessToken", `dev-token-${Date.now()}`);
-        localStorage.setItem("user", JSON.stringify(mockAdminUser));
-        setLoading(false);
-        return;
+      const accessToken = localStorage.getItem("accessToken");
+      const userStr = localStorage.getItem("user");
+      if (accessToken && userStr) {
+        setUser(JSON.parse(userStr));
       }
-
-      // TODO: Implement real API login when backend is ready
-      throw new Error("API login chưa được implement");
-    } catch (err: any) {
-      const errorMessage = err?.message || "Đăng nhập thất bại";
-      setError(errorMessage);
-      throw new Error(errorMessage);
+    } catch {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Helper: persist login result
+  const persistLogin = (data: {
+    accessToken: string;
+    refreshToken?: string;
+    user: User;
+  }) => {
+    localStorage.setItem("accessToken", data.accessToken);
+    if (data.refreshToken)
+      localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    setUser(data.user);
   };
 
+  // ============================================
+  // Legacy simple login (kept for backward compat)
+  // ============================================
+  const login = async (username: string, password: string) => {
+    setError(null);
+    const data = await apiFetch<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>(AUTH_ENDPOINTS.LOGIN, { email: username, password });
+    persistLogin(data);
+  };
+
+  // ============================================
+  // Admin 2FA Login
+  // ============================================
+  const adminLoginStep1 = async (email: string, password: string) => {
+    setError(null);
+    const data = await apiFetch<{
+      requiresTwoFactor: boolean;
+      tempToken: string;
+      maskedEmail: string;
+      expiresIn: number;
+      message: string;
+    }>(AUTH_ENDPOINTS.ADMIN_LOGIN, { email, password });
+
+    setTempToken(data.tempToken);
+    setMaskedEmail(data.maskedEmail);
+    setIsWaitingFor2FA(true);
+  };
+
+  const adminLoginStep2 = async (otpCode: string) => {
+    setError(null);
+    const data = await apiFetch<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>(AUTH_ENDPOINTS.ADMIN_VERIFY_2FA, { tempToken, otpCode });
+
+    setIsWaitingFor2FA(false);
+    setTempToken("");
+    setMaskedEmail("");
+    persistLogin(data);
+  };
+
+  const cancelAdmin2FA = () => {
+    setIsWaitingFor2FA(false);
+    setTempToken("");
+    setMaskedEmail("");
+    setError(null);
+  };
+
+  // ============================================
+  // Partner OTP Login
+  // ============================================
+  const partnerSendOTP = async (
+    contact: string,
+    contactType: "EMAIL" | "PHONE",
+  ) => {
+    setError(null);
+    const endpoint =
+      contactType === "EMAIL"
+        ? AUTH_ENDPOINTS.EMAIL_SEND_OTP
+        : AUTH_ENDPOINTS.PHONE_LOGIN;
+
+    await apiFetch<{ message: string }>(endpoint, { contact });
+
+    setPartnerContactInfo(contact);
+    setIsWaitingForOTP(true);
+  };
+
+  const partnerVerifyOTP = async (otpCode: string) => {
+    setError(null);
+    const data = await apiFetch<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>(AUTH_ENDPOINTS.EMAIL_VERIFY_OTP, {
+      contact: partnerContactInfo,
+      otpCode,
+    });
+
+    setIsWaitingForOTP(false);
+    setPartnerContactInfo("");
+    persistLogin(data);
+  };
+
+  const cancelPartnerOTP = () => {
+    setIsWaitingForOTP(false);
+    setPartnerContactInfo("");
+    setError(null);
+  };
+
+  // ============================================
+  // Logout & Permissions
+  // ============================================
   const logout = async () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     setUser(null);
     setError(null);
+    cancelAdmin2FA();
+    cancelPartnerOTP();
   };
 
   const hasPermission = (requiredPermission: string): boolean => {
     if (!user) return false;
-
-    // Super admin has all permissions
-    if (user.role.some(role => role.toUpperCase() === 'SUPER_ADMIN')) return true;
-
-    // Check if user has wildcard permission
-    if (user.permissions.includes('*')) return true;
-
-    // Check specific permission
+    if (user.role.some((r) => r.toUpperCase() === "SUPER_ADMIN")) return true;
+    if (user.permissions.includes("*")) return true;
     return user.permissions.includes(requiredPermission);
   };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isAuthenticated, 
-        loading, 
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
         error,
-        login, 
-        logout, 
-        hasPermission 
+        login,
+        logout,
+        hasPermission,
+        // Admin 2FA
+        isWaitingFor2FA,
+        maskedEmail,
+        adminLoginStep1,
+        adminLoginStep2,
+        cancelAdmin2FA,
+        // Partner OTP
+        isWaitingForOTP,
+        partnerContactInfo,
+        partnerSendOTP,
+        partnerVerifyOTP,
+        cancelPartnerOTP,
       }}
     >
       {children}
