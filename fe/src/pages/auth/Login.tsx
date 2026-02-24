@@ -58,19 +58,22 @@ export default function LoginPage(): React.JSX.Element {
     const from = location.state?.from?.pathname;
     if (from) return from;
 
-    const isAdmin = userRoles.some(
-      (role) =>
-        role.toUpperCase() === "SUPER_ADMIN" || role.toUpperCase() === "ADMIN",
-    );
-    const isPartner = userRoles.some(
-      (role) =>
-        role.toUpperCase() === "PARTNER" ||
-        role.toUpperCase() === "PARTNER_STAFF",
-    );
+    // Normalize role: strip optional "ROLE_" prefix before comparing
+    const normalize = (role: string) =>
+      role.toUpperCase().replace(/^ROLE_/, "");
+
+    const isAdmin = userRoles.some((role) => {
+      const r = normalize(role);
+      return r === "SUPER_ADMIN" || r === "ADMIN";
+    });
+    const isPartner = userRoles.some((role) => {
+      const r = normalize(role);
+      return r === "PARTNER" || r === "PARTNER_STAFF";
+    });
 
     if (isAdmin) return "/admin/dashboard";
     if (isPartner) return "/partner/dashboard";
-    return "/admin/dashboard";
+    return "/";
   };
 
   // ============================================

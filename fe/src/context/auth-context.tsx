@@ -15,7 +15,7 @@ async function apiFetch<T>(endpoint: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken = localStorage.getItem("accessToken")?.replace(/\s/g, "");
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -51,7 +51,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const accessToken = localStorage.getItem("accessToken");
       const userStr = localStorage.getItem("user");
       if (accessToken && userStr) {
-        setUser(JSON.parse(userStr));
+        const parsed = JSON.parse(userStr);
+        // Normalize - ensure arrays exist even for legacy cached data
+        setUser({
+          ...parsed,
+          role: parsed.role ?? [],
+          permissions: parsed.permissions ?? [],
+        });
       }
     } catch {
       localStorage.removeItem("accessToken");
@@ -67,9 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshToken?: string;
     user: User;
   }) => {
-    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("accessToken", data.accessToken.replace(/\s/g, ""));
     if (data.refreshToken)
-      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem(
+        "refreshToken",
+        data.refreshToken.replace(/\s/g, ""),
+      );
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
   };
@@ -130,7 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Partner OTP Login
   // ============================================
   const partnerSendOTP = async (
-    contact: string,
+    email: string,
     contactType: "EMAIL" | "PHONE",
   ) => {
     setError(null);
@@ -139,9 +148,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ? AUTH_ENDPOINTS.EMAIL_SEND_OTP
         : AUTH_ENDPOINTS.PHONE_LOGIN;
 
-    await apiFetch<{ message: string }>(endpoint, { contact });
+    await apiFetch<{ message: string }>(endpoint, { email });
 
-    setPartnerContactInfo(contact);
+    setPartnerContactInfo(email);
     setIsWaitingForOTP(true);
   };
 
@@ -150,15 +159,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const data = await apiFetch<{
       accessToken: string;
       refreshToken: string;
-      user: User;
+      userInfo: {
+        id: number;
+        email: string;
+        name?: string;
+        firstName?: string;
+        lastName?: string;
+        imageUrl?: string | null;
+      };
     }>(AUTH_ENDPOINTS.EMAIL_VERIFY_OTP, {
-      contact: partnerContactInfo,
-      otpCode,
+      email: partnerContactInfo,
+      otp: otpCode,
     });
+
+    // Decode roles from JWT payload
+    let roles: string[] = [];
+    try {
+      const payload = JSON.parse(atob(data.accessToken.split(".")[1]));
+      roles = payload.roles ?? [];
+    } catch {
+      /* ignore decode errors */
+    }
+
+    const user: User = {
+      id: String(data.userInfo.id),
+      fullName:
+        data.userInfo.name ||
+        `${data.userInfo.firstName ?? ""} ${data.userInfo.lastName ?? ""}`.trim(),
+      email: data.userInfo.email,
+      role: roles,
+      permissions: [],
+      avatar: data.userInfo.imageUrl ?? undefined,
+    };
 
     setIsWaitingForOTP(false);
     setPartnerContactInfo("");
-    persistLogin(data);
+    persistLogin({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      user,
+    });
   };
 
   const cancelPartnerOTP = () => {
@@ -182,9 +222,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const hasPermission = (requiredPermission: string): boolean => {
     if (!user) return false;
-    if (user.role.some((r) => r.toUpperCase() === "SUPER_ADMIN")) return true;
-    if (user.permissions.includes("*")) return true;
-    return user.permissions.includes(requiredPermission);
+
+    const roles = user.role ?? [];
+    const permissions = user.permissions ?? [];
+
+    // Strip optional "ROLE_" prefix for comparison
+    const normalizeRole = (r: string) => r.toUpperCase().replace(/^ROLE_/, "");
+
+    // SUPER_ADMIN bypasses everything
+    if (roles.some((r) => normalizeRole(r) === "SUPER_ADMIN")) return true;
+    if (permissions.includes("*")) return true;
+    if (permissions.includes(requiredPermission)) return true;
+
+    // Role → implicit permissions mapping (backend returns roles, not fine-grained permissions)
+    const rolePermissions: Record<string, string[]> = {
+      ADMIN: ["admin_access"],
+      PARTNER: ["partner_access"],
+      PARTNER_STAFF: ["partner_access"],
+      USER: [],
+    };
+
+    return roles.some((r) =>
+      (rolePermissions[normalizeRole(r)] ?? []).includes(requiredPermission),
+    );
   };
 
   const isAuthenticated = !!user;
