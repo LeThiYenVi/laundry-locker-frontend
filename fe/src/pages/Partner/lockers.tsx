@@ -641,8 +641,7 @@ export default function PartnerLockersPage(): React.JSX.Element {
                 </p>
                 {emergencyModal.box.description && (
                   <p>
-                    <strong>Mô tả:</strong>{" "}
-                    {emergencyModal.box.description}
+                    <strong>Mô tả:</strong> {emergencyModal.box.description}
                   </p>
                 )}
               </div>
