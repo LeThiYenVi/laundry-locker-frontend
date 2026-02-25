@@ -5,6 +5,7 @@ import type {
   PartnerDashboardResponse,
   PartnerResponse,
   PartnerRevenueResponse,
+  PartnerService,
   StaffAccessCode,
   GenerateAccessCodeRequest,
   AcceptOrderResponse,
@@ -149,7 +150,8 @@ function mapOrderResponse(order: BackendOrderResponse): PartnerOrder {
     customerName: order.senderName || "",
     customerPhone: order.senderPhone || "",
     status: order.status as PartnerOrder["status"],
-    serviceType: (order.serviceCategory || "WASH") as PartnerOrder["serviceType"],
+    serviceType: (order.serviceCategory ||
+      "WASH") as PartnerOrder["serviceType"],
     returnMethod: "LOCKER" as PartnerOrder["returnMethod"],
     lockerId: order.lockerId || 0,
     lockerName: order.lockerName || "",
@@ -208,12 +210,60 @@ function mapLockerResponse(locker: BackendLockerResponse): PartnerLocker {
 function mapUserToStaffContact(user: BackendUserResponse): StaffContact {
   return {
     id: user.id,
-    name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+    name:
+      user.name ||
+      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+      user.email,
     phoneNumber: user.phoneNumber || "",
     email: user.email,
     imageUrl: user.imageUrl,
     roles: user.roles,
     joinDate: user.joinDate,
+  };
+}
+
+// Backend ServiceResponse DTO (public /api/services)
+interface BackendServiceResponse {
+  id: number;
+  name: string;
+  image?: string;
+  price?: number;
+  maxPrice?: number;
+  unit?: string;
+  description?: string;
+  status: string;
+  category: string;
+  serviceType?: string;
+  isAddon?: boolean;
+  isMonthlyPackage?: boolean;
+  estimatedHours?: number;
+  storeId?: number;
+  storeName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Map backend ServiceResponse → frontend PartnerService */
+function mapServiceResponse(service: BackendServiceResponse): PartnerService {
+  return {
+    id: service.id,
+    name: service.name,
+    image: service.image,
+    price: service.price || 0,
+    maxPrice: service.maxPrice,
+    unit: service.unit,
+    description: service.description || "",
+    status: service.status,
+    category: service.category,
+    serviceType: service.serviceType,
+    isAddon: service.isAddon,
+    isMonthlyPackage: service.isMonthlyPackage,
+    estimatedHours: service.estimatedHours,
+    storeId: service.storeId,
+    storeName: service.storeName,
+    createdAt: service.createdAt,
+    updatedAt: service.updatedAt,
+    isActive: service.status === "ACTIVE",
   };
 }
 
@@ -307,10 +357,14 @@ export const partnerApi = baseApi.injectEndpoints({
     >({
       query: (params) => {
         const urlParams = new URLSearchParams();
-        if (params && params.page !== undefined) urlParams.append("page", params.page.toString());
-        if (params && params.size !== undefined) urlParams.append("size", params.size.toString());
+        if (params && params.page !== undefined)
+          urlParams.append("page", params.page.toString());
+        if (params && params.size !== undefined)
+          urlParams.append("size", params.size.toString());
         const qs = urlParams.toString();
-        return qs ? `${PARTNER_ENDPOINTS.ORDERS_PENDING}?${qs}` : PARTNER_ENDPOINTS.ORDERS_PENDING;
+        return qs
+          ? `${PARTNER_ENDPOINTS.ORDERS_PENDING}?${qs}`
+          : PARTNER_ENDPOINTS.ORDERS_PENDING;
       },
       transformResponse: (
         response: ApiResponse<PaginatedResponse<BackendOrderResponse>>,
@@ -353,14 +407,15 @@ export const partnerApi = baseApi.injectEndpoints({
     }),
 
     // Update order weight → backend returns OrderResponse
-    updateOrderWeight: builder.mutation<
-      PartnerOrder,
-      UpdateWeightRequest
-    >({
+    updateOrderWeight: builder.mutation<PartnerOrder, UpdateWeightRequest>({
       query: ({ orderId, actualWeight, weightUnit, notes }) => ({
         url: PARTNER_ENDPOINTS.ORDER_WEIGHT(orderId),
         method: "PUT",
-        body: { actualWeight, weightUnit: weightUnit || "kg", staffNote: notes },
+        body: {
+          actualWeight,
+          weightUnit: weightUnit || "kg",
+          staffNote: notes,
+        },
       }),
       transformResponse: (response: ApiResponse<BackendOrderResponse>) =>
         mapOrderResponse(response.data),
@@ -506,6 +561,19 @@ export const partnerApi = baseApi.injectEndpoints({
     }),
 
     // ============================================
+    // Services Endpoints (public /api/services)
+    // Backend has no partner-specific services endpoint.
+    // We use the public GET /api/services endpoint.
+    // ============================================
+
+    getPartnerServices: builder.query<PartnerService[], void>({
+      query: () => "/api/services",
+      transformResponse: (response: ApiResponse<BackendServiceResponse[]>) =>
+        response.data.map(mapServiceResponse),
+      providesTags: ["Services"],
+    }),
+
+    // ============================================
     // Revenue Endpoints
     // ============================================
 
@@ -556,6 +624,9 @@ export const {
   // Lockers
   useGetPartnerLockersQuery,
   useGetAvailableBoxesQuery,
+
+  // Services
+  useGetPartnerServicesQuery,
 
   // Revenue
   useGetPartnerRevenueQuery,

@@ -37,7 +37,10 @@ import {
   AlertTriangle,
   Mail,
 } from "lucide-react";
-import type { StaffContact, CreateStaffContactRequest } from "@/types/partner.type";
+import type {
+  StaffContact,
+  CreateStaffContactRequest,
+} from "@/types/partner.type";
 import {
   useGetStaffContactsQuery,
   useAddStaffContactMutation,
@@ -472,8 +475,8 @@ export default function PartnerStaffPage(): React.JSX.Element {
             <DialogHeader>
               <DialogTitle className="text-red-600">Xóa nhân viên</DialogTitle>
               <DialogDescription>
-                Bạn có chắc muốn xóa nhân viên "{deleteConfirm.staff?.name}" khỏi
-                cửa hàng?
+                Bạn có chắc muốn xóa nhân viên "{deleteConfirm.staff?.name}"
+                khỏi cửa hàng?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

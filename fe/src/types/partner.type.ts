@@ -124,15 +124,27 @@ export interface UpdateStaffRequest {
 // Partner Service Types
 // ============================================
 
+// PartnerService mapped from backend ServiceResponse
 export interface PartnerService {
   id: number;
   name: string;
+  image?: string;
+  price: number;
+  maxPrice?: number;
+  unit?: string;
   description: string;
-  basePrice: number;
-  pricePerKg?: number;
-  processingTime: string;
+  status: string; // ACTIVE, INACTIVE
+  category: string; // STORAGE, LAUNDRY
+  serviceType?: string;
+  isAddon?: boolean;
+  isMonthlyPackage?: boolean;
+  estimatedHours?: number;
+  storeId?: number;
+  storeName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // UI-computed fields
   isActive: boolean;
-  category: string;
 }
 
 export interface UpdateServiceRequest {
