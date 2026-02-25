@@ -31,7 +31,7 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
-import type { PartnerService } from "@/types";
+import type { PartnerService } from "@/types/partner.type";
 import { useGetPartnerProfileQuery } from "@/stores/apis/partnerApi";
 
 // ============================================
