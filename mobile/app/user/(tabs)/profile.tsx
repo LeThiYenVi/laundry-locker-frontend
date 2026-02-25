@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
-import { orderService, userService } from "@/services/user";
+import { orderService, userService, loyaltyService } from "@/services/user";
+import type { LoyaltySummary } from "@/services/user/loyaltyService";
 import { Order, User } from "@/types";
 import { Icon } from "@rneui/themed";
 import { Image } from "expo-image";
@@ -35,6 +36,9 @@ export default function ProfileScreen() {
     activeOrders: 0,
     completedOrders: 0,
   });
+
+  // Loyalty state
+  const [loyalty, setLoyalty] = useState<LoyaltySummary | null>(null);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -73,10 +77,22 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const fetchLoyalty = useCallback(async () => {
+    try {
+      const response = await loyaltyService.getLoyaltySummary();
+      if (response.success) {
+        setLoyalty(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch loyalty:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfile();
     fetchOrderStats();
-  }, [fetchProfile, fetchOrderStats]);
+    fetchLoyalty();
+  }, [fetchProfile, fetchOrderStats, fetchLoyalty]);
 
   const handleUpdateAvatar = async () => {
       if (!newAvatarUrl.trim()) {
@@ -298,6 +314,64 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Loyalty Summary */}
+        {loyalty && (
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Tích điểm & Ưu đãi</ThemedText>
+
+            <View style={styles.loyaltyCard}>
+              <View style={styles.loyaltyRow}>
+                <View style={styles.loyaltyItem}>
+                  <Icon name="stars" type="material" size={28} color="#FFD700" />
+                  <ThemedText style={styles.loyaltyValue}>
+                    {loyalty.pointsAccount?.pointsBalance?.toLocaleString() || 0}
+                  </ThemedText>
+                  <ThemedText style={styles.loyaltyLabel}>Điểm tích lũy</ThemedText>
+                </View>
+                <View style={styles.loyaltyDivider} />
+                <View style={styles.loyaltyItem}>
+                  <Icon name="card-giftcard" type="material" size={28} color="#FF9800" />
+                  <ThemedText style={styles.loyaltyValue}>
+                    {loyalty.totalFreeRewards || 0}
+                  </ThemedText>
+                  <ThemedText style={styles.loyaltyLabel}>Phần thưởng</ThemedText>
+                </View>
+                <View style={styles.loyaltyDivider} />
+                <View style={styles.loyaltyItem}>
+                  <Icon name="monetization-on" type="material" size={28} color="#4CAF50" />
+                  <ThemedText style={styles.loyaltyValue}>
+                    {(loyalty.totalRedeemableValue || 0).toLocaleString()}đ
+                  </ThemedText>
+                  <ThemedText style={styles.loyaltyLabel}>Có thể đổi</ThemedText>
+                </View>
+              </View>
+            </View>
+
+            {/* Stamp Cards */}
+            {loyalty.stampCards && loyalty.stampCards.length > 0 && (
+              <View style={{ marginTop: 12 }}>
+                {loyalty.stampCards.map((card) => (
+                  <View key={card.id} style={styles.stampCard}>
+                    <View style={styles.stampCardHeader}>
+                      <Icon name="loyalty" type="material" size={20} color="#9C27B0" />
+                      <ThemedText style={styles.stampCardTitle}>
+                        {card.serviceName || 'Stamp Card'}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.stampProgressBar}>
+                      <View style={[styles.stampProgressFill, { width: `${card.progressPercentage}%` }]} />
+                    </View>
+                    <ThemedText style={styles.stampProgressText}>
+                      {card.currentStamps}/{card.stampsRequired} tem
+                      {card.freeRewardsAvailable > 0 && ` — 🎁 ${card.freeRewardsAvailable} phần thưởng`}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Quick Actions Section */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Tiện ích</ThemedText>
@@ -313,21 +387,55 @@ export default function ProfileScreen() {
               <ThemedText style={styles.quickActionText}>Lịch sử</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionCard}>
+            <TouchableOpacity style={styles.quickActionCard}
+              onPress={() => router.push("/user/(tabs)/notifications")}
+            >
               <View style={styles.quickActionIcon}>
                 <Icon name="favorite" type="material" size={28} color="#E91E63" />
               </View>
               <ThemedText style={styles.quickActionText}>Yêu thích</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionCard}>
+            <TouchableOpacity style={styles.quickActionCard}
+              onPress={async () => {
+                try {
+                  const res = await loyaltyService.getAvailableRewards();
+                  if (res.success && res.data) {
+                    const { availableRewards, membershipTier, currentPoints } = res.data;
+                    const rewardList = availableRewards?.length > 0
+                      ? availableRewards.slice(0, 5).map(r => `• ${r.name} (${r.pointsRequired} điểm)`).join('\n')
+                      : 'Chưa có voucher khả dụng';
+                    Alert.alert(
+                      `Voucher — ${membershipTier || 'Thành viên'}`,
+                      `Điểm hiện tại: ${currentPoints || 0}\n\n${rewardList}`
+                    );
+                  }
+                } catch (e) {
+                  Alert.alert('Thông báo', 'Không thể tải voucher. Vui lòng thử lại.');
+                }
+              }}
+            >
               <View style={styles.quickActionIcon}>
                 <Icon name="card-giftcard" type="material" size={28} color="#FF9800" />
               </View>
               <ThemedText style={styles.quickActionText}>Voucher</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionCard}>
+            <TouchableOpacity style={styles.quickActionCard}
+              onPress={async () => {
+                try {
+                  const res = await loyaltyService.getStampCards();
+                  if (res.success && res.data) {
+                    const cardList = res.data.length > 0
+                      ? res.data.map(c => `• ${c.serviceName}: ${c.currentStamps}/${c.stampsRequired} tem (${c.freeRewardsAvailable} thưởng)`).join('\n')
+                      : 'Chưa có thẻ tích điểm';
+                    Alert.alert('Ưu đãi tích điểm', cardList);
+                  }
+                } catch (e) {
+                  Alert.alert('Thông báo', 'Không thể tải ưu đãi. Vui lòng thử lại.');
+                }
+              }}
+            >
               <View style={styles.quickActionIcon}>
                 <Icon name="local-offer" type="material" size={28} color="#4CAF50" />
               </View>
@@ -796,5 +904,76 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     textAlign: "center"
+  },
+  // Loyalty styles
+  loyaltyCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  loyaltyRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  loyaltyItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  loyaltyValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#003D5B",
+    marginTop: 4,
+  },
+  loyaltyLabel: {
+    fontSize: 11,
+    color: "#999",
+    marginTop: 2,
+  },
+  loyaltyDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: "#E0E0E0",
+  },
+  stampCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#9C27B0",
+  },
+  stampCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  stampCardTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  stampProgressBar: {
+    height: 8,
+    backgroundColor: "#F0E6F6",
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: 4,
+  },
+  stampProgressFill: {
+    height: "100%",
+    backgroundColor: "#9C27B0",
+    borderRadius: 4,
+  },
+  stampProgressText: {
+    fontSize: 12,
+    color: "#666",
   },
 });

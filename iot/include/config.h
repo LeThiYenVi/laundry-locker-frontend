@@ -59,7 +59,7 @@
 // ============================================
 // MQTT Configuration
 // ============================================
-#define MQTT_BROKER "broker.hivemq.com"      // MQTT Broker (thay bằng broker riêng nếu có)
+#define MQTT_BROKER "192.168.1.7"           // Mosquitto Docker container (exposed trên host port 1883)
 #define MQTT_PORT 1883                        // MQTT Port
 #define MQTT_USER ""                          // Username (để trống nếu public broker)
 #define MQTT_PASSWORD ""                      // Password (để trống nếu public broker)
