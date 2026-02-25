@@ -27,7 +27,6 @@
 #include <ArduinoJson.h>
 #include "config.h"
 #include "locker_controller.h"
-#include "web_ui.h"
 
 // ============================================
 // Global Variables
@@ -85,7 +84,7 @@ void checkWiFiConnection() {
  * Handle root endpoint - Phục vụ trang web kiosk
  */
 void handleRoot() {
-    server.send(200, "text/html", FPSTR(LOCKER_UI_HTML));
+    server.send(200, "text/plain", "Laundry Locker IoT API Running");
 }
 
 /**
@@ -244,12 +243,8 @@ void handleUnlock() {
         int requestedBoxId = doc["boxId"] | -1;
         String action = doc["action"] | "";
         
-        // Kiểm tra box ID
-        if (requestedBoxId != BOX_ID) {
-            Serial.printf("[SERVER] Box ID mismatch: expected %d, got %d\n", BOX_ID, requestedBoxId);
-            server.send(400, "application/json", "{\"success\":false,\"error\":\"Box ID mismatch\"}");
-            return;
-        }
+        // DEMO MODE: Accept any box ID (chỉ có 1 relay vật lý)
+        Serial.printf("[SERVER] Unlock request for box %d (demo: accept all)\n", requestedBoxId);
         
         // Thực hiện action
         if (action == "UNLOCK") {
@@ -344,11 +339,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     int cmdBoxId = doc["box_id"] | -1;
     const char* action = doc["action"] | "";
     
-    // Kiểm tra box_id có đúng box này không
-    if (cmdBoxId != BOX_ID) {
-        Serial.printf("[MQTT] Ignored: box_id %d != my BOX_ID %d\n", cmdBoxId, BOX_ID);
-        return;
-    }
+    // DEMO MODE: Mở khóa cho mọi box_id (chỉ có 1 relay vật lý)
+    Serial.printf("[MQTT] Received command for box_id %d (demo: accept all)\n", cmdBoxId);
     
     if (strcmp(action, "OPEN") == 0) {
         Serial.println("[MQTT] >>> OPEN command received! Unlocking...");
