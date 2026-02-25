@@ -2,7 +2,6 @@ import { PARTNER_ENDPOINTS } from "../../constants";
 import { baseApi } from "../baseAPi";
 import type {
   PartnerOrder,
-  PartnerDashboardOverview,
   PartnerDashboardResponse,
   PartnerResponse,
   PartnerRevenueResponse,
@@ -11,13 +10,12 @@ import type {
   AcceptOrderResponse,
   MarkReadyResponse,
   UpdateWeightRequest,
-  UpdateWeightResponse,
   PartnerLocker,
   LockerBox,
   StaffContact,
   CreateStaffContactRequest,
   UpdatePartnerProfileRequest,
-} from "../../types";
+} from "../../types/partner.type";
 import type { OrderStatus } from "../../types/partner.enum";
 
 // ============================================
@@ -43,6 +41,180 @@ interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+}
+
+// Backend OrderResponse DTO (what the API actually returns)
+interface BackendOrderResponse {
+  id: number;
+  orderCode: string;
+  type?: string;
+  status: string;
+  pinCode?: string;
+  serviceCategory?: string;
+  pricingType?: string;
+  senderId?: number;
+  senderName?: string;
+  senderPhone?: string;
+  receiverId?: number;
+  receiverName?: string;
+  receiverPhone?: string;
+  lockerId?: number;
+  lockerName?: string;
+  lockerCode?: string;
+  sendBoxNumber?: number;
+  receiveBoxNumber?: number;
+  sendBoxNumbers?: number[];
+  receiveBoxNumbers?: number[];
+  staffId?: number;
+  staffName?: string;
+  actualWeight?: number;
+  weightUnit?: string;
+  extraFee?: number;
+  discount?: number;
+  reservationFee?: number;
+  storagePrice?: number;
+  shippingFee?: number;
+  totalPrice?: number;
+  description?: string;
+  customerNote?: string;
+  staffNote?: string;
+  deliveryAddress?: string;
+  isPaid?: boolean;
+  isOvertime?: boolean;
+  completedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  returnedAt?: string;
+  receiveAt?: string;
+  orderDetails?: unknown[];
+}
+
+// Backend LockerResponse DTO
+interface BackendLockerResponse {
+  id: number;
+  code: string;
+  name: string;
+  image?: string;
+  status: string;
+  address: string;
+  longitude?: number;
+  latitude?: number;
+  description?: string;
+  storeId: number;
+  storeName: string;
+  totalBoxes: number;
+  availableBoxes: number;
+  boxes?: BackendBoxResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Backend BoxResponse DTO
+interface BackendBoxResponse {
+  id: number;
+  boxNumber: number;
+  isActive: boolean;
+  status: string;
+  description?: string;
+  lockerId: number;
+  lockerCode: string;
+}
+
+// Backend UserResponse DTO (for staff)
+interface BackendUserResponse {
+  id: number;
+  email: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  imageUrl?: string;
+  provider?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  joinDate?: string;
+  roles?: string[];
+}
+
+// ============================================
+// Mapper Functions
+// ============================================
+
+/** Map backend OrderResponse → frontend PartnerOrder */
+function mapOrderResponse(order: BackendOrderResponse): PartnerOrder {
+  return {
+    id: order.id,
+    orderCode: order.orderCode,
+    customerId: order.senderId || 0,
+    customerName: order.senderName || "",
+    customerPhone: order.senderPhone || "",
+    status: order.status as PartnerOrder["status"],
+    serviceType: (order.serviceCategory || "WASH") as PartnerOrder["serviceType"],
+    returnMethod: "LOCKER" as PartnerOrder["returnMethod"],
+    lockerId: order.lockerId || 0,
+    lockerName: order.lockerName || "",
+    boxNumber: order.sendBoxNumber?.toString() || "",
+    pinCode: order.pinCode || "",
+    createdAt: order.createdAt || "",
+    updatedAt: order.updatedAt || "",
+    completedAt: order.completedAt,
+    returnedAt: order.returnedAt,
+    weight: order.actualWeight,
+    totalPrice: order.totalPrice,
+    assignedStaffId: order.staffId,
+    assignedStaffName: order.staffName,
+    deliveryAddress: order.deliveryAddress,
+    notes: order.customerNote || order.description,
+  };
+}
+
+/** Map backend LockerResponse → frontend PartnerLocker */
+function mapLockerResponse(locker: BackendLockerResponse): PartnerLocker {
+  const boxes: LockerBox[] = (locker.boxes || []).map((box) => ({
+    id: box.id,
+    boxNumber: box.boxNumber,
+    isActive: box.isActive,
+    status: box.status,
+    description: box.description,
+    lockerId: box.lockerId,
+    lockerCode: box.lockerCode,
+  }));
+
+  const occupiedBoxes = boxes.filter((b) => b.status === "OCCUPIED").length;
+
+  return {
+    id: locker.id,
+    code: locker.code,
+    name: locker.name,
+    image: locker.image,
+    status: locker.status,
+    address: locker.address,
+    longitude: locker.longitude,
+    latitude: locker.latitude,
+    description: locker.description,
+    storeId: locker.storeId,
+    storeName: locker.storeName,
+    totalBoxes: locker.totalBoxes || boxes.length,
+    availableBoxes: locker.availableBoxes || 0,
+    occupiedBoxes: occupiedBoxes,
+    boxes,
+    createdAt: locker.createdAt,
+    updatedAt: locker.updatedAt,
+    location: locker.address, // alias for UI
+  };
+}
+
+/** Map backend UserResponse → frontend StaffContact */
+function mapUserToStaffContact(user: BackendUserResponse): StaffContact {
+  return {
+    id: user.id,
+    name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+    phoneNumber: user.phoneNumber || "",
+    email: user.email,
+    imageUrl: user.imageUrl,
+    roles: user.roles,
+    joinDate: user.joinDate,
+  };
 }
 
 // ============================================
@@ -111,8 +283,11 @@ export const partnerApi = baseApi.injectEndpoints({
         return `${PARTNER_ENDPOINTS.ORDERS}?${params.toString()}`;
       },
       transformResponse: (
-        response: ApiResponse<PaginatedResponse<PartnerOrder>>,
-      ) => response.data,
+        response: ApiResponse<PaginatedResponse<BackendOrderResponse>>,
+      ) => ({
+        ...response.data,
+        content: response.data.content.map(mapOrderResponse),
+      }),
       providesTags: (result) =>
         result
           ? [
@@ -126,27 +301,49 @@ export const partnerApi = baseApi.injectEndpoints({
           : [{ type: "PartnerOrder", id: "LIST" }, "Orders"],
     }),
 
-    getPendingOrders: builder.query<PartnerOrder[], void>({
-      query: () => PARTNER_ENDPOINTS.ORDERS_PENDING,
-      transformResponse: (response: ApiResponse<PartnerOrder[]>) =>
-        response.data,
+    getPendingOrders: builder.query<
+      PaginatedResponse<PartnerOrder>,
+      { page?: number; size?: number } | void
+    >({
+      query: (params) => {
+        const urlParams = new URLSearchParams();
+        if (params && params.page !== undefined) urlParams.append("page", params.page.toString());
+        if (params && params.size !== undefined) urlParams.append("size", params.size.toString());
+        const qs = urlParams.toString();
+        return qs ? `${PARTNER_ENDPOINTS.ORDERS_PENDING}?${qs}` : PARTNER_ENDPOINTS.ORDERS_PENDING;
+      },
+      transformResponse: (
+        response: ApiResponse<PaginatedResponse<BackendOrderResponse>>,
+      ) => ({
+        ...response.data,
+        content: response.data.content.map(mapOrderResponse),
+      }),
       providesTags: ["Orders"],
     }),
 
     getPartnerOrderById: builder.query<PartnerOrder, number>({
       query: (id) => PARTNER_ENDPOINTS.ORDER_BY_ID(id),
-      transformResponse: (response: ApiResponse<PartnerOrder>) => response.data,
+      transformResponse: (response: ApiResponse<BackendOrderResponse>) =>
+        mapOrderResponse(response.data),
       providesTags: (_result, _error, id) => [{ type: "Orders", id }],
     }),
 
-    // Accept order and generate COLLECT access code
+    // Accept order → backend returns StaffAccessCodeResponse directly
     acceptOrder: builder.mutation<AcceptOrderResponse, number>({
       query: (orderId) => ({
         url: PARTNER_ENDPOINTS.ORDER_ACCEPT(orderId),
         method: "POST",
       }),
-      transformResponse: (response: ApiResponse<AcceptOrderResponse>) =>
-        response.data,
+      transformResponse: (
+        response: ApiResponse<StaffAccessCode>,
+        _meta,
+        orderId,
+      ) => ({
+        orderId,
+        status: "COLLECTED" as AcceptOrderResponse["status"],
+        staffAccessCode: response.data,
+        message: response.message || "Order accepted",
+      }),
       invalidatesTags: (_result, _error, orderId) => [
         { type: "PartnerOrder", id: orderId },
         { type: "PartnerOrder", id: "LIST" },
@@ -155,18 +352,18 @@ export const partnerApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // Update order weight after collection
+    // Update order weight → backend returns OrderResponse
     updateOrderWeight: builder.mutation<
-      UpdateWeightResponse,
+      PartnerOrder,
       UpdateWeightRequest
     >({
-      query: ({ orderId, ...data }) => ({
+      query: ({ orderId, actualWeight, weightUnit, notes }) => ({
         url: PARTNER_ENDPOINTS.ORDER_WEIGHT(orderId),
         method: "PUT",
-        body: data,
+        body: { actualWeight, weightUnit: weightUnit || "kg", staffNote: notes },
       }),
-      transformResponse: (response: ApiResponse<UpdateWeightResponse>) =>
-        response.data,
+      transformResponse: (response: ApiResponse<BackendOrderResponse>) =>
+        mapOrderResponse(response.data),
       invalidatesTags: (_result, _error, { orderId }) => [
         { type: "PartnerOrder", id: orderId },
         { type: "PartnerOrder", id: "LIST" },
@@ -175,13 +372,14 @@ export const partnerApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // Start processing order
+    // Start processing order → backend returns OrderResponse
     processOrder: builder.mutation<PartnerOrder, number>({
       query: (orderId) => ({
         url: PARTNER_ENDPOINTS.ORDER_PROCESS(orderId),
         method: "POST",
       }),
-      transformResponse: (response: ApiResponse<PartnerOrder>) => response.data,
+      transformResponse: (response: ApiResponse<BackendOrderResponse>) =>
+        mapOrderResponse(response.data),
       invalidatesTags: (_result, _error, orderId) => [
         { type: "PartnerOrder", id: orderId },
         { type: "PartnerOrder", id: "LIST" },
@@ -190,14 +388,22 @@ export const partnerApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // Mark order ready and generate RETURN access code
+    // Mark order ready → backend returns StaffAccessCodeResponse directly
     markOrderReady: builder.mutation<MarkReadyResponse, number>({
       query: (orderId) => ({
         url: PARTNER_ENDPOINTS.ORDER_READY(orderId),
         method: "POST",
       }),
-      transformResponse: (response: ApiResponse<MarkReadyResponse>) =>
-        response.data,
+      transformResponse: (
+        response: ApiResponse<StaffAccessCode>,
+        _meta,
+        orderId,
+      ) => ({
+        orderId,
+        status: "READY" as MarkReadyResponse["status"],
+        staffAccessCode: response.data,
+        message: response.message || "Order ready",
+      }),
       invalidatesTags: (_result, _error, orderId) => [
         { type: "PartnerOrder", id: orderId },
         { type: "PartnerOrder", id: "LIST" },
@@ -221,7 +427,6 @@ export const partnerApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: ApiResponse<StaffAccessCode>) =>
         response.data,
-      // Invalidate cache to refresh order list after code generation
       invalidatesTags: (_result, _error, { orderId }) => [
         { type: "PartnerOrder", id: orderId },
         { type: "PartnerOrder", id: "LIST" },
@@ -244,22 +449,27 @@ export const partnerApi = baseApi.injectEndpoints({
     }),
 
     // ============================================
-    // Staff Directory Endpoints (Simple contacts)
+    // Staff Endpoints (backend: UserResponse-based)
+    // GET  /api/partner/staff         → List<UserResponse>
+    // POST /api/partner/staff/{id}    → UserResponse (add existing user as staff)
+    // DELETE /api/partner/staff/{id}  → void (remove staff)
     // ============================================
 
     getStaffContacts: builder.query<StaffContact[], void>({
       query: () => PARTNER_ENDPOINTS.STAFF,
-      transformResponse: (response: ApiResponse<StaffContact[]>) =>
-        response.data,
+      transformResponse: (response: ApiResponse<BackendUserResponse[]>) =>
+        response.data.map(mapUserToStaffContact),
+      providesTags: ["Partner"],
     }),
 
     addStaffContact: builder.mutation<StaffContact, CreateStaffContactRequest>({
-      query: (data) => ({
-        url: PARTNER_ENDPOINTS.STAFF,
+      query: ({ staffId }) => ({
+        url: PARTNER_ENDPOINTS.STAFF_BY_ID(staffId),
         method: "POST",
-        body: data,
       }),
-      transformResponse: (response: ApiResponse<StaffContact>) => response.data,
+      transformResponse: (response: ApiResponse<BackendUserResponse>) =>
+        mapUserToStaffContact(response.data),
+      invalidatesTags: ["Partner"],
     }),
 
     deleteStaffContact: builder.mutation<void, number>({
@@ -267,6 +477,7 @@ export const partnerApi = baseApi.injectEndpoints({
         url: PARTNER_ENDPOINTS.STAFF_BY_ID(id),
         method: "DELETE",
       }),
+      invalidatesTags: ["Partner"],
     }),
 
     // ============================================
@@ -275,14 +486,23 @@ export const partnerApi = baseApi.injectEndpoints({
 
     getPartnerLockers: builder.query<PartnerLocker[], void>({
       query: () => PARTNER_ENDPOINTS.LOCKERS,
-      transformResponse: (response: ApiResponse<PartnerLocker[]>) =>
-        response.data,
+      transformResponse: (response: ApiResponse<BackendLockerResponse[]>) =>
+        response.data.map(mapLockerResponse),
       providesTags: ["Lockers"],
     }),
 
     getAvailableBoxes: builder.query<LockerBox[], number>({
       query: (lockerId) => PARTNER_ENDPOINTS.LOCKER_AVAILABLE_BOXES(lockerId),
-      transformResponse: (response: ApiResponse<LockerBox[]>) => response.data,
+      transformResponse: (response: ApiResponse<BackendBoxResponse[]>) =>
+        response.data.map((box) => ({
+          id: box.id,
+          boxNumber: box.boxNumber,
+          isActive: box.isActive,
+          status: box.status,
+          description: box.description,
+          lockerId: box.lockerId,
+          lockerCode: box.lockerCode,
+        })),
     }),
 
     // ============================================
@@ -328,7 +548,7 @@ export const {
   useGetAccessCodesByOrderQuery,
   useCancelAccessCodeMutation,
 
-  // Staff Directory
+  // Staff
   useGetStaffContactsQuery,
   useAddStaffContactMutation,
   useDeleteStaffContactMutation,

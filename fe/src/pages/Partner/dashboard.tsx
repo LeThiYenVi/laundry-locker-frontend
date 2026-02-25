@@ -36,7 +36,8 @@ export default function PartnerDashboard(): React.JSX.Element {
     refetch,
   } = useGetPartnerDashboardQuery();
 
-  const { data: pendingOrders = [] } = useGetPendingOrdersQuery();
+  const { data: pendingOrdersData } = useGetPendingOrdersQuery();
+  const pendingOrders = pendingOrdersData?.content || [];
 
   if (isLoading) {
     return <PageLoading message="Đang tải dashboard..." />;

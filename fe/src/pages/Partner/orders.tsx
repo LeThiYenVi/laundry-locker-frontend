@@ -37,7 +37,7 @@ import {
 } from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
 import { ORDER_STATUS_COLORS } from "@/constants";
-import type { PartnerOrder, StaffAccessCode } from "@/types";
+import type { PartnerOrder, StaffAccessCode } from "@/types/partner.type";
 import { OrderStatus } from "@/types/partner.enum";
 import {
   useGetPartnerOrdersQuery,

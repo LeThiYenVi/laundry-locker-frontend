@@ -183,22 +183,36 @@ export interface RevenueByPeriod {
 
 export interface PartnerLocker {
   id: number;
+  code: string;
   name: string;
-  location: string;
+  image?: string;
+  status: string;
+  address: string;
+  longitude?: number;
+  latitude?: number;
+  description?: string;
+  storeId: number;
+  storeName: string;
   totalBoxes: number;
   availableBoxes: number;
   occupiedBoxes: number;
-  status: "ACTIVE" | "MAINTENANCE" | "INACTIVE";
   boxes: LockerBox[];
+  createdAt: string;
+  updatedAt: string;
+  // computed alias for UI
+  location: string;
 }
 
 export interface LockerBox {
   id: number;
-  boxNumber: string;
-  size: "SMALL" | "MEDIUM" | "LARGE";
-  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "MAINTENANCE";
-  currentOrderId?: number;
-  pinCode?: string;
+  boxNumber: number;
+  isActive: boolean;
+  status: string;
+  description?: string;
+  lockerId: number;
+  lockerCode: string;
+  // computed fields for UI
+  size?: string;
 }
 
 // ============================================
@@ -293,8 +307,6 @@ export interface UpdatePartnerProfileRequest {
   contactEmail?: string;
   notes?: string;
 }
-  serviceArea?: string[];
-}
 
 // ============================================
 // Staff Access Code Types (Business Flow)
@@ -337,6 +349,22 @@ export interface MarkReadyResponse {
   status: OrderStatus;
   staffAccessCode: StaffAccessCode;
   message: string;
+}
+
+// Staff member from backend UserResponse (GET /api/partner/staff)
+export interface StaffMemberResponse {
+  id: number;
+  email: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  imageUrl?: string;
+  provider?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  joinDate?: string;
+  roles?: string[];
 }
 
 export interface UpdateWeightRequest {
@@ -413,19 +441,21 @@ export interface PartnerRevenueResponse {
 }
 
 // ============================================
-// Staff Directory Types (Simple - No Accounts)
+// Staff Directory Types
 // ============================================
 
+// StaffContact mapped from backend UserResponse for UI compatibility
 export interface StaffContact {
   id: number;
   name: string;
   phoneNumber: string;
-  notes?: string;
-  createdAt: string;
+  email?: string;
+  imageUrl?: string;
+  roles?: string[];
+  joinDate?: string;
 }
 
+// Request type for adding staff (just needs userId)
 export interface CreateStaffContactRequest {
-  name: string;
-  phoneNumber: string;
-  notes?: string;
+  staffId: number;
 }
