@@ -211,58 +211,68 @@ export default function UsersPage(): React.JSX.Element {
           </Table>
 
           {/* Footer / Pagination */}
-          <div className="flex items-center justify-between  border-t border-black-200 pt-4 pl-2 pr-2 pb-2">
+          <div className="flex items-center justify-between border-t border-black-200 pt-4 pl-2 pr-2 pb-2">
             <div className="flex items-center gap-4">
               <select 
                 className="border rounded px-2 py-1"
                 value={size}
-                onChange={(e) => setSize(Number(e.target.value))}
+                onChange={(e) => handleSizeChange(Number(e.target.value))}
               >
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
               </select>
               <div className="text-sm text-muted-foreground">
                 {page * size + 1}-{Math.min((page + 1) * size, totalElements)} of {totalElements}
               </div>
             </div>
 
-            <Pagination className="">
+            <Pagination>
               <PaginationContent>
-                <PaginationPrevious onClick={() => setPage(Math.max(0, page - 1))} />
-                {[...Array(Math.min(5, totalPages))].map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink 
-                      href="#" 
-                      isActive={page === i}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setPage(i);
-                      }}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                {totalPages > 5 && (
-                  <>
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink 
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setPage(totalPages - 1);
-                        }}
-                      >
-                        {totalPages}
-                      </PaginationLink>
-                    </PaginationItem>
-                  </>
-                )}
-                <PaginationNext onClick={() => setPage(Math.min(totalPages - 1, page + 1))} />
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage(Math.max(0, page - 1))}
+                    className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {(() => {
+                  // Sliding window pagination
+                  const pages: (number | "ellipsis")[] = [];
+                  if (totalPages <= 7) {
+                    for (let i = 0; i < totalPages; i++) pages.push(i);
+                  } else {
+                    pages.push(0);
+                    if (page > 2) pages.push("ellipsis");
+                    for (let i = Math.max(1, page - 1); i <= Math.min(totalPages - 2, page + 1); i++) {
+                      pages.push(i);
+                    }
+                    if (page < totalPages - 3) pages.push("ellipsis");
+                    pages.push(totalPages - 1);
+                  }
+                  return pages.map((p, idx) =>
+                    p === "ellipsis" ? (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          isActive={page === p}
+                          onClick={() => setPage(p)}
+                          className="cursor-pointer"
+                        >
+                          {p + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  );
+                })()}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
               </PaginationContent>
             </Pagination>
           </div>

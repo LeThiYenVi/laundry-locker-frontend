@@ -1,13 +1,17 @@
 import * as React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { withLocale } from "@/lib/i18n";
-import { User, Settings, LogOut, Bell } from "lucide-react";
+import { User, Settings, LogOut } from "lucide-react";
 import {
   PARTNER_NAV_ITEMS,
   PARTNER_SIDEBAR_CONFIG,
 } from "@/constants/partner-sidebar";
 import { useAuth } from "@/context/auth-context";
 import LockrIcon from "~/components/ui/LockrIcon";
+import {
+  useGetUnreadCountQuery,
+  NOTIFICATION_POLLING_INTERVAL,
+} from "~/stores/apis/notificationApi";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -21,7 +25,9 @@ const PartnerLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [notificationCount, setNotificationCount] = React.useState(3);
+  const { data: notificationCount = 0 } = useGetUnreadCountQuery(undefined, {
+    pollingInterval: NOTIFICATION_POLLING_INTERVAL,
+  });
 
   const handleLogout = async () => {
     await logout();

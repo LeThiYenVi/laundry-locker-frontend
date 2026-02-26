@@ -173,28 +173,25 @@ export default function LoyaltyPage(): React.JSX.Element {
                           className="bg-amber-100 text-amber-800"
                         >
                           <Star size={12} className="mr-1" />
-                          {(Math.random() * 5000).toFixed(0)} pts
+                          -- pts
                         </Badge>
                       </TableCell>
 
                       <TableCell className="py-2">
                         <span className="text-sm text-green-600">
-                          +{(Math.random() * 10000).toFixed(0)}
+                          --
                         </span>
                       </TableCell>
 
                       <TableCell className="py-2">
                         <span className="text-sm text-red-600">
-                          -{(Math.random() * 5000).toFixed(0)}
+                          --
                         </span>
                       </TableCell>
 
                       <TableCell className="py-2">
-                        <span className="text-sm">
-                          {(Math.random() * 10000000)
-                            .toFixed(0)
-                            .toLocaleString()}{" "}
-                          VNĐ
+                        <span className="text-sm text-muted-foreground">
+                          --
                         </span>
                       </TableCell>
 
