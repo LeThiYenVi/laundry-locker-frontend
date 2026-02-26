@@ -19,6 +19,23 @@ import { Mail, Phone, ArrowLeft, User, Shield } from "lucide-react";
 type LoginMode = "ADMIN" | "PARTNER";
 type PartnerLoginStep = "INPUT" | "OTP";
 
+// Map backend error codes to user-friendly messages
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  E_ADMIN_AUTH_INVALID_CREDENTIALS: "Email hoặc mật khẩu không đúng.",
+  E_ADMIN_AUTH_ACCOUNT_LOCKED: "Tài khoản đã bị khóa.",
+  E_ADMIN_AUTH_ACCOUNT_DISABLED: "Tài khoản đã bị vô hiệu hóa.",
+  E_PARTNER_AUTH_NOT_FOUND: "Tài khoản partner không tồn tại.",
+};
+
+function friendlyAuthError(raw: string): string {
+  // Backend may return "AuthenticationException: E_ADMIN_AUTH_INVALID_CREDENTIALS"
+  // or just the code directly
+  for (const [code, msg] of Object.entries(AUTH_ERROR_MESSAGES)) {
+    if (raw.includes(code)) return msg;
+  }
+  return raw;
+}
+
 export default function LoginPage(): React.JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,7 +104,8 @@ export default function LoginPage(): React.JSX.Element {
     try {
       await adminLoginStep1(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
+      const raw = err instanceof Error ? err.message : "Đăng nhập thất bại";
+      setError(friendlyAuthError(raw));
     } finally {
       setLoading(false);
     }
@@ -111,7 +129,8 @@ export default function LoginPage(): React.JSX.Element {
         }
       }, 100);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Xác thực OTP thất bại");
+      const raw = err instanceof Error ? err.message : "Xác thực OTP thất bại";
+      setError(friendlyAuthError(raw));
     } finally {
       setLoading(false);
     }
@@ -129,7 +148,8 @@ export default function LoginPage(): React.JSX.Element {
       await partnerSendOTP(partnerContact, partnerContactType);
       setPartnerStep("OTP");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể gửi OTP");
+      const raw = err instanceof Error ? err.message : "Không thể gửi OTP";
+      setError(friendlyAuthError(raw));
     } finally {
       setLoading(false);
     }
@@ -153,7 +173,8 @@ export default function LoginPage(): React.JSX.Element {
         }
       }, 100);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Mã OTP không đúng");
+      const raw = err instanceof Error ? err.message : "Mã OTP không đúng";
+      setError(friendlyAuthError(raw));
     } finally {
       setLoading(false);
     }

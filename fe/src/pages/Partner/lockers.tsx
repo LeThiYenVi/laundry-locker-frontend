@@ -25,7 +25,7 @@ import {
   DialogFooter,
 } from "~/components/ui/dialog";
 import { Unlock, AlertTriangle, RefreshCw, Box as BoxIcon } from "lucide-react";
-import type { PartnerLocker, LockerBox } from "@/types";
+import type { PartnerLocker, LockerBox } from "@/types/partner.type";
 import { useGetPartnerLockersQuery } from "@/stores/apis/partnerApi";
 
 // ============================================
@@ -523,7 +523,7 @@ export default function PartnerLockersPage(): React.JSX.Element {
                             setEmergencyModal({ open: true, box });
                           } else {
                             alert(
-                              `Ô: ${box.boxNumber}\nKích thước: ${getSizeLabel(box.size || "MEDIUM")}\nTrạng thái: ${getBoxStatusLabel(box.status)}`,
+                              `Ô: ${box.boxNumber}\nTrạng thái: ${getBoxStatusLabel(box.status)}`,
                             );
                           }
                         }}
@@ -533,7 +533,7 @@ export default function PartnerLockersPage(): React.JSX.Element {
                             {box.boxNumber}
                           </div>
                           <div className="text-xs text-[#7BAAD1] mt-1">
-                            {getSizeLabel(box.size || "MEDIUM")[0]}
+                            {box.isActive ? "✓" : "✕"}
                           </div>
                         </div>
                         {box.status === "OCCUPIED" && (
@@ -589,21 +589,15 @@ export default function PartnerLockersPage(): React.JSX.Element {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs px-2 py-1 bg-[#E8E9EB] text-[#326B9C] rounded">
-                    N
+                    ✓
                   </span>
-                  <span className="text-sm text-[#7BAAD1]">Nhỏ</span>
+                  <span className="text-sm text-[#7BAAD1]">Hoạt động</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs px-2 py-1 bg-[#E8E9EB] text-[#326B9C] rounded">
-                    V
+                    ✕
                   </span>
-                  <span className="text-sm text-[#7BAAD1]">Vừa</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 bg-[#E8E9EB] text-[#326B9C] rounded">
-                    L
-                  </span>
-                  <span className="text-sm text-[#7BAAD1]">Lớn</span>
+                  <span className="text-sm text-[#7BAAD1]">Ngưng</span>
                 </div>
               </div>
             </CardContent>
@@ -645,10 +639,9 @@ export default function PartnerLockersPage(): React.JSX.Element {
                     {getBoxStatusLabel(emergencyModal.box.status)}
                   </Badge>
                 </p>
-                {emergencyModal.box.currentOrderId && (
+                {emergencyModal.box.description && (
                   <p>
-                    <strong>Mã đơn:</strong> #
-                    {emergencyModal.box.currentOrderId}
+                    <strong>Mô tả:</strong> {emergencyModal.box.description}
                   </p>
                 )}
               </div>
