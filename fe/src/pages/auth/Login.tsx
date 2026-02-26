@@ -160,7 +160,7 @@ export default function LoginPage(): React.JSX.Element {
     setLoading(true);
     setError(null);
     try {
-      await partnerVerifyOTP(otpCode);
+      await partnerVerifyOTP(partnerContact, otpCode);
       setTimeout(() => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {

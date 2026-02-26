@@ -10,6 +10,8 @@ import {
   Copy,
   Clock,
   Eye,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import {
   Button,
@@ -47,6 +49,10 @@ import {
   useMarkOrderReadyMutation,
   POLLING_INTERVAL,
 } from "@/stores/apis/partnerApi";
+import {
+  usePartnerWebSocket,
+  OrderUpdateNotification,
+} from "@/hooks/useWebSocket";
 
 const tableHeader = {
   bg: "bg-blue-950",
@@ -172,6 +178,30 @@ export default function PartnerOrders(): React.JSX.Element {
   const [processOrder, { isLoading: isProcessing }] = useProcessOrderMutation();
   const [markReady, { isLoading: isMarkingReady }] =
     useMarkOrderReadyMutation();
+
+  // WebSocket for real-time updates
+  const handleOrderUpdate = React.useCallback(
+    (update: OrderUpdateNotification) => {
+      console.log("[Orders] Real-time order update received:", update);
+      // Refetch orders when a real-time update is received
+      refetch();
+    },
+    [refetch],
+  );
+
+  const {
+    connected: wsConnected,
+    connect: wsConnect,
+    error: wsError,
+  } = usePartnerWebSocket({
+    onOrderUpdate: handleOrderUpdate,
+    debug: import.meta.env.DEV,
+  });
+
+  // Connect WebSocket on mount
+  React.useEffect(() => {
+    wsConnect();
+  }, [wsConnect]);
 
   const orders = ordersData?.content || [];
 
@@ -383,6 +413,32 @@ export default function PartnerOrders(): React.JSX.Element {
           </div>
         </div>
       )}
+
+      {/* WebSocket Connection Indicator */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <div
+          className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow ${
+            wsConnected
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-100 text-gray-500"
+          }`}
+          title={
+            wsConnected ? "Kết nối real-time" : wsError || "Đang kết nối..."
+          }
+        >
+          {wsConnected ? (
+            <>
+              <Wifi size={14} className="text-green-600" />
+              Real-time
+            </>
+          ) : (
+            <>
+              <WifiOff size={14} className="text-gray-400" />
+              Offline
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
