@@ -28,6 +28,15 @@ import {
   Badge,
   Input,
 } from "~/components/ui";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "~/components/ui/pagination";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Dialog,
@@ -123,6 +132,22 @@ export default function PartnerOrders(): React.JSX.Element {
   const [page, setPage] = React.useState(0);
   const [size] = React.useState(10);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+
+  // Debounce search to avoid too many API calls
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(0); // Reset to first page on search
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset page when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setPage(0);
+  };
 
   // Error toast state
   const [errorToast, setErrorToast] = React.useState<string | null>(null);
@@ -160,7 +185,7 @@ export default function PartnerOrders(): React.JSX.Element {
       status: activeTab === "ALL" ? undefined : (activeTab as OrderStatus),
       page,
       size,
-      search: searchQuery || undefined,
+      search: debouncedSearch || undefined,
     },
     {
       // Polling: Tự động gọi lại API mỗi 10 giây
@@ -204,6 +229,29 @@ export default function PartnerOrders(): React.JSX.Element {
   }, [wsConnect]);
 
   const orders = ordersData?.content || [];
+  const totalPages = ordersData?.totalPages || 0;
+  const totalElements = ordersData?.totalElements || 0;
+  const currentPage = ordersData?.number || 0;
+
+  // Generate page numbers for pagination
+  const getPageNumbers = (): (number | "ellipsis")[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i);
+    }
+    const pages: (number | "ellipsis")[] = [];
+    pages.push(0);
+    if (currentPage > 2) pages.push("ellipsis");
+    for (
+      let i = Math.max(1, currentPage - 1);
+      i <= Math.min(totalPages - 2, currentPage + 1);
+      i++
+    ) {
+      pages.push(i);
+    }
+    if (currentPage < totalPages - 3) pages.push("ellipsis");
+    if (totalPages > 1) pages.push(totalPages - 1);
+    return pages;
+  };
 
   // Get status badge class
   const getStatusBadgeClass = (status: string) => {
@@ -471,7 +519,7 @@ export default function PartnerOrders(): React.JSX.Element {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-6">
           <TabsTrigger value="ALL">Tất cả</TabsTrigger>
           <TabsTrigger value="WAITING">Chờ lấy đồ</TabsTrigger>
@@ -560,6 +608,51 @@ export default function PartnerOrders(): React.JSX.Element {
                 ))}
               </TableBody>
             </Table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t">
+                <p className="text-sm text-gray-600">
+                  Hiển thị {currentPage * size + 1} -{" "}
+                  {Math.min((currentPage + 1) * size, totalElements)} / {totalElements} đơn hàng
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage(Math.max(0, currentPage - 1))}
+                        className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+
+                    {getPageNumbers().map((pageNum, idx) =>
+                      pageNum === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${idx}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            isActive={pageNum === currentPage}
+                            onClick={() => setPage(pageNum)}
+                            className="cursor-pointer"
+                          >
+                            {pageNum + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ),
+                    )}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage(Math.min(totalPages - 1, currentPage + 1))}
+                        className={currentPage >= totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </Card>
         )}
       </Tabs>

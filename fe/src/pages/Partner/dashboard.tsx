@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Clock,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -19,11 +20,20 @@ import {
   Badge,
   PageLoading,
   ErrorState,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
 } from "~/components/ui";
 import {
   useGetPartnerDashboardQuery,
   useGetPendingOrdersQuery,
+  POLLING_INTERVAL,
 } from "@/stores/apis/partnerApi";
+import { ORDER_STATUS_COLORS } from "@/constants";
+import type { OrderStatus } from "@/types/partner.enum";
 
 export default function PartnerDashboard(): React.JSX.Element {
   const navigate = useNavigate();
@@ -34,9 +44,19 @@ export default function PartnerDashboard(): React.JSX.Element {
     isLoading,
     error,
     refetch,
-  } = useGetPartnerDashboardQuery();
+  } = useGetPartnerDashboardQuery(undefined, {
+    pollingInterval: POLLING_INTERVAL,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
 
-  const { data: pendingOrdersData } = useGetPendingOrdersQuery();
+  const { data: pendingOrdersData } = useGetPendingOrdersQuery(
+    { page: 0, size: 5 },
+    {
+      pollingInterval: POLLING_INTERVAL,
+      refetchOnFocus: true,
+    },
+  );
   const pendingOrders = pendingOrdersData?.content || [];
 
   if (isLoading) {
@@ -271,6 +291,63 @@ export default function PartnerDashboard(): React.JSX.Element {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Orders Table */}
+      {pendingOrders.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Đơn hàng chờ xử lý</CardTitle>
+              <CardDescription>{pendingOrders.length} đơn hàng cần xử lý</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/partner/orders?status=WAITING")}
+            >
+              Xem tất cả
+              <ArrowRight className="ml-2" size={14} />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mã đơn</TableHead>
+                  <TableHead>Khách hàng</TableHead>
+                  <TableHead>Dịch vụ</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Ngày tạo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingOrders.map((order) => (
+                  <TableRow key={order.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate("/partner/orders")}>
+                    <TableCell className="font-mono font-semibold">{order.orderCode}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{order.customerName}</p>
+                        <p className="text-sm text-gray-500">{order.customerPhone}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{order.serviceType}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={ORDER_STATUS_COLORS[order.status as OrderStatus] || "bg-gray-100 text-gray-700"}>
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

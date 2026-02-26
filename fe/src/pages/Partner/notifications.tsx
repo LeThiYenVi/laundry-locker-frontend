@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import {
-  useGetAllNotificationsQuery,
+  useGetNotificationsQuery,
   useGetUnreadCountQuery,
   useMarkNotificationAsReadMutation,
   useMarkAllNotificationsAsReadMutation,
@@ -26,6 +26,15 @@ import {
   NOTIFICATION_POLLING_INTERVAL,
   type Notification,
 } from "~/stores/apis/notificationApi";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "~/components/ui/pagination";
 import {
   Bell,
   CheckCircle,
@@ -193,6 +202,11 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
   // Filter states
   const [filterType, setFilterType] = React.useState<string>("ALL");
   const [filterStatus, setFilterStatus] = React.useState<string>("ALL");
+  const [page, setPage] = React.useState(0);
+  const [pageSize] = React.useState(20);
+
+  // Per-item delete tracking
+  const [deletingId, setDeletingId] = React.useState<number | null>(null);
 
   // Toast state
   const [toast, setToast] = React.useState<{
@@ -202,14 +216,22 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
 
   // RTK Query hooks
   const {
-    data: notifications = [],
+    data: notificationsData,
     isLoading,
     isError,
     error,
     refetch,
-  } = useGetAllNotificationsQuery(undefined, {
-    pollingInterval: NOTIFICATION_POLLING_INTERVAL,
-  });
+  } = useGetNotificationsQuery(
+    { page, size: pageSize },
+    {
+      pollingInterval: NOTIFICATION_POLLING_INTERVAL,
+    },
+  );
+
+  const notifications = notificationsData?.content || [];
+  const totalPages = notificationsData?.totalPages || 0;
+  const totalElements = notificationsData?.totalElements || 0;
+  const currentPage = notificationsData?.number || 0;
 
   const { data: unreadCount = 0 } = useGetUnreadCountQuery(undefined, {
     pollingInterval: NOTIFICATION_POLLING_INTERVAL,
@@ -219,7 +241,7 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
     useMarkNotificationAsReadMutation();
   const [markAllAsRead, { isLoading: isMarkingAllRead }] =
     useMarkAllNotificationsAsReadMutation();
-  const [deleteNotification, { isLoading: isDeleting }] =
+  const [deleteNotification] =
     useDeleteNotificationMutation();
 
   // ============================================
@@ -254,6 +276,7 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeletingId(id);
     try {
       await deleteNotification(id).unwrap();
       setToast({ type: "success", message: "Đã xóa thông báo" });
@@ -263,6 +286,8 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
         type: "error",
         message: "Không thể xóa thông báo. Vui lòng thử lại.",
       });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -601,7 +626,7 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
                               size="sm"
                               className="text-red-500 hover:text-red-700 hover:bg-red-50"
                               onClick={(e) => handleDelete(notification.id, e)}
-                              disabled={isDeleting}
+                              disabled={deletingId === notification.id}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -625,6 +650,49 @@ export default function PartnerNotificationsPage(): React.JSX.Element {
             />
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4">
+            <p className="text-sm text-gray-600">
+              Hiển thị {currentPage * pageSize + 1} -{" "}
+              {Math.min((currentPage + 1) * pageSize, totalElements)} / {totalElements} thông báo
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage(Math.max(0, currentPage - 1))}
+                    className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const pageNum = Math.max(0, Math.min(currentPage - 2, totalPages - 5)) + i;
+                  if (pageNum >= totalPages) return null;
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        isActive={pageNum === currentPage}
+                        onClick={() => setPage(pageNum)}
+                        className="cursor-pointer"
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage(Math.min(totalPages - 1, currentPage + 1))}
+                    className={currentPage >= totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       {/* Toast */}
