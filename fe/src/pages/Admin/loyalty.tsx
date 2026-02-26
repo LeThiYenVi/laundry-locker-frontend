@@ -1,5 +1,12 @@
 import * as React from "react";
-import { MoreHorizontal, Plus, Gift, Star, TrendingUp, Users } from "lucide-react";
+import {
+  MoreHorizontal,
+  Plus,
+  Gift,
+  Star,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import {
   Button,
   Card,
@@ -25,7 +32,10 @@ import {
   PaginationEllipsis,
 } from "~/components/ui/pagination";
 import { t } from "@/lib/i18n";
-import { useGetLoyaltyStatisticsQuery, useGetAllUsersQuery } from "@/stores/apis/adminApi";
+import {
+  useGetLoyaltyStatisticsQuery,
+  useGetAllUsersQuery,
+} from "@/stores/apis/adminApi";
 import StatusCard from "~/components/ui/status-card";
 
 const tableHeader = {
@@ -38,9 +48,13 @@ export default function LoyaltyPage(): React.JSX.Element {
   const [size, setSize] = React.useState(10);
 
   // Get users for loyalty table (in real app, would have dedicated loyalty users endpoint)
-  const { data: usersData, isLoading, error } = useGetAllUsersQuery({ pageNumber: page, pageSize: size });
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useGetAllUsersQuery({ pageNumber: page, pageSize: size });
   const { data: statsData } = useGetLoyaltyStatisticsQuery();
-  
+
   const users = usersData?.data?.content || [];
   const totalPages = usersData?.data?.totalPages || 0;
   const totalElements = usersData?.data?.totalElements || 0;
@@ -77,13 +91,13 @@ export default function LoyaltyPage(): React.JSX.Element {
           />
           <StatusCard
             title="Điểm đã phát hành"
-            count={stats.totalPointsIssued.toLocaleString()}
+            count={(stats.totalPointsIssued ?? 0).toLocaleString()}
             icon={<Star size={20} />}
             variant="amber"
           />
           <StatusCard
             title="Điểm đã đổi"
-            count={stats.totalPointsRedeemed.toLocaleString()}
+            count={(stats.totalPointsRedeemed ?? 0).toLocaleString()}
             icon={<Gift size={20} />}
             variant="green"
           />
@@ -108,16 +122,22 @@ export default function LoyaltyPage(): React.JSX.Element {
               <Button variant="default" size="icon">
                 <Plus size={16} />
               </Button>
-              <Button variant="ghost" size="sm">Thêm điểm</Button>
+              <Button variant="ghost" size="sm">
+                Thêm điểm
+              </Button>
             </div>
           </div>
 
           {users.length === 0 ? (
-            <div className="p-4 text-muted-foreground">Chưa có thành viên nào.</div>
+            <div className="p-4 text-muted-foreground">
+              Chưa có thành viên nào.
+            </div>
           ) : (
             <>
               <Table className="w-full p-0">
-                <TableHeader className={`${tableHeader.bg} ${tableHeader.text}`}>
+                <TableHeader
+                  className={`${tableHeader.bg} ${tableHeader.text}`}
+                >
                   <TableRow>
                     <TableHead className="rounded-tl-md">Thành viên</TableHead>
                     <TableHead>Điểm hiện tại</TableHead>
@@ -137,29 +157,45 @@ export default function LoyaltyPage(): React.JSX.Element {
                             {user.name?.[0] || user.email[0].toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-medium">{user.name || user.email}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                            <div className="font-medium">
+                              {user.name || user.email}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {user.email}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
 
                       <TableCell className="py-2">
-                        <Badge variant="default" className="bg-amber-100 text-amber-800">
+                        <Badge
+                          variant="default"
+                          className="bg-amber-100 text-amber-800"
+                        >
                           <Star size={12} className="mr-1" />
                           {(Math.random() * 5000).toFixed(0)} pts
                         </Badge>
                       </TableCell>
 
                       <TableCell className="py-2">
-                        <span className="text-sm text-green-600">+{(Math.random() * 10000).toFixed(0)}</span>
+                        <span className="text-sm text-green-600">
+                          +{(Math.random() * 10000).toFixed(0)}
+                        </span>
                       </TableCell>
 
                       <TableCell className="py-2">
-                        <span className="text-sm text-red-600">-{(Math.random() * 5000).toFixed(0)}</span>
+                        <span className="text-sm text-red-600">
+                          -{(Math.random() * 5000).toFixed(0)}
+                        </span>
                       </TableCell>
 
                       <TableCell className="py-2">
-                        <span className="text-sm">{(Math.random() * 10000000).toFixed(0).toLocaleString()} VNĐ</span>
+                        <span className="text-sm">
+                          {(Math.random() * 10000000)
+                            .toFixed(0)
+                            .toLocaleString()}{" "}
+                          VNĐ
+                        </span>
                       </TableCell>
 
                       <TableCell className="py-2">
@@ -175,7 +211,7 @@ export default function LoyaltyPage(): React.JSX.Element {
               {/* Footer / Pagination */}
               <div className="flex items-center justify-between border-t border-black-200 pt-4 pl-2 pr-2 pb-2">
                 <div className="flex items-center gap-4">
-                  <select 
+                  <select
                     className="border rounded px-2 py-1"
                     value={size}
                     onChange={(e) => {
@@ -188,21 +224,27 @@ export default function LoyaltyPage(): React.JSX.Element {
                     <option value={50}>50</option>
                   </select>
                   <div className="text-sm text-muted-foreground">
-                    {totalElements === 0 ? '0-0 of 0' : `${page * size + 1}-${Math.min((page + 1) * size, totalElements)} of ${totalElements}`}
+                    {totalElements === 0
+                      ? "0-0 of 0"
+                      : `${page * size + 1}-${Math.min((page + 1) * size, totalElements)} of ${totalElements}`}
                   </div>
                 </div>
 
                 <Pagination>
                   <PaginationContent>
-                    <PaginationPrevious 
+                    <PaginationPrevious
                       onClick={() => setPage(Math.max(0, page - 1))}
-                      className={page === 0 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      className={
+                        page === 0
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
                     />
                     {[...Array(Math.min(5, totalPages))].map((_, i) => {
                       const pageNum = i;
                       return (
                         <PaginationItem key={i}>
-                          <PaginationLink 
+                          <PaginationLink
                             onClick={(e) => {
                               e.preventDefault();
                               setPage(pageNum);
@@ -221,7 +263,7 @@ export default function LoyaltyPage(): React.JSX.Element {
                           <PaginationEllipsis />
                         </PaginationItem>
                         <PaginationItem>
-                          <PaginationLink 
+                          <PaginationLink
                             onClick={(e) => {
                               e.preventDefault();
                               setPage(totalPages - 1);
@@ -233,9 +275,15 @@ export default function LoyaltyPage(): React.JSX.Element {
                         </PaginationItem>
                       </>
                     )}
-                    <PaginationNext 
-                      onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                      className={page >= totalPages - 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    <PaginationNext
+                      onClick={() =>
+                        setPage(Math.min(totalPages - 1, page + 1))
+                      }
+                      className={
+                        page >= totalPages - 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
                     />
                   </PaginationContent>
                 </Pagination>
