@@ -31,47 +31,11 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
-import type { PartnerService } from "@/types";
-import { useGetPartnerProfileQuery } from "@/stores/apis/partnerApi";
-
-// ============================================
-// Note: Backend chưa có endpoint riêng cho Partner Services
-// Hiện tại sử dụng API /api/services public với filter storeId
-// TODO: Tích hợp khi backend có endpoint:
-// - GET /api/partner/services
-// - PUT /api/partner/services/{id}/toggle
-// - PUT /api/partner/services/{id}/price
-// ============================================
-
-// ============================================
-// Error Handling
-// ============================================
-
-const ERROR_MESSAGES: Record<string, string> = {
-  E_SERVICE001: "Không tìm thấy dịch vụ.",
-  E_AUTH001: "Bạn không có quyền truy cập.",
-};
-
-const getErrorMessage = (err: unknown): string => {
-  const apiError = err as {
-    status?: number;
-    data?: { code?: string; message?: string };
-  };
-
-  if (apiError?.status === 401 || apiError?.status === 403) {
-    localStorage.removeItem("accessToken");
-    window.location.href =
-      "/login?redirect=" + encodeURIComponent(window.location.pathname);
-    return "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
-  }
-
-  const errorCode = apiError?.data?.code;
-  if (errorCode && ERROR_MESSAGES[errorCode]) {
-    return ERROR_MESSAGES[errorCode];
-  }
-
-  return apiError?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
-};
+import type { PartnerService } from "@/types/partner.type";
+import {
+  useGetPartnerServicesQuery,
+  useGetPartnerProfileQuery,
+} from "@/stores/apis/partnerApi";
 
 // ============================================
 // Helpers
@@ -79,16 +43,10 @@ const getErrorMessage = (err: unknown): string => {
 
 const getCategoryLabel = (category: string): string => {
   switch (category) {
-    case "WASH":
-      return "Giặt";
-    case "WASH_IRON":
-      return "Giặt hấp";
-    case "DRY_CLEAN":
-      return "Giặt khô";
-    case "IRON":
-      return "Là ủi";
-    case "SPECIAL":
-      return "Đặc biệt";
+    case "LAUNDRY":
+      return "Giặt ủi";
+    case "STORAGE":
+      return "Gửi đồ";
     default:
       return category;
   }
@@ -96,16 +54,10 @@ const getCategoryLabel = (category: string): string => {
 
 const getCategoryBadge = (category: string): string => {
   switch (category) {
-    case "WASH":
+    case "LAUNDRY":
       return "bg-blue-100 text-blue-700 border-blue-200";
-    case "WASH_IRON":
+    case "STORAGE":
       return "bg-purple-100 text-purple-700 border-purple-200";
-    case "DRY_CLEAN":
-      return "bg-pink-100 text-pink-700 border-pink-200";
-    case "IRON":
-      return "bg-orange-100 text-orange-700 border-orange-200";
-    case "SPECIAL":
-      return "bg-green-100 text-green-700 border-green-200";
     default:
       return "bg-gray-100 text-gray-700 border-gray-200";
   }
@@ -123,18 +75,16 @@ const formatCurrency = (amount: number): string => {
 // ============================================
 
 export default function PartnerServicesPage(): React.JSX.Element {
-  // Get partner profile to know which store(s) belong to partner
+  // RTK Query hooks
   const {
-    data: profile,
-    isLoading: isLoadingProfile,
-    error: profileError,
-    refetch: refetchProfile,
-  } = useGetPartnerProfileQuery();
+    data: services = [],
+    isLoading,
+    error,
+    refetch,
+  } = useGetPartnerServicesQuery();
 
-  // Local state for services (will be populated from API)
-  const [services, setServices] = React.useState<PartnerService[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
+  const { isLoading: isLoadingProfile, error: profileError } =
+    useGetPartnerProfileQuery();
 
   const [filterCategory, setFilterCategory] = React.useState<string>("ALL");
   const [errorToast, setErrorToast] = React.useState<string | null>(null);
@@ -145,55 +95,6 @@ export default function PartnerServicesPage(): React.JSX.Element {
     service: PartnerService | null;
     newPrice: string;
   }>({ open: false, service: null, newPrice: "" });
-
-  // Fetch services from public API
-  React.useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch from public services API
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/services`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Không thể tải danh sách dịch vụ");
-        }
-
-        const data = await response.json();
-
-        // Map to PartnerService type with isActive default true
-        const mappedServices: PartnerService[] = (data.data || []).map(
-          (s: Record<string, unknown>) => ({
-            id: s.id as number,
-            name: s.name as string,
-            category: (s.category as string) || "WASH",
-            basePrice: (s.price as number) || 0,
-            pricePerKg: (s.pricePerKg as number) || 0,
-            processingTime: (s.estimatedTime as number) || 24,
-            isActive: true, // Default - backend doesn't return per-partner status yet
-            description: (s.description as string) || "",
-          }),
-        );
-
-        setServices(mappedServices);
-      } catch (err) {
-        console.error("Error fetching services:", err);
-        setError(err as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchServices();
-  }, []);
 
   // Auto-hide error toast
   React.useEffect(() => {
@@ -215,7 +116,7 @@ export default function PartnerServicesPage(): React.JSX.Element {
     const inactiveServices = services.length - activeServices;
     const avgPrice =
       services.length > 0
-        ? services.reduce((sum, s) => sum + s.basePrice, 0) / services.length
+        ? services.reduce((sum, s) => sum + s.price, 0) / services.length
         : 0;
 
     return {
@@ -227,17 +128,10 @@ export default function PartnerServicesPage(): React.JSX.Element {
   }, [services]);
 
   // Toggle service active status (local only - needs backend)
-  const handleToggleActive = (serviceId: number) => {
-    // TODO: Call API when backend supports: PUT /api/partner/services/{id}/toggle
-    setServices((prev) =>
-      prev.map((service) =>
-        service.id === serviceId
-          ? { ...service, isActive: !service.isActive }
-          : service,
-      ),
-    );
+  const handleToggleActive = (_serviceId: number) => {
+    // Backend has no partner-specific toggle endpoint
     setErrorToast(
-      "⚠️ Chức năng bật/tắt dịch vụ đang được phát triển. Thay đổi chỉ áp dụng tạm thời.",
+      "⚠️ Chức năng bật/tắt dịch vụ chỉ Admin mới có quyền thay đổi.",
     );
   };
 
@@ -251,27 +145,14 @@ export default function PartnerServicesPage(): React.JSX.Element {
       return;
     }
 
-    // TODO: Call API when backend supports: PUT /api/partner/services/{id}/price
-    setServices((prev) =>
-      prev.map((service) =>
-        service.id === editModal.service?.id
-          ? { ...service, basePrice: newPrice }
-          : service,
-      ),
-    );
-
+    // Backend has no partner-specific price update endpoint
     setEditModal({ open: false, service: null, newPrice: "" });
-    setErrorToast(
-      "⚠️ Chức năng cập nhật giá đang được phát triển. Thay đổi chỉ áp dụng tạm thời.",
-    );
+    setErrorToast("⚠️ Chức năng cập nhật giá chỉ Admin mới có quyền thay đổi.");
   };
 
   // Refetch all data
   const handleRefresh = () => {
-    setIsLoading(true);
-    refetchProfile();
-    // Re-trigger the effect by setting error to null
-    setError(null);
+    refetch();
   };
 
   // Loading state
@@ -361,9 +242,8 @@ export default function PartnerServicesPage(): React.JSX.Element {
         {/* Info Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
           <p>
-            ℹ️ <strong>Lưu ý:</strong> Chức năng bật/tắt và cập nhật giá dịch vụ
-            đang được phát triển. Mọi thay đổi hiện tại chỉ áp dụng tạm thời
-            trong phiên làm việc này.
+            ℹ️ <strong>Lưu ý:</strong> Danh sách dịch vụ được quản lý bởi Admin.
+            Nếu cần thay đổi, vui lòng liên hệ quản trị viên hệ thống.
           </p>
         </div>
 
@@ -425,34 +305,16 @@ export default function PartnerServicesPage(): React.JSX.Element {
                     Tất cả
                   </SelectItem>
                   <SelectItem
-                    value="WASH"
+                    value="LAUNDRY"
                     className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
                   >
-                    Giặt
+                    Giặt ủi
                   </SelectItem>
                   <SelectItem
-                    value="WASH_IRON"
+                    value="STORAGE"
                     className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
                   >
-                    Giặt hấp
-                  </SelectItem>
-                  <SelectItem
-                    value="DRY_CLEAN"
-                    className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                  >
-                    Giặt khô
-                  </SelectItem>
-                  <SelectItem
-                    value="IRON"
-                    className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                  >
-                    Là ủi
-                  </SelectItem>
-                  <SelectItem
-                    value="SPECIAL"
-                    className="hover:bg-[#FAFCFF] focus:bg-[#FAFCFF]"
-                  >
-                    Đặc biệt
+                    Gửi đồ
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -501,27 +363,41 @@ export default function PartnerServicesPage(): React.JSX.Element {
                 {/* Pricing */}
                 <div className="space-y-2 pt-2 border-t border-[#E8E9EB]">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#7BAAD1]">Giá cơ bản:</span>
+                    <span className="text-sm text-[#7BAAD1]">Giá:</span>
                     <span className="font-bold text-[#326B9C]">
-                      {formatCurrency(service.basePrice)}
+                      {formatCurrency(service.price)}
+                      {service.unit ? `/${service.unit}` : ""}
                     </span>
                   </div>
-                  {service.pricePerKg > 0 && (
+                  {service.maxPrice != null && service.maxPrice > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-[#7BAAD1]">Giá/kg:</span>
+                      <span className="text-sm text-[#7BAAD1]">
+                        Giá tối đa:
+                      </span>
                       <span className="font-bold text-[#326B9C]">
-                        {formatCurrency(service.pricePerKg)}
+                        {formatCurrency(service.maxPrice)}
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#7BAAD1]">
-                      Thời gian xử lý:
-                    </span>
-                    <span className="font-semibold text-[#326B9C]">
-                      {service.processingTime}h
-                    </span>
-                  </div>
+                  {service.estimatedHours != null &&
+                    service.estimatedHours > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-[#7BAAD1]">
+                          Thời gian xử lý:
+                        </span>
+                        <span className="font-semibold text-[#326B9C]">
+                          {service.estimatedHours}h
+                        </span>
+                      </div>
+                    )}
+                  {service.serviceType && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-[#7BAAD1]">Loại:</span>
+                      <span className="text-sm text-[#326B9C]">
+                        {service.serviceType}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -533,7 +409,7 @@ export default function PartnerServicesPage(): React.JSX.Element {
                       setEditModal({
                         open: true,
                         service,
-                        newPrice: service.basePrice.toString(),
+                        newPrice: service.price.toString(),
                       })
                     }
                   >
@@ -597,7 +473,7 @@ export default function PartnerServicesPage(): React.JSX.Element {
                   {editModal.service.name}
                 </p>
                 <p className="text-[#7BAAD1] mt-1">
-                  Giá hiện tại: {formatCurrency(editModal.service.basePrice)}
+                  Giá hiện tại: {formatCurrency(editModal.service.price)}
                 </p>
               </div>
 
@@ -620,8 +496,8 @@ export default function PartnerServicesPage(): React.JSX.Element {
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                ⚠️ Chức năng này đang được phát triển. Thay đổi giá sẽ chỉ áp
-                dụng tạm thời trong phiên làm việc hiện tại.
+                ⚠️ Chức năng cập nhật giá chỉ Admin mới có quyền thay đổi. Vui
+                lòng liên hệ quản trị viên.
               </div>
             </div>
           )}
