@@ -52,10 +52,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userStr = localStorage.getItem("user");
       if (accessToken && userStr) {
         const parsed = JSON.parse(userStr);
-        // Normalize - ensure arrays exist even for legacy cached data
+        // Normalize - handle both `role` and `roles` from API, plus legacy cached data
         setUser({
           ...parsed,
-          role: parsed.role ?? [],
+          fullName: parsed.fullName || parsed.name || "",
+          role: parsed.role ?? parsed.roles ?? [],
           permissions: parsed.permissions ?? [],
         });
       }
@@ -119,13 +120,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const data = await apiFetch<{
       accessToken: string;
       refreshToken: string;
-      user: User;
+      user: Record<string, unknown>;
     }>(AUTH_ENDPOINTS.ADMIN_VERIFY_2FA, { tempToken, otpCode });
 
     setIsWaitingFor2FA(false);
     setTempToken("");
     setMaskedEmail("");
-    persistLogin(data);
+
+    // Normalize API response: backend returns `roles` (plural) and `name`, map to User shape
+    const raw = data.user;
+    const normalizedUser: User = {
+      id: String(raw.id ?? ""),
+      fullName: (raw.fullName as string) || (raw.name as string) || "",
+      email: (raw.email as string) || "",
+      role: (raw.role as string[]) ?? (raw.roles as string[]) ?? [],
+      permissions: (raw.permissions as string[]) ?? [],
+      avatar: (raw.avatar as string) ?? (raw.imageUrl as string) ?? undefined,
+    };
+
+    persistLogin({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      user: normalizedUser,
+    });
   };
 
   const cancelAdmin2FA = () => {
@@ -236,7 +253,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Role → implicit permissions mapping (backend returns roles, not fine-grained permissions)
     const rolePermissions: Record<string, string[]> = {
-      ADMIN: ["admin_access"],
+      ADMIN: [
+        "admin_access",
+        "manage_users",
+        "manage_stores",
+        "manage_lockers",
+        "manage_services",
+        "view_orders",
+        "manage_orders",
+        "view_payments",
+        "manage_payments",
+        "manage_loyalty",
+        "manage_partners",
+        "manage_feedback",
+        "manage_settings",
+      ],
       PARTNER: ["partner_access"],
       PARTNER_STAFF: ["partner_access"],
       USER: [],

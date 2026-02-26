@@ -54,7 +54,7 @@ const routesConfig: RouteObject[] = [
       {
         path: "admin",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermission="admin_access">
             <AdminLayout />
           </ProtectedRoute>
         ),

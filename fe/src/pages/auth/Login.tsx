@@ -103,7 +103,11 @@ export default function LoginPage(): React.JSX.Element {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          navigate(withLocale(getRedirectPath(parsedUser.role || [])));
+          navigate(
+            withLocale(
+              getRedirectPath(parsedUser.role || parsedUser.roles || []),
+            ),
+          );
         }
       }, 100);
     } catch (err) {
@@ -141,7 +145,11 @@ export default function LoginPage(): React.JSX.Element {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          navigate(withLocale(getRedirectPath(parsedUser.role || [])));
+          navigate(
+            withLocale(
+              getRedirectPath(parsedUser.role || parsedUser.roles || []),
+            ),
+          );
         }
       }, 100);
     } catch (err) {
