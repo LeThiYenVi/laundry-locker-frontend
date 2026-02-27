@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
 import { PartnerTable } from "./components/PartnerTable";
@@ -6,6 +7,7 @@ import { PartnerStats } from "./components/PartnerStats";
 import { usePartners } from "./hooks/usePartners";
 
 export default function PartnersPage() {
+  const { t } = useTranslation();
   const {
     partners,
     isLoading,
@@ -25,8 +27,8 @@ export default function PartnersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quản lý đối tác"
-        description="Quản lý và phê duyệt đối tác trong hệ thống"
+        title={t("admin.partners.title")}
+        description={t("admin.partners.description")}
       />
 
       <PartnerStats statistics={statistics} />

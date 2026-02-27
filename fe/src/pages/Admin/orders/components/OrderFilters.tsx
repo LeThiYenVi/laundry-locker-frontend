@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Input } from "~/components/ui/input";
 import { StatusTabs } from "~/components/shared/status-tabs";
 import { OrderStatus } from "~/types/admin/enums";
@@ -11,15 +12,6 @@ interface OrderFiltersProps {
   statusCounts: Record<string, number>;
 }
 
-const tabs = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
-  { value: OrderStatus.INITIALIZED, label: "Khởi tạo", color: "gray" as const },
-  { value: OrderStatus.PROCESSING, label: "Đang xử lý", color: "purple" as const },
-  { value: OrderStatus.READY, label: "Sẵn sàng", color: "blue" as const },
-  { value: OrderStatus.COMPLETED, label: "Hoàn thành", color: "green" as const },
-  { value: OrderStatus.CANCELED, label: "Đã hủy", color: "red" as const },
-];
-
 export function OrderFilters({
   status,
   onStatusChange,
@@ -27,6 +19,17 @@ export function OrderFilters({
   onSearchChange,
   statusCounts,
 }: OrderFiltersProps) {
+  const { t } = useTranslation();
+
+  const tabs = [
+    { value: "ALL", label: t("common.all"), color: "blue" as const },
+    { value: OrderStatus.INITIALIZED, label: t("admin.orders.status.initialized"), color: "gray" as const },
+    { value: OrderStatus.PROCESSING, label: t("admin.orders.status.processing"), color: "purple" as const },
+    { value: OrderStatus.READY, label: t("admin.orders.status.ready"), color: "blue" as const },
+    { value: OrderStatus.COMPLETED, label: t("admin.orders.status.completed"), color: "green" as const },
+    { value: OrderStatus.CANCELED, label: t("admin.orders.status.canceled"), color: "red" as const },
+  ];
+
   const tabsWithCounts = tabs.map((tab) => ({
     ...tab,
     count: statusCounts[tab.value] || 0,
@@ -47,7 +50,7 @@ export function OrderFilters({
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <Input
-            placeholder="Tìm kiếm đơn hàng..."
+            placeholder={t("admin.orders.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10 h-10"

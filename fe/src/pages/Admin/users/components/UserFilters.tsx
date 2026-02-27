@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Input } from "~/components/ui/input";
 import { StatusTabs } from "~/components/shared/status-tabs";
 import type { UserStatus } from "../hooks/useUsers";
@@ -11,13 +12,6 @@ interface UserFiltersProps {
   statusCounts: Record<UserStatus, number>;
 }
 
-const tabs = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
-  { value: "ACTIVE", label: "Hoạt động", color: "green" as const },
-  { value: "INACTIVE", label: "Vô hiệu", color: "red" as const },
-  { value: "PENDING", label: "Chờ xác thực", color: "yellow" as const },
-];
-
 export function UserFilters({
   status,
   onStatusChange,
@@ -25,6 +19,15 @@ export function UserFilters({
   onSearchChange,
   statusCounts,
 }: UserFiltersProps) {
+  const { t } = useTranslation();
+
+  const tabs = [
+    { value: "ALL", label: t("common.all"), color: "blue" as const },
+    { value: "ACTIVE", label: t("admin.users.status.active"), color: "green" as const },
+    { value: "INACTIVE", label: t("admin.users.status.inactive"), color: "red" as const },
+    { value: "PENDING", label: t("admin.users.status.pending"), color: "yellow" as const },
+  ];
+
   const tabsWithCounts = tabs.map((tab) => ({
     ...tab,
     count: statusCounts[tab.value as UserStatus],
@@ -45,7 +48,7 @@ export function UserFilters({
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <Input
-            placeholder="Tìm kiếm ngườii dùng..."
+            placeholder={t("admin.users.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10 h-10"

@@ -1,7 +1,6 @@
 import { XCircle, ArrowLeft, RotateCcw } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { withLocale } from "~/lib/i18n";
 
 interface ErrorResultProps {
   title?: string;
@@ -61,14 +60,14 @@ export function ErrorResult({
 
       <div className="flex gap-3 mt-8">
         <Button
-          onClick={onGoHome || (() => navigate(withLocale("/admin/dashboard")))}
+          onClick={onGoHome || (() => navigate("/admin/dashboard"))}
           className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
         >
           <ArrowLeft size={16} />
           Quay lại trang chủ
         </Button>
         <Button
-          onClick={onRetry || (() => navigate(withLocale("/")))}
+          onClick={onRetry || (() => navigate("/"))}
           variant="outline"
           className="flex items-center gap-2"
         >

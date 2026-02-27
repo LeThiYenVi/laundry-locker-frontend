@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
 import { LockerTable } from "./components/LockerTable";
@@ -6,6 +7,7 @@ import { LockerStats } from "./components/LockerStats";
 import { useLockers } from "./hooks/useLockers";
 
 export default function LockersPage() {
+  const { t } = useTranslation();
   const {
     lockers,
     isLoading,
@@ -23,8 +25,8 @@ export default function LockersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quản lý tủ đồ"
-        description="Quản lý và giám sát các tủ đồ thông minh trong hệ thống"
+        title={t("admin.lockers.title")}
+        description={t("admin.lockers.description")}
       />
 
       <LockerStats statistics={statistics} />

@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { useAuth } from "~/context/auth-context";
-import { withLocale } from "~/lib/i18n";
+import { useSidebar } from "~/context/sidebar-context";
+import { useTranslation } from "react-i18next";
 import type { NavItem } from "~/types/common/sidebar";
 
 interface SidebarProps {
@@ -24,12 +25,21 @@ interface SidebarProps {
 const SIDEBAR_WIDTH = 280;
 const SIDEBAR_COLLAPSED_WIDTH = 80;
 
-export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+export function Sidebar({
+  items,
+  userName = "Admin",
+  onSettingsClick,
+}: SidebarProps) {
+  const {
+    isExpanded,
+    toggleSidebar: toggleDesktopSidebar,
+    setIsExpanded,
+  } = useSidebar();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const location = useLocation();
   const { logout } = useAuth();
+  const { t } = useTranslation();
 
   // Detect tablet and below (md breakpoint = 768px)
   useEffect(() => {
@@ -53,13 +63,13 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
     if (isTablet) {
       setIsMobileOpen((prev) => !prev);
     } else {
-      setIsExpanded((prev) => !prev);
+      toggleDesktopSidebar();
     }
-  }, [isTablet]);
+  }, [isTablet, toggleDesktopSidebar]);
 
   const handleLogout = useCallback(async () => {
     await logout();
-    window.location.href = withLocale("/auth/login");
+    window.location.href = "/auth/login";
   }, [logout]);
 
   const currentWidth = isExpanded ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH;
@@ -84,7 +94,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
         onClick={toggleSidebar}
         className={cn(
           "fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-blue-950 text-white shadow-lg lg:hidden",
-          "hover:bg-blue-900 transition-colors"
+          "hover:bg-blue-900 transition-colors",
         )}
         aria-label="Toggle menu"
       >
@@ -95,15 +105,13 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
       <motion.aside
         initial={false}
         animate={{
-          width: isTablet 
-            ? (isMobileOpen ? SIDEBAR_WIDTH : 0)
-            : currentWidth,
+          width: isTablet ? (isMobileOpen ? SIDEBAR_WIDTH : 0) : currentWidth,
           x: isTablet && !isMobileOpen ? -SIDEBAR_WIDTH : 0,
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed left-0 top-0 h-screen bg-blue-950 flex flex-col z-50",
-          isTablet && !isMobileOpen && "overflow-hidden"
+          "fixed left-0 top-0 h-screen bg-blue-950 flex flex-col z-50 rounded-r-md shadow-2xl",
+          isTablet && !isMobileOpen && "overflow-hidden",
         )}
       >
         {/* Logo & Toggle */}
@@ -120,7 +128,9 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-lg">L</span>
                 </div>
-                <span className="text-white font-semibold text-lg">Laundry</span>
+                <span className="text-white font-semibold text-lg">
+                  Laundry
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -132,11 +142,15 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
               className={cn(
                 "p-2 rounded-lg transition-colors",
                 "hover:bg-blue-900 text-blue-300 hover:text-white",
-                !isExpanded && "mx-auto"
+                !isExpanded && "mx-auto",
               )}
               aria-label={isExpanded ? "Thu gọn" : "Mở rộng"}
             >
-              {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+              {isExpanded ? (
+                <ChevronLeft size={20} />
+              ) : (
+                <ChevronRight size={20} />
+              )}
             </button>
           )}
 
@@ -160,7 +174,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
             return (
               <NavLink
                 key={idx}
-                to={withLocale(item.path)}
+                to={item.path}
                 onClick={() => isTablet && setIsMobileOpen(false)}
                 className={({ isActive: active }) =>
                   cn(
@@ -169,7 +183,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                     active
                       ? "bg-blue-900 text-white shadow-lg shadow-blue-900/20"
                       : "text-blue-300 hover:text-white",
-                    !isExpanded && !isMobileOpen && "justify-center px-2"
+                    !isExpanded && !isMobileOpen && "justify-center px-2",
                   )
                 }
               >
@@ -186,7 +200,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                       transition={{ duration: 0.2 }}
                       className="font-medium whitespace-nowrap overflow-hidden"
                     >
-                      {item.label}
+                      {t(item.label)}
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -201,7 +215,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                 {/* Tooltip for collapsed state */}
                 {!isExpanded && !isMobileOpen && !isTablet && (
                   <div className="absolute left-full ml-2 px-3 py-2 bg-blue-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
-                    {item.label}
+                    {t(item.label)}
                     <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-blue-900" />
                   </div>
                 )}
@@ -218,7 +232,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
             className={cn(
               "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all",
               "text-blue-300 hover:text-white hover:bg-blue-900/50",
-              !isExpanded && !isMobileOpen && "justify-center"
+              !isExpanded && !isMobileOpen && "justify-center",
             )}
           >
             <Settings size={20} />
@@ -231,7 +245,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                   transition={{ duration: 0.2 }}
                   className="font-medium whitespace-nowrap overflow-hidden"
                 >
-                  Cài đặt
+                  {t("admin.sidebar.settings")}
                 </motion.span>
               )}
             </AnimatePresence>
@@ -243,7 +257,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
             className={cn(
               "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all",
               "text-red-400 hover:text-red-300 hover:bg-red-950/30",
-              !isExpanded && !isMobileOpen && "justify-center"
+              !isExpanded && !isMobileOpen && "justify-center",
             )}
           >
             <LogOut size={20} />
@@ -256,7 +270,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                   transition={{ duration: 0.2 }}
                   className="font-medium whitespace-nowrap overflow-hidden"
                 >
-                  Đăng xuất
+                  {t("button.logout")}
                 </motion.span>
               )}
             </AnimatePresence>
@@ -266,7 +280,7 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
           <div
             className={cn(
               "flex items-center gap-3 px-3 py-3 rounded-xl bg-blue-900/30",
-              !isExpanded && !isMobileOpen && "justify-center"
+              !isExpanded && !isMobileOpen && "justify-center",
             )}
           >
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -281,7 +295,9 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden min-w-0"
                 >
-                  <p className="text-white font-medium text-sm truncate">{userName}</p>
+                  <p className="text-white font-medium text-sm truncate">
+                    {userName}
+                  </p>
                   <p className="text-blue-400 text-xs truncate">Admin</p>
                 </motion.div>
               )}
@@ -289,14 +305,6 @@ export function Sidebar({ items, userName = "Admin", onSettingsClick }: SidebarP
           </div>
         </div>
       </motion.aside>
-
-      {/* Spacer for desktop */}
-      {!isTablet && (
-        <div
-          className="hidden lg:block transition-all duration-300"
-          style={{ width: currentWidth, flexShrink: 0 }}
-        />
-      )}
     </>
   );
 }

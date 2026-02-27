@@ -16,6 +16,12 @@ import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,6 +30,7 @@ import {
 import { LockerStatus } from "~/types/admin/enums";
 import type { MockLocker } from "~/mockdata/lockers.mock";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface LockerTableProps {
   lockers: MockLocker[];
@@ -35,34 +42,97 @@ interface LockerTableProps {
 
 const columnHelper = createColumnHelper<MockLocker>();
 
-const getStatusBadge = (status: LockerStatus) => {
+// Unified icon wrapper
+const IconWrapper = ({
+  children,
+  color = "blue",
+}: {
+  children: React.ReactNode;
+  color?: "blue" | "indigo" | "green" | "red" | "amber";
+}) => {
+  const colorClasses = {
+    blue: "bg-blue-50 text-blue-600",
+    indigo: "bg-indigo-50 text-indigo-600",
+    green: "bg-green-50 text-green-600",
+    red: "bg-red-50 text-red-500",
+    amber: "bg-amber-50 text-amber-500",
+  };
+  return (
+    <div
+      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+// Truncated text with tooltip
+const TruncatedText = ({
+  text,
+  maxLength = 25,
+  className = "",
+}: {
+  text: string;
+  maxLength?: number;
+  className?: string;
+}) => {
+  if (text.length <= maxLength)
+    return <span className={className}>{text}</span>;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`cursor-help ${className}`}>
+            {text.slice(0, maxLength)}...
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <p>{text}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+const getStatusBadge = (status: LockerStatus, t: (key: string) => string) => {
   const variants: Record<
     LockerStatus,
-    { bg: string; text: string; icon: React.ElementType; label: string }
+    {
+      bg: string;
+      text: string;
+      border: string;
+      icon: React.ElementType;
+      label: string;
+    }
   > = {
     [LockerStatus.ACTIVE]: {
       bg: "bg-green-50",
       text: "text-green-700",
+      border: "border-green-200",
       icon: CheckCircle2,
-      label: "Hoạt động",
+      label: t("admin.lockers.status.active"),
     },
     [LockerStatus.INACTIVE]: {
       bg: "bg-gray-50",
       text: "text-gray-700",
+      border: "border-gray-200",
       icon: XCircle,
-      label: "Vô hiệu",
+      label: t("admin.lockers.status.inactive"),
     },
     [LockerStatus.MAINTENANCE]: {
-      bg: "bg-yellow-50",
-      text: "text-yellow-700",
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
       icon: Wrench,
-      label: "Bảo trì",
+      label: t("admin.lockers.status.maintenance"),
     },
     [LockerStatus.DISCONNECTED]: {
       bg: "bg-red-50",
       text: "text-red-700",
+      border: "border-red-200",
       icon: WifiOff,
-      label: "Mất kết nối",
+      label: t("admin.lockers.status.disconnected"),
     },
   };
 
@@ -70,8 +140,11 @@ const getStatusBadge = (status: LockerStatus) => {
   const Icon = variant.icon;
 
   return (
-    <Badge className={`${variant.bg} ${variant.text} border-0 font-medium`}>
-      <Icon className="mr-1 h-3 w-3" />
+    <Badge
+      className={`${variant.bg} ${variant.text} ${variant.border} font-medium`}
+      variant="outline"
+    >
+      <Icon className="mr-1 h-3.5 w-3.5" />
       {variant.label}
     </Badge>
   );
@@ -85,19 +158,29 @@ export function LockerTable({
   onActivate,
 }: LockerTableProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const columns = [
     columnHelper.accessor("code", {
-      header: "Mã tủ",
+      header: t("admin.lockers.columns.code"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-50 flex items-center justify-center shadow-sm">
-            <Box size={24} className="text-blue-600" />
-          </div>
-          <div>
-            <p className="font-mono font-semibold text-gray-900 text-sm">
-              {row.original.code}
-            </p>
-            <p className="text-sm text-gray-600 font-medium">
+          <IconWrapper color="blue">
+            <Box size={18} />
+          </IconWrapper>
+          <div className="min-w-0">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="font-mono font-semibold text-gray-900 text-sm cursor-help">
+                    {row.original.code}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{row.original.code}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <p className="text-sm text-gray-600 font-medium truncate max-w-[150px]">
               {row.original.name}
             </p>
           </div>
@@ -106,21 +189,25 @@ export function LockerTable({
     }),
 
     columnHelper.accessor("storeName", {
-      header: "Cửa hàng",
+      header: t("admin.lockers.columns.store"),
       cell: ({ row }) => (
         <div className="flex items-start gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-            <Store size={16} className="text-indigo-600" />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900">
-              {row.original.storeName}
-            </p>
+          <IconWrapper color="indigo">
+            <Store size={16} />
+          </IconWrapper>
+          <div className="min-w-0 pt-0.5">
+            <TruncatedText
+              text={row.original.storeName}
+              maxLength={20}
+              className="font-medium text-gray-900"
+            />
             <div className="flex items-center gap-1 text-gray-500 text-sm mt-0.5">
-              <MapPin size={12} />
-              <span className="line-clamp-1 max-w-[200px]">
-                {row.original.address}
-              </span>
+              <MapPin size={14} className="flex-shrink-0 text-gray-400" />
+              <TruncatedText
+                text={row.original.address}
+                maxLength={25}
+                className=""
+              />
             </div>
           </div>
         </div>
@@ -128,18 +215,18 @@ export function LockerTable({
     }),
 
     columnHelper.accessor("status", {
-      header: "Trạng thái",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      header: t("admin.lockers.columns.status"),
+      cell: ({ row }) => getStatusBadge(row.original.status, t),
     }),
 
     columnHelper.accessor("totalBoxes", {
-      header: "Ngăn tủ",
+      header: t("admin.lockers.columns.boxes"),
       cell: ({ row }) => {
         const { availableBoxes, totalBoxes, occupiedBoxes } = row.original;
         const availablePercent = (availableBoxes / totalBoxes) * 100;
 
         return (
-          <div className="flex flex-col gap-2 w-36">
+          <div className="flex flex-col gap-1.5 w-28">
             <div className="flex items-center justify-between text-sm">
               <span className="font-semibold text-gray-700">
                 {availableBoxes}/{totalBoxes}
@@ -149,21 +236,21 @@ export function LockerTable({
                   availablePercent > 50
                     ? "text-green-600"
                     : availablePercent > 20
-                    ? "text-yellow-600"
-                    : "text-red-600"
+                      ? "text-amber-500"
+                      : "text-red-500"
                 }`}
               >
                 trống
               </span>
             </div>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
                   availablePercent > 50
                     ? "bg-green-500"
                     : availablePercent > 20
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                      ? "bg-amber-500"
+                      : "bg-red-500"
                 }`}
                 style={{ width: `${availablePercent}%` }}
               />
@@ -181,11 +268,11 @@ export function LockerTable({
 
     columnHelper.display({
       id: "actions",
-      header: "",
+      header: t("common.actions"),
       cell: ({ row }) => {
         const locker = row.original;
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
@@ -206,7 +293,10 @@ export function LockerTable({
                   <MoreHorizontal size={16} className="text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent
+                align="end"
+                className="w-48 bg-white border border-gray-200"
+              >
                 <DropdownMenuItem
                   onClick={() => navigate(`/admin/lockers/${locker.id}`)}
                   className="cursor-pointer"
@@ -217,7 +307,7 @@ export function LockerTable({
                 {locker.status === LockerStatus.ACTIVE && (
                   <DropdownMenuItem
                     onClick={() => onMaintenance(locker.id)}
-                    className="cursor-pointer text-yellow-600 focus:text-yellow-600"
+                    className="cursor-pointer text-amber-600 focus:text-amber-600"
                   >
                     <Wrench className="mr-2 h-4 w-4" />
                     Bảo trì
@@ -246,7 +336,7 @@ export function LockerTable({
       columns={columns}
       data={lockers}
       isLoading={isLoading}
-      emptyMessage="Không tìm thấy tủ đồ nào"
+      emptyMessage={t("common.noData")}
     />
   );
 }

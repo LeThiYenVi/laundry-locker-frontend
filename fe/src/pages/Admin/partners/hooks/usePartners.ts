@@ -1,10 +1,31 @@
 import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { mockPartners, getPaginatedPartners, partnerStatistics, MockPartner } from "~/mockdata/partners.mock";
-import { PartnerStatus } from "~/types/admin/enums";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
+import {
+  useGetAllPartnersQuery,
+  useApprovePartnerMutation,
+  useRejectPartnerMutation,
+  useSuspendPartnerMutation,
+} from "@/stores/apis/admin/partners";
+import { PartnerStatus } from "@/types/admin/enums";
+import type { PartnerResponse } from "@/types/admin";
 
 export type PartnerStatusFilter = "ALL" | PartnerStatus;
+
+// Helper to map API response to table format
+const mapPartnerToTable = (partner: PartnerResponse) => ({
+  id: partner.id,
+  name: partner.businessName,
+  email: partner.contactEmail,
+  phone: partner.contactPhone,
+  representativeName: partner.userName,
+  representativePhone: partner.contactPhone,
+  status: partner.status as PartnerStatus,
+  address: partner.businessAddress,
+  createdAt: partner.createdAt,
+  storeCount: partner.storeCount,
+  staffCount: partner.staffCount,
+  revenueSharePercent: partner.revenueSharePercent,
+});
 
 export function usePartners() {
   const [status, setStatus] = useState<PartnerStatusFilter>("ALL");
@@ -13,90 +34,101 @@ export function usePartners() {
   const [pageSize, setPageSize] = useState(10);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<MockPartner | null>(null);
-  const [isLoading, setIsLoading] = useState(isMockEnabled);
+  const [selectedPartner, setSelectedPartner] = useState<ReturnType<typeof mapPartnerToTable> | null>(null);
 
-  if (isMockEnabled && isLoading) {
-    setTimeout(() => setIsLoading(false), mockDelay);
-  }
+  // Fetch partners from API
+  const {
+    data: partnersResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllPartnersQuery({
+    pageNumber: page,
+    pageSize: pageSize,
+    status: status === "ALL" ? undefined : status,
+  });
 
-  const filteredPartners = useMemo(() => {
-    let result = [...mockPartners];
+  // Mutations
+  const [approvePartner] = useApprovePartnerMutation();
+  const [rejectPartner] = useRejectPartnerMutation();
+  const [suspendPartner] = useSuspendPartnerMutation();
 
-    if (status !== "ALL") {
-      result = result.filter((partner) => partner.status === status);
-    }
+  const partnersData = partnersResponse?.data;
+  const partners = useMemo(() => {
+    return (partnersData?.content || []).map(mapPartnerToTable);
+  }, [partnersData]);
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (partner) =>
-          partner.name?.toLowerCase().includes(query) ||
-          partner.email?.toLowerCase().includes(query) ||
-          partner.representativeName?.toLowerCase().includes(query)
-      );
-    }
+  const totalElements = partnersData?.totalElements || 0;
+  const totalPages = partnersData?.totalPages || 0;
 
-    const start = page * pageSize;
-    return result.slice(start, start + pageSize);
-  }, [status, searchQuery, page, pageSize]);
+  // Statistics
+  const statistics = useMemo(() => {
+    // If we have real data, use it; otherwise return defaults
+    return {
+      totalPartners: totalElements,
+      pendingApproval: 0, // These would need a separate API call or aggregations
+      approved: 0,
+      rejected: 0,
+      suspended: 0,
+      totalStores: 0,
+    };
+  }, [totalElements]);
 
   const statusCounts = useMemo(() => ({
-    ALL: mockPartners.length,
-    [PartnerStatus.PENDING]: mockPartners.filter((p) => p.status === PartnerStatus.PENDING).length,
-    [PartnerStatus.APPROVED]: mockPartners.filter((p) => p.status === PartnerStatus.APPROVED).length,
-    [PartnerStatus.REJECTED]: mockPartners.filter((p) => p.status === PartnerStatus.REJECTED).length,
-    [PartnerStatus.SUSPENDED]: mockPartners.filter((p) => p.status === PartnerStatus.SUSPENDED).length,
-  }), []);
+    ALL: totalElements,
+    [PartnerStatus.PENDING]: 0, // Would need to fetch counts separately
+    [PartnerStatus.APPROVED]: 0,
+    [PartnerStatus.REJECTED]: 0,
+    [PartnerStatus.SUSPENDED]: 0,
+  }), [totalElements]);
 
   const handleCreate = useCallback(() => {
     setIsCreateModalOpen(true);
   }, []);
 
-  const handleEdit = useCallback((partner: MockPartner) => {
+  const handleEdit = useCallback((partner: ReturnType<typeof mapPartnerToTable>) => {
     setSelectedPartner(partner);
     setIsEditModalOpen(true);
   }, []);
 
-  const handleApprove = useCallback((partnerId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang phê duyệt...",
-        success: "Đã phê duyệt đối tác thành công!",
-        error: "Không thể phê duyệt",
-      }
-    );
-  }, []);
+  const handleApprove = useCallback(async (partnerId: number) => {
+    try {
+      await approvePartner(partnerId).unwrap();
+      toast.success("Đã phê duyệt đối tác thành công!");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Không thể phê duyệt đối tác");
+    }
+  }, [approvePartner, refetch]);
 
-  const handleReject = useCallback((partnerId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang từ chối...",
-        success: "Đã từ chối đối tác!",
-        error: "Không thể từ chối",
-      }
-    );
-  }, []);
+  const handleReject = useCallback(async (partnerId: number) => {
+    try {
+      await rejectPartner({ partnerId, reason: "Không đáp ứng yêu cầu" }).unwrap();
+      toast.success("Đã từ chối đối tác!");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Không thể từ chối đối tác");
+    }
+  }, [rejectPartner, refetch]);
 
-  const handleSuspend = useCallback((partnerId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang đình chỉ...",
-        success: "Đã đình chỉ đối tác!",
-        error: "Không thể đình chỉ",
-      }
-    );
-  }, []);
+  const handleSuspend = useCallback(async (partnerId: number) => {
+    try {
+      await suspendPartner(partnerId).unwrap();
+      toast.success("Đã đình chỉ đối tác!");
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Không thể đình chỉ đối tác");
+    }
+  }, [suspendPartner, refetch]);
 
   return {
-    partners: filteredPartners,
-    totalElements: mockPartners.length,
-    totalPages: Math.ceil(mockPartners.length / pageSize),
-    statistics: partnerStatistics,
+    partners,
+    totalElements,
+    totalPages,
+    statistics,
     isLoading,
+    error,
+    refetch,
     status,
     setStatus,
     searchQuery,
@@ -116,6 +148,6 @@ export function usePartners() {
     handleApprove,
     handleReject,
     handleSuspend,
-    isMock: isMockEnabled,
+    isMock: false,
   };
 }

@@ -6,3 +6,4 @@ export * from "./mock-indicator";
 export { ErrorBoundary } from "./error-boundary/ErrorBoundary";
 export * from "./skeleton/PageSkeleton";
 export { Breadcrumb } from "./breadcrumb/Breadcrumb";
+export { PerformanceMonitor } from "./performance/PerformanceMonitor";
