@@ -1,216 +1,351 @@
 {
-	"brand": {
-		"title": "LockerWash",
-		"subtitle": "Smart laundry lockers, on demand"
-	},
-	"signin": {
-		"title": "Sign in to your account"
-	},
-	"label": {
-		"email": "E-mail",
-		"password": "Password"
-	},
-	"placeholder": {
-		"email": "you@domain.com",
-		"password": "••••••••"
-	},
-	"link": {
-		"forgot": "Forgot Password?"
-	},
-	"info": {
-		"devHint": "Need access? Click Login to use the mock accounts (dev)."
-	},
-	"right": {
-		"title": "Fresh clothes, on your schedule.",
-		"subtitle": "24/7 Smart Locker Access"
-	},
-	"button": {
-		"login": "Login"
-	}
-,
-	"admin": {
-		"orders": {
-			"title": "Orders",
-			"empty": "No orders found",
-			"table": {
-				"id": "Order ID",
-				"customer": "Customer",
-				"status": "Status",
-				"total": "Total",
-				"action": "Actions"
-			}
-			,"status": {
-				"waiting": "Waiting",
-				"reserved": "Reserved",
-				"confirmed": "Confirmed",
-				"inprogress": "In Progress",
-				"collected": "Collected",
-				"processing": "Processing",
-				"ready": "Ready",
-				"returned": "Returned",
-				"completed": "Completed",
-				"canceled": "Canceled",
-				"done": "Done"
-			},
-			"customers": {
-				"alice": "Alice",
-				"bob": "Bob",
-				"carol": "Carol",
-				"dan": "Dan"
-			}
-		},
-		"feedback": {
-			"title": "Feedback",
-			"empty": "No feedback yet"
-		},
-		"partners": {
-			"title": "Partners",
-			"empty": "No partners added",
-			"table": {
-				"partner": "Partner",
-				"contact": "Contact",
-				"action": "Actions",
-				"add": "Add Partner"
-			}
-		}
-			,
-			"settings": {
-				"title": "Settings",
-				"subtitle": "Manage application preferences",
-				"language": "Language",
-				"languageHelp": "Select application language",
-				"theme": "Theme",
-				"themeHelp": "Toggle between light and dark modes",
-				"analytics": "Analytics",
-				"analyticsHelp": "Share anonymous usage data to help improve the product.",
-				"devMode": "Developer mode",
-				"devModeHelp": "Enable developer features and debug tools.",
-				"reset": "Reset",
-				"save": "Save changes",
-				"saving": "Saving..."
-			},
-		
-		"dashboard": {
-			"title": "My Organization",
-			"settings": "Settings",
-			"createScenario": "Create a new scenario",
-			"tabs": {
-				"organization": "Organization",
-				"teams": "Teams",
-				"users": "Users",
-				"subscription": "Subscription",
-				"payment": "Payment",
-				"installedApps": "Installed apps",
-				"variables": "Variables"
-			},
-			"cards": {
-				"operations": {
-					"title": "Operations",
-					"subtitle": "10,000 / 13,889",
-					"used": "%{percent} Used"
-				},
-				"dataTransfer": {
-					"title": "Data transfer",
-					"subtitle": "3.2 GB / 10 GB",
-					"used": "%{percent} Used"
-				},
-				"promo": {
-					"title": "Take Your Automation to the Next Level",
-					"subtitle": "Unlock advanced features and unlimited operations",
-					"cta": "Upgrade"
-				}
-			},
-			"statistics": {
-				"title": "Statistics",
-				"yearSelectPlaceholder": "Select year"
-			},
-			"recommendations": {
-				"title": "Recommended for you",
-				"community": "Community",
-				"academy": "Academy",
-				"helpCenter": "Help center",
-				"partnerDirectory": "Partner directory"
-			},
-			"used": "Used"
-		},
-		"users": {
-			"header": {
-				"allUsers": "All Users:",
-				"projects": "Orders:"
-			},
-			"table": {
-				"settings": "Table settings",
-				"columns": {
-					"user": "User",
-					"role": "User Role",
-					"status": "Status",
-					"social": "Social",
-					"promote": "Promote",
-					"rating": "Rating",
-					"lastLogin": "Last Login"
-				}
-			},
-			"toolbar": {
-				"add": "Add new user",
-				"suspendAll": "Suspend all",
-				"archiveAll": "Archive all",
-				"deleteAll": "Delete all"
-			}
-		}
-	}
-,
-	"dashboard": {
-		"title": "My Organization",
-		"settings": "Settings",
-		"createScenario": "Create a new scenario",
-		"tabs": {
-			"organization": "Organization",
-			"teams": "Teams",
-			"users": "Users",
-			"subscription": "Subscription",
-			"payment": "Payment",
-			"installedApps": "Installed apps",
-			"variables": "Variables"
-		},
-		"cards": {
-			"operations": {
-				"title": "Operations",
-				"subtitle": "10,000 / 13,889",
-				"used": "%{percent} Used"
-			},
-			"dataTransfer": {
-				"title": "Data transfer",
-				"subtitle": "3.2 GB / 10 GB",
-				"used": "%{percent} Used"
-			},
-			"promo": {
-				"title": "Take Your Automation to the Next Level",
-				"subtitle": "Unlock advanced features and unlimited operations",
-				"cta": "Upgrade"
-			}
-		},
-		"statistics": {
-			"title": "Statistics",
-			"yearSelectPlaceholder": "Select year"
-		},
-		"recommendations": {
-			"title": "Recommended for you",
-			"community": "Community",
-			"academy": "Academy",
-			"helpCenter": "Help center",
-			"partnerDirectory": "Partner directory"
-		}
-		,
-		"used": "Used"
-	}
-	,
-	"lockers": {
-		"title": "Lockers",
-		"empty": "No lockers found",
-		"table": {
-			"id": "Locker ID",
-			"location": "Location",
-			"status": "Status"
-		}
-	}
+  "brand": {
+    "title": "LockerWash",
+    "subtitle": "Smart lockers, on demand"
+  },
+  "signin": {
+    "title": "Sign in to your account"
+  },
+  "label": {
+    "email": "E-mail",
+    "password": "Password"
+  },
+  "placeholder": {
+    "email": "you@domain.com",
+    "password": "••••••••"
+  },
+  "link": {
+    "forgot": "Forgot password?"
+  },
+  "info": {
+    "devHint": "Need access? Click Login to use mock account (dev)."
+  },
+  "right": {
+    "title": "Clean clothes, on your schedule.",
+    "subtitle": "24/7 locker access"
+  },
+  "button": {
+    "login": "Sign In",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create New",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "detail": "Detail",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "viewAll": "View All",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading...",
+    "noData": "No data",
+    "mockData": "Using mock data",
+    "empty": "Empty",
+    "all": "All",
+    "status": "Status",
+    "action": "Action",
+    "actions": "Actions",
+    "name": "Name",
+    "description": "Description",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "note": "Note",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "header": {
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "notifications": "Notifications"
+  },
+  "table": {
+    "rowsPerPage": "Rows per page",
+    "of": "of",
+    "showing": "Showing",
+    "results": "results"
+  },
+  "admin": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "orders": "Orders",
+      "stores": "Stores",
+      "lockers": "Lockers",
+      "services": "Services",
+      "payments": "Payments",
+      "loyalty": "Loyalty",
+      "partners": "Partners",
+      "feedback": "Feedback",
+      "scheduler": "Scheduler",
+      "settings": "Settings"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "welcome": "Welcome back",
+      "monthlyOrders": "Monthly Orders",
+      "monthlyRevenue": "Monthly Revenue",
+      "newUsers": "New Users"
+    },
+    "users": {
+      "title": "User Management",
+      "description": "Manage user accounts in the system",
+      "addUser": "Add User",
+      "searchPlaceholder": "Search users...",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending": "Pending"
+      },
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "status": "Status",
+        "provider": "Provider",
+        "verified": "Verified",
+        "createdAt": "Created At"
+      },
+      "verified": {
+        "yes": "Verified",
+        "no": "Pending"
+      },
+      "noName": "Unnamed"
+    },
+    "orders": {
+      "title": "Order Management",
+      "description": "Manage and track orders in the system",
+      "createOrder": "Create Order",
+      "createSuccess": "Order created successfully",
+      "searchPlaceholder": "Search orders...",
+      "columns": {
+        "id": "Order ID",
+        "customer": "Customer",
+        "service": "Service",
+        "total": "Total",
+        "status": "Status",
+        "createdAt": "Created At"
+      },
+      "status": {
+        "initialized": "Initialized",
+        "reserved": "Reserved",
+        "waiting": "Waiting",
+        "collected": "Collected",
+        "processing": "Processing",
+        "ready": "Ready",
+        "returned": "Returned",
+        "completed": "Completed",
+        "canceled": "Canceled"
+      }
+    },
+    "stores": {
+      "title": "Store Management",
+      "description": "Manage stores in the system",
+      "searchPlaceholder": "Search stores...",
+      "columns": {
+        "store": "Store",
+        "contact": "Contact",
+        "address": "Address",
+        "hours": "Hours",
+        "lockers": "Lockers",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    },
+    "lockers": {
+      "title": "Locker Management",
+      "description": "Manage and monitor smart lockers in the system",
+      "searchPlaceholder": "Search lockers...",
+      "columns": {
+        "code": "Code",
+        "store": "Store",
+        "status": "Status",
+        "boxes": "Boxes"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "maintenance": "Maintenance",
+        "disconnected": "Disconnected"
+      }
+    },
+    "partners": {
+      "title": "Partner Management",
+      "description": "Manage and approve partners in the system",
+      "searchPlaceholder": "Search partners...",
+      "columns": {
+        "partner": "Partner",
+        "representative": "Representative",
+        "address": "Address",
+        "stores": "Stores",
+        "status": "Status"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "suspended": "Suspended"
+      }
+    },
+    "feedback": {
+      "title": "Feedback",
+      "empty": "No feedback yet"
+    },
+    "scheduler": {
+      "title": "Scheduler",
+      "description": "Manage automated schedules"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage application preferences"
+    }
+  },
+  "partner": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "staff": "Staff",
+      "revenue": "Revenue",
+      "lockers": "Lockers",
+      "services": "Services",
+      "notifications": "Notifications",
+      "settings": "Settings"
+    },
+    "common": {
+      "updating": "Updating...",
+      "settings": "Settings",
+      "logout": "Logout"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Store activity overview",
+      "errorTitle": "Failed to load dashboard",
+      "welcome": "Welcome",
+      "pendingOrders": "Pending Orders",
+      "ordersNeedAction": "orders need action",
+      "stats": {
+        "todayOrders": "Today's Orders",
+        "total": "Total",
+        "processing": "Processing",
+        "processingShort": "Processing",
+        "revenue": "Revenue",
+        "thisMonth": "This Month",
+        "earnings": "Earnings",
+        "stores": "Stores",
+        "active": "Active"
+      }
+    },
+    "orders": {
+      "title": "Order Management",
+      "subtitle": "Track and process laundry orders",
+      "loadingTitle": "Loading orders...",
+      "errorTitle": "Failed to load orders",
+      "description": "Manage orders",
+      "tabs": {
+        "all": "All",
+        "waiting": "Waiting Pickup",
+        "collected": "Collected",
+        "processing": "Processing",
+        "ready": "Ready to Return",
+        "returned": "Returned",
+        "completed": "Completed"
+      },
+      "empty": {
+        "title": "No Orders",
+        "message": "No orders in this status."
+      },
+      "columns": {
+        "orderCode": "Order Code",
+        "customer": "Customer",
+        "locker": "Locker",
+        "service": "Service",
+        "weight": "Weight",
+        "total": "Total"
+      },
+      "results": "orders",
+      "actions": {
+        "accept": "Issue Pickup Code",
+        "process": "Start Washing",
+        "markReady": "Issue Return Code",
+        "enterWeight": "Update Weight"
+      },
+      "status": {
+        "waitingReturn": "Waiting Staff Return",
+        "waitingPickup": "Waiting Customer Pickup"
+      }
+    },
+    "services": {
+      "title": "Service Management",
+      "subtitle": "View services assigned to your store",
+      "loadingTitle": "Loading services...",
+      "errorTitle": "Failed to load services",
+      "description": "Manage services"
+    },
+    "revenue": {
+      "title": "Revenue",
+      "subtitle": "Track revenue and transactions",
+      "loadingTitle": "Loading revenue data...",
+      "errorTitle": "Failed to load revenue data",
+      "description": "View revenue reports"
+    },
+    "lockers": {
+      "title": "Locker Management",
+      "subtitle": "Monitor and manage lockers",
+      "loadingTitle": "Loading locker info...",
+      "errorTitle": "Failed to load lockers",
+      "reportIssue": "Report Issue",
+      "description": "Manage lockers",
+      "empty": {
+        "title": "No Lockers",
+        "message": "Your store has no lockers assigned. Please contact Admin for support."
+      }
+    },
+    "staff": {
+      "title": "Staff Management",
+      "subtitle": "Manage staff and issue access codes",
+      "loadingTitle": "Loading staff list...",
+      "errorTitle": "Failed to load staff list",
+      "description": "Manage staff"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Manage system notifications",
+      "loadingTitle": "Loading notifications...",
+      "errorTitle": "Failed to load notifications",
+      "description": "Manage notifications"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage store information",
+      "loadingTitle": "Loading settings...",
+      "errorTitle": "Failed to load settings",
+      "description": "Account settings"
+    }
+  },
+  "dropdown": {
+    "viewDetail": "View Detail",
+    "edit": "Edit",
+    "delete": "Delete",
+    "approve": "Approve",
+    "reject": "Reject",
+    "suspend": "Suspend",
+    "activate": "Activate",
+    "maintenance": "Maintenance"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next"
+  }
 }

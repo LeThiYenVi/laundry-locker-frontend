@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
 import { StoreTable } from "./components/StoreTable";
@@ -6,6 +7,7 @@ import { StoreModal } from "./components/StoreModal";
 import { useStores } from "./hooks/useStores";
 
 export default function StoresPage() {
+  const { t } = useTranslation();
   const {
     stores,
     isLoading,
@@ -27,8 +29,8 @@ export default function StoresPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quản lý cửa hàng"
-        description="Quản lý các cửa hàng trong hệ thống"
+        title={t("admin.stores.title")}
+        description={t("admin.stores.description")}
       />
 
       <Card className="border-0 shadow-sm">

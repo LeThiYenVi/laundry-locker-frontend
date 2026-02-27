@@ -10,7 +10,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useState } from "react";
-import { t } from "@/lib/i18n";
+import { useTranslation } from "react-i18next";
 import { ADMIN_DASHBOARD } from "@/constants/adminpage.constants";
 import {
   BarChart,
@@ -41,6 +41,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useGetDashboardOverviewQuery } from "@/stores/apis/adminApi";
 
 function DashboardPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(
     t(ADMIN_DASHBOARD.TABS.ORGANIZATION),
   );

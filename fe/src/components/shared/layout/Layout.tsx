@@ -16,11 +16,11 @@ export function Layout({ navItems }: LayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const visibleNavItems = navItems.filter(
-    (item) => !item.permission || hasPermission(item.permission)
+    (item) => !item.permission || hasPermission(item.permission),
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Sidebar
         items={visibleNavItems}
         onSettingsClick={() => setIsSettingsOpen(true)}

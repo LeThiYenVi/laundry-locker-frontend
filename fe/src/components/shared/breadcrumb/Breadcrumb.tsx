@@ -12,9 +12,8 @@ interface BreadcrumbProps {
   className?: string;
 }
 
-// Auto-generate breadcrumb from path
+// Path mapping - no "admin" or "Trang chủ"
 const pathMap: Record<string, string> = {
-  admin: "Admin",
   dashboard: "Dashboard",
   users: "Ngườii dùng",
   orders: "Đơn hàng",
@@ -26,6 +25,10 @@ const pathMap: Record<string, string> = {
   partners: "Đối tác",
   feedback: "Phản hồi",
   settings: "Cài đặt",
+  scheduler: "Lập lịch",
+  detail: "Chi tiết",
+  create: "Tạo mới",
+  edit: "Chỉnh sửa",
 };
 
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
@@ -36,20 +39,22 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
     items ||
     (() => {
       const paths = location.pathname.split("/").filter(Boolean);
-      // Skip locale (en/vi/ja)
-      const relevantPaths = paths.slice(1);
+      
+      // Only show breadcrumb for nested pages
+      if (paths.length < 2) return [];
 
-      return [
-        { label: "Trang chủ", path: "/admin/dashboard" },
-        ...relevantPaths.map((path, index) => {
-          const fullPath = "/" + paths.slice(0, index + 2).join("/");
-          return {
-            label: pathMap[path] || path,
-            path: index < relevantPaths.length - 1 ? fullPath : undefined,
-          };
-        }),
-      ];
+      return paths.map((path, index) => {
+        const fullPath = "/" + paths.slice(0, index + 1).join("/");
+        const isLast = index === paths.length - 1;
+        return {
+          label: pathMap[path] || path,
+          path: isLast ? undefined : fullPath,
+        };
+      });
     })();
+
+  // Don't render if no items
+  if (breadcrumbItems.length === 0) return null;
 
   return (
     <nav
@@ -63,35 +68,25 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
 
         return (
           <div key={index} className="flex items-center gap-2">
-            {index === 0 ? (
-              <Link
-                to={item.path || "/admin/dashboard"}
-                className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-              >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">{item.label}</span>
-              </Link>
-            ) : (
-              <>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-                {isLast || !item.path ? (
-                  <span
-                    className={cn(
-                      isLast && "font-medium text-gray-900",
-                      "max-w-[200px] truncate"
-                    )}
-                  >
-                    {item.label}
-                  </span>
-                ) : (
-                  <Link
-                    to={item.path}
-                    className="hover:text-blue-600 transition-colors max-w-[200px] truncate"
-                  >
-                    {item.label}
-                  </Link>
+            {index > 0 && (
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            )}
+            {isLast || !item.path ? (
+              <span
+                className={cn(
+                  isLast && "font-medium text-gray-900",
+                  "max-w-[200px] truncate"
                 )}
-              </>
+              >
+                {item.label}
+              </span>
+            ) : (
+              <Link
+                to={item.path}
+                className="hover:text-blue-600 transition-colors max-w-[200px] truncate"
+              >
+                {item.label}
+              </Link>
             )}
           </div>
         );

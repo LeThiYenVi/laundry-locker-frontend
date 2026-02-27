@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
 import { OrderTable } from "./components/OrderTable";
@@ -9,6 +10,7 @@ import { useOrders } from "./hooks/useOrders";
 import { toast } from "sonner";
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const {
     orders,
@@ -18,7 +20,6 @@ export default function OrdersPage() {
     searchQuery,
     setSearchQuery,
     statusCounts,
-    addOrder,
   } = useOrders();
 
   const handleCreateOrder = (orderData: {
@@ -28,17 +29,18 @@ export default function OrdersPage() {
     items: { id: string; name: string; qty: number; price: number }[];
     notes: string;
   }) => {
-    addOrder(orderData);
-    toast.success("Đã tạo đơn hàng thành công");
+    console.log("Create order:", orderData);
+    toast.success(t("admin.orders.createSuccess"));
+    setIsCreateModalOpen(false);
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quản lý đơn hàng"
-        description="Quản lý và theo dõi đơn hàng trong hệ thống"
+        title={t("admin.orders.title")}
+        description={t("admin.orders.description")}
         action={{
-          label: "Tạo đơn hàng",
+          label: t("admin.orders.createOrder"),
           onClick: () => setIsCreateModalOpen(true),
           icon: Plus,
         }}

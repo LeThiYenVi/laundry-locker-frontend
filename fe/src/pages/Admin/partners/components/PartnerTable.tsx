@@ -1,49 +1,106 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal, Building2, Phone, User, CheckCircle, XCircle, AlertCircle, Clock, Eye } from "lucide-react";
+import { MoreHorizontal, Building2, Phone, User, CheckCircle, XCircle, AlertCircle, Clock, Eye, MapPin } from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { useTranslation } from "react-i18next";
 import { PartnerStatus } from "~/types/admin/enums";
-import type { MockPartner } from "~/mockdata/partners.mock";
+
+// Partner row data type (mapped from API response)
+interface PartnerRowData {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  representativeName: string;
+  representativePhone: string;
+  status: PartnerStatus;
+  address: string;
+  createdAt: string;
+  storeCount: number;
+  staffCount: number;
+  revenueSharePercent: number | null;
+}
 
 interface PartnerTableProps {
-  partners: MockPartner[];
+  partners: PartnerRowData[];
   isLoading: boolean;
-  onEdit: (partner: MockPartner) => void;
+  onEdit: (partner: PartnerRowData) => void;
   onApprove: (partnerId: number) => void;
   onReject: (partnerId: number) => void;
   onSuspend: (partnerId: number) => void;
 }
 
-const columnHelper = createColumnHelper<MockPartner>();
+const columnHelper = createColumnHelper<PartnerRowData>();
 
-const getStatusBadge = (status: PartnerStatus) => {
-  const variants: Record<PartnerStatus, { className: string; icon: React.ReactNode; label: string }> = {
+// Unified icon wrapper
+const IconWrapper = ({ children, color = "blue" }: { children: React.ReactNode; color?: "blue" | "green" | "purple" | "indigo" }) => {
+  const colorClasses = {
+    blue: "bg-blue-50 text-blue-600",
+    green: "bg-green-50 text-green-600",
+    purple: "bg-purple-50 text-purple-600",
+    indigo: "bg-indigo-50 text-indigo-600",
+  };
+  return (
+    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}>
+      {children}
+    </div>
+  );
+};
+
+// Truncated text with tooltip
+const TruncatedText = ({ text, maxLength = 25, className = "" }: { text: string; maxLength?: number; className?: string }) => {
+  if (!text || text.length <= maxLength) return <span className={className}>{text || "Chưa cập nhật"}</span>;
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`cursor-help ${className}`}>
+            {text.slice(0, maxLength)}...
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <p>{text}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+const getStatusBadge = (status: PartnerStatus, t: (key: string) => string) => {
+  const variants: Record<PartnerStatus, { className: string; icon: React.ReactNode; labelKey: string }> = {
     [PartnerStatus.APPROVED]: {
       className: "bg-green-50 text-green-700 border-green-200",
       icon: <CheckCircle size={14} className="text-green-600" />,
-      label: "Đã duyệt",
+      labelKey: "admin.partners.status.approved",
     },
     [PartnerStatus.PENDING]: {
-      className: "bg-yellow-50 text-yellow-700 border-yellow-200",
-      icon: <Clock size={14} className="text-yellow-600" />,
-      label: "Chờ duyệt",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: <Clock size={14} className="text-amber-600" />,
+      labelKey: "admin.partners.status.pending",
     },
     [PartnerStatus.REJECTED]: {
       className: "bg-red-50 text-red-700 border-red-200",
       icon: <XCircle size={14} className="text-red-600" />,
-      label: "Từ chối",
+      labelKey: "admin.partners.status.rejected",
     },
     [PartnerStatus.SUSPENDED]: {
       className: "bg-gray-50 text-gray-700 border-gray-200",
       icon: <AlertCircle size={14} className="text-gray-600" />,
-      label: "Đình chỉ",
+      labelKey: "admin.partners.status.suspended",
     },
   };
 
@@ -51,7 +108,7 @@ const getStatusBadge = (status: PartnerStatus) => {
   return (
     <Badge className={`${variant.className} font-medium`} variant="outline">
       <span className="mr-1.5">{variant.icon}</span>
-      {variant.label}
+      {t(variant.labelKey)}
     </Badge>
   );
 };
@@ -64,75 +121,87 @@ export function PartnerTable({
   onReject,
   onSuspend,
 }: PartnerTableProps) {
+  const { t } = useTranslation();
   const columns = [
     columnHelper.accessor("name", {
-      header: "Đối tác",
+      header: t("admin.partners.columns.partner"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-purple-50 flex items-center justify-center shadow-sm">
-            <Building2 size={24} className="text-purple-600" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">{row.original.name}</p>
-            <p className="text-sm text-gray-500">{row.original.email}</p>
+          <IconWrapper color="purple">
+            <Building2 size={18} />
+          </IconWrapper>
+          <div className="min-w-0">
+            <TruncatedText 
+              text={row.original.name}
+              maxLength={22}
+              className="font-semibold text-gray-900"
+            />
+            <p className="text-sm text-gray-500 truncate max-w-[180px]">{row.original.email}</p>
           </div>
         </div>
       ),
     }),
 
     columnHelper.accessor("representativeName", {
-      header: "Ngườii đại diện",
+      header: t("admin.partners.columns.representative"),
       cell: ({ row }) => (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2 text-gray-700">
-            <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
-              <User size={12} className="text-blue-600" />
-            </div>
-            <span className="font-medium">{row.original.representativeName}</span>
+        <div className="flex items-start gap-2">
+          <div className="pt-0.5">
+            <IconWrapper color="blue">
+              <User size={16} />
+            </IconWrapper>
           </div>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center">
-              <Phone size={12} className="text-green-600" />
+          <div className="min-w-0">
+            <TruncatedText 
+              text={row.original.representativeName}
+              maxLength={18}
+              className="font-medium text-gray-700"
+            />
+            <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-0.5">
+              <Phone size={14} className="text-gray-400 flex-shrink-0" />
+              <span>{row.original.representativePhone}</span>
             </div>
-            <span>{row.original.representativePhone}</span>
           </div>
         </div>
       ),
     }),
 
-    columnHelper.accessor("businessLicense", {
-      header: "Mã số thuế",
+    columnHelper.accessor("address", {
+      header: t("admin.partners.columns.address"),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-sm bg-gray-50 px-3 py-1.5 rounded-lg text-gray-700 border border-gray-200">
-            {row.original.businessLicense}
-          </span>
+        <div className="flex items-start gap-2">
+          <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
+          <TruncatedText 
+            text={row.original.address || "Chưa cập nhật"}
+            maxLength={30}
+            className="text-sm text-gray-600"
+          />
         </div>
       ),
     }),
 
-    columnHelper.accessor("totalStores", {
-      header: "Cửa hàng",
+    columnHelper.accessor("storeCount", {
+      header: t("admin.partners.columns.stores"),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-            <Building2 size={16} className="text-indigo-600" />
-          </div>
+          <IconWrapper color="indigo">
+            <Building2 size={16} />
+          </IconWrapper>
           <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold">
-            {row.original.totalStores} cửa hàng
+            {row.original.storeCount || 0} cửa hàng
           </Badge>
         </div>
       ),
     }),
 
     columnHelper.accessor("status", {
-      header: "Trạng thái",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      header: t("admin.partners.columns.status"),
+      cell: ({ row }) => getStatusBadge(row.original.status, t),
     }),
 
     columnHelper.display({
       id: "actions",
-      header: "",
+      header: t("common.actions"),
       cell: ({ row }) => {
         const partner = row.original;
         return (
@@ -142,7 +211,7 @@ export function PartnerTable({
                 <MoreHorizontal size={16} className="text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="w-44 bg-white border border-gray-200">
               <DropdownMenuItem onClick={() => onEdit(partner)} className="cursor-pointer">
                 <Eye className="mr-2 h-4 w-4" />
                 Xem chi tiết
@@ -153,14 +222,14 @@ export function PartnerTable({
                     onClick={() => onApprove(partner.id)}
                     className="cursor-pointer text-green-600 focus:text-green-600"
                   >
-                    <CheckCircle size={14} className="mr-2" />
+                    <CheckCircle size={16} className="mr-2" />
                     Phê duyệt
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onReject(partner.id)}
                     className="cursor-pointer text-red-600 focus:text-red-600"
                   >
-                    <XCircle size={14} className="mr-2" />
+                    <XCircle size={16} className="mr-2" />
                     Từ chối
                   </DropdownMenuItem>
                 </>
@@ -168,9 +237,9 @@ export function PartnerTable({
               {partner.status === PartnerStatus.APPROVED && (
                 <DropdownMenuItem
                   onClick={() => onSuspend(partner.id)}
-                  className="cursor-pointer text-orange-600 focus:text-orange-600"
+                  className="cursor-pointer text-amber-600 focus:text-amber-600"
                 >
-                  <AlertCircle size={14} className="mr-2" />
+                  <AlertCircle size={16} className="mr-2" />
                   Đình chỉ
                 </DropdownMenuItem>
               )}
@@ -186,7 +255,7 @@ export function PartnerTable({
       columns={columns}
       data={partners}
       isLoading={isLoading}
-      emptyMessage="Không tìm thấy đối tác nào"
+      emptyMessage={t("common.noData")}
     />
   );
 }

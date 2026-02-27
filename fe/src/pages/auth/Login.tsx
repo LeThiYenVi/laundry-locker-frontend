@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { t, withLocale } from "@/lib/i18n";
+import { useTranslation } from "react-i18next";
 
 import {
   Button,
@@ -51,6 +51,7 @@ export default function LoginPage(): React.JSX.Element {
     partnerVerifyOTP,
     cancelPartnerOTP,
   } = useAuth();
+  const { t } = useTranslation();
 
   const [loginMode, setLoginMode] = React.useState<LoginMode>("ADMIN");
   const [partnerStep, setPartnerStep] =
@@ -121,11 +122,7 @@ export default function LoginPage(): React.JSX.Element {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          navigate(
-            withLocale(
-              getRedirectPath(parsedUser.role || parsedUser.roles || []),
-            ),
-          );
+          navigate(getRedirectPath(parsedUser.role || parsedUser.roles || []));
         }
       }, 100);
     } catch (err) {
@@ -165,11 +162,7 @@ export default function LoginPage(): React.JSX.Element {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          navigate(
-            withLocale(
-              getRedirectPath(parsedUser.role || parsedUser.roles || []),
-            ),
-          );
+          navigate(getRedirectPath(parsedUser.role || parsedUser.roles || []));
         }
       }, 100);
     } catch (err) {
@@ -317,7 +310,7 @@ export default function LoginPage(): React.JSX.Element {
               {loading ? "Signing in..." : "Login"}
             </Button>
             <Link
-              to={withLocale("/auth/forgot")}
+              to="/auth/forgot"
               className="text-sm text-blue-800 hover:underline"
             >
               {t("link.forgot")}

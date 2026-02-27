@@ -1,15 +1,32 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal, Mail, User as UserIcon, Eye, CheckCircle2, Clock } from "lucide-react";
+import {
+  MoreHorizontal,
+  Mail,
+  User as UserIcon,
+  Eye,
+  CheckCircle2,
+  Clock,
+  Smartphone,
+  Search,
+  Facebook,
+} from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { useTranslation } from "react-i18next";
 import type { AdminUserResponse } from "~/types";
 
 interface UserTableProps {
@@ -19,7 +36,65 @@ interface UserTableProps {
 
 const columnHelper = createColumnHelper<AdminUserResponse>();
 
-const getStatusBadge = (enabled: boolean) => {
+// Truncated text with tooltip
+const TruncatedText = ({
+  text,
+  maxLength = 20,
+  className = "",
+}: {
+  text: string;
+  maxLength?: number;
+  className?: string;
+}) => {
+  if (!text || text.length <= maxLength)
+    return <span className={className}>{text || "-"}</span>;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`cursor-help ${className}`}>
+            {text.slice(0, maxLength)}...
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <p>{text}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+// Provider icon mapping with Lucide icons only
+const ProviderIcon = ({ provider }: { provider: string }) => {
+  const iconMap: Record<string, { icon: React.ReactNode; color: string }> = {
+    EMAIL: { icon: <Mail size={14} />, color: "text-blue-600 bg-blue-50" },
+    GOOGLE: { icon: <Search size={14} />, color: "text-red-500 bg-red-50" },
+    FACEBOOK: {
+      icon: <Facebook size={14} />,
+      color: "text-blue-700 bg-blue-100",
+    },
+    PHONE: {
+      icon: <Smartphone size={14} />,
+      color: "text-green-600 bg-green-50",
+    },
+  };
+
+  const { icon, color } = iconMap[provider] || {
+    icon: <UserIcon size={14} />,
+    color: "text-gray-600 bg-gray-100",
+  };
+
+  return (
+    <div
+      className={`w-6 h-6 rounded flex items-center justify-center ${color}`}
+    >
+      {icon}
+    </div>
+  );
+};
+
+const getStatusBadge = (enabled: boolean, t: (key: string) => string) => {
   if (enabled) {
     return (
       <div className="flex items-center gap-2">
@@ -27,14 +102,18 @@ const getStatusBadge = (enabled: boolean) => {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
         </span>
-        <span className="text-sm font-medium text-green-700">Hoạt động</span>
+        <span className="text-sm font-medium text-green-700">
+          {t("admin.users.status.active")}
+        </span>
       </div>
     );
   }
   return (
     <div className="flex items-center gap-2">
       <span className="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
-      <span className="text-sm font-medium text-gray-600">Vô hiệu</span>
+      <span className="text-sm font-medium text-gray-600">
+        {t("admin.users.status.inactive")}
+      </span>
     </div>
   );
 };
@@ -52,7 +131,7 @@ const getRoleBadge = (role: string) => {
   return (
     <Badge
       variant="outline"
-      className={`${styles[role] || styles.USER} font-medium`}
+      className={`${styles[role] || styles.USER} font-medium text-xs`}
     >
       {role}
     </Badge>
@@ -60,27 +139,32 @@ const getRoleBadge = (role: string) => {
 };
 
 export function UserTable({ users, isLoading }: UserTableProps) {
+  const { t } = useTranslation();
   const columns = [
     columnHelper.accessor("name", {
-      header: "Ngườii dùng",
+      header: t("admin.users.columns.user"),
       cell: ({ row }) => {
         const user = row.original;
-        const initials = (user.name || user.email || "U").slice(0, 2).toUpperCase();
+        const initials = (user.name || user.email || "U")
+          .slice(0, 2)
+          .toUpperCase();
 
         return (
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+            <Avatar className="h-10 w-10 border-2 border-white shadow-sm flex-shrink-0">
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <p className="font-semibold text-gray-900">
-                {user.name || "Chưa đặt tên"}
-              </p>
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <Mail size={12} />
-                {user.email}
+            <div className="min-w-0">
+              <TruncatedText
+                text={user.name || t("admin.users.noName")}
+                maxLength={20}
+                className="font-semibold text-gray-900"
+              />
+              <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
+                <Mail size={14} className="text-gray-400 flex-shrink-0" />
+                <span className="truncate max-w-[160px]">{user.email}</span>
               </p>
             </div>
           </div>
@@ -89,14 +173,17 @@ export function UserTable({ users, isLoading }: UserTableProps) {
     }),
 
     columnHelper.accessor("roles", {
-      header: "Vai trò",
+      header: t("admin.users.columns.role"),
       cell: ({ row }) => (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {row.original.roles?.slice(0, 2).map((role) => (
             <span key={role}>{getRoleBadge(role)}</span>
           ))}
           {row.original.roles?.length > 2 && (
-            <Badge variant="outline" className="bg-gray-50 text-gray-600">
+            <Badge
+              variant="outline"
+              className="bg-gray-50 text-gray-600 text-xs"
+            >
               +{row.original.roles.length - 2}
             </Badge>
           )}
@@ -105,23 +192,17 @@ export function UserTable({ users, isLoading }: UserTableProps) {
     }),
 
     columnHelper.accessor("enabled", {
-      header: "Trạng thái",
-      cell: ({ row }) => getStatusBadge(row.original.enabled),
+      header: t("admin.users.columns.status"),
+      cell: ({ row }) => getStatusBadge(row.original.enabled, t),
     }),
 
     columnHelper.accessor("provider", {
-      header: "Đăng nhập",
+      header: t("admin.users.columns.provider"),
       cell: ({ row }) => {
         const provider = row.original.provider;
-        const icons: Record<string, string> = {
-          EMAIL: "📧",
-          GOOGLE: "🔍",
-          FACEBOOK: "📘",
-          PHONE: "📱",
-        };
         return (
           <div className="flex items-center gap-2">
-            <span>{icons[provider] || "👤"}</span>
+            <ProviderIcon provider={provider} />
             <span className="text-sm text-gray-600">{provider}</span>
           </div>
         );
@@ -129,23 +210,26 @@ export function UserTable({ users, isLoading }: UserTableProps) {
     }),
 
     columnHelper.accessor("emailVerified", {
-      header: "Xác thực",
+      header: t("admin.users.columns.verified"),
       cell: ({ row }) =>
         row.original.emailVerified ? (
           <Badge className="bg-green-50 text-green-700 border-green-200 font-medium">
-            <CheckCircle2 className="mr-1 h-3 w-3" />
-            Đã xác thực
+            <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+            {t("admin.users.verified.yes")}
           </Badge>
         ) : (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 font-medium">
-            <Clock className="mr-1 h-3 w-3" />
-            Chờ xác thực
+          <Badge
+            variant="outline"
+            className="bg-amber-50 text-amber-700 border-amber-200 font-medium"
+          >
+            <Clock className="mr-1 h-3.5 w-3.5" />
+            {t("admin.users.verified.no")}
           </Badge>
         ),
     }),
 
     columnHelper.accessor("createdAt", {
-      header: "Ngày tạo",
+      header: t("common.createdAt"),
       cell: ({ row }) => (
         <span className="text-sm text-gray-600">
           {new Date(row.original.createdAt).toLocaleDateString("vi-VN", {
@@ -159,28 +243,31 @@ export function UserTable({ users, isLoading }: UserTableProps) {
 
     columnHelper.display({
       id: "actions",
-      header: "",
+      header: t("common.actions"),
       cell: () => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 hover:bg-gray-100"
             >
               <MoreHorizontal size={16} className="text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuContent
+            align="end"
+            className="w-40 bg-white border border-gray-200"
+          >
             <DropdownMenuItem className="cursor-pointer">
               <Eye className="mr-2 h-4 w-4" />
-              Xem chi tiết
+              {t("dropdown.viewDetail")}
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">
-              ✏️ Chỉnh sửa
+              <span className="mr-2">✏️</span> {t("button.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-              🗑️ Xóa
+              <span className="mr-2">🗑️</span> {t("button.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -193,7 +280,7 @@ export function UserTable({ users, isLoading }: UserTableProps) {
       columns={columns}
       data={users}
       isLoading={isLoading}
-      emptyMessage="Không tìm thấy ngườii dùng nào"
+      emptyMessage={t("common.noData")}
     />
   );
 }
