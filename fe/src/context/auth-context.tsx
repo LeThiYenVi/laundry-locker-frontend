@@ -7,8 +7,29 @@ import {
 } from "react";
 import type { AuthContextType, User } from "../types";
 import { API_BASE_URL, AUTH_ENDPOINTS } from "../constants/api-paths";
+import { isMockEnabled, mockDelay } from "./mock/mock-data-context";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Mock admin user for development
+const mockAdminUser: User = {
+  id: "1",
+  fullName: "Admin Mock",
+  email: "admin@mock.com",
+  role: ["SUPER_ADMIN", "ADMIN"],
+  permissions: ["*"],
+  avatar: undefined,
+};
+
+// Mock partner user for development
+const mockPartnerUser: User = {
+  id: "2",
+  fullName: "Partner Mock",
+  email: "partner@mock.com",
+  role: ["PARTNER"],
+  permissions: ["partner_access"],
+  avatar: undefined,
+};
 
 // Helper: call API with JSON
 async function apiFetch<T>(endpoint: string, body?: unknown): Promise<T> {
@@ -45,8 +66,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isWaitingForOTP, setIsWaitingForOTP] = useState(false);
   const [partnerContactInfo, setPartnerContactInfo] = useState("");
 
-  // ── Initialise from localStorage ──
+  // ── Mock Auth: Auto login for development ──
   useEffect(() => {
+    if (isMockEnabled) {
+      // Auto login as admin when mock is enabled
+      setTimeout(() => {
+        localStorage.setItem("accessToken", "mock-jwt-token");
+        localStorage.setItem("user", JSON.stringify(mockAdminUser));
+        setUser(mockAdminUser);
+        setLoading(false);
+        console.log("[MockAuth] Auto logged in as:", mockAdminUser.email);
+      }, mockDelay);
+      return;
+    }
+
+    // ── Real auth: Initialise from localStorage ──
     try {
       const accessToken = localStorage.getItem("accessToken");
       const userStr = localStorage.getItem("user");
@@ -88,6 +122,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Legacy simple login (kept for backward compat)
   // ============================================
   const login = async (username: string, password: string) => {
+    if (isMockEnabled) {
+      // Mock login - accept any credentials
+      setTimeout(() => {
+        persistLogin({
+          accessToken: "mock-jwt-token",
+          user: mockAdminUser,
+        });
+      }, mockDelay);
+      return;
+    }
+
     setError(null);
     const data = await apiFetch<{
       accessToken: string;
@@ -101,6 +146,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Admin 2FA Login
   // ============================================
   const adminLoginStep1 = async (email: string, password: string) => {
+    if (isMockEnabled) {
+      // Mock 2FA step 1
+      setTimeout(() => {
+        setTempToken("mock-temp-token");
+        setMaskedEmail("a***@mock.com");
+        setIsWaitingFor2FA(true);
+      }, mockDelay);
+      return;
+    }
+
     setError(null);
     const data = await apiFetch<{
       requiresTwoFactor: boolean;
@@ -116,6 +171,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const adminLoginStep2 = async (otpCode: string) => {
+    if (isMockEnabled) {
+      // Mock 2FA step 2 - accept any OTP
+      setTimeout(() => {
+        setIsWaitingFor2FA(false);
+        setTempToken("");
+        setMaskedEmail("");
+        persistLogin({
+          accessToken: "mock-jwt-token",
+          user: mockAdminUser,
+        });
+      }, mockDelay);
+      return;
+    }
+
     setError(null);
     const data = await apiFetch<{
       accessToken: string;
@@ -159,6 +228,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     email: string,
     contactType: "EMAIL" | "PHONE",
   ) => {
+    if (isMockEnabled) {
+      // Mock OTP sent
+      setTimeout(() => {
+        setPartnerContactInfo(email);
+        setIsWaitingForOTP(true);
+        console.log("[MockAuth] OTP sent to:", email);
+      }, mockDelay);
+      return;
+    }
+
     setError(null);
     const endpoint =
       contactType === "EMAIL"
@@ -172,6 +251,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const partnerVerifyOTP = async (otpCode: string) => {
+    if (isMockEnabled) {
+      // Mock OTP verify - accept any OTP
+      setTimeout(() => {
+        setIsWaitingForOTP(false);
+        setPartnerContactInfo("");
+        persistLogin({
+          accessToken: "mock-jwt-token",
+          user: mockPartnerUser,
+        });
+        console.log("[MockAuth] Partner logged in:", mockPartnerUser.email);
+      }, mockDelay);
+      return;
+    }
+
     setError(null);
     const data = await apiFetch<{
       accessToken: string;

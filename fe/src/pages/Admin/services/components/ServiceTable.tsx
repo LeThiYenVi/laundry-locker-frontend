@@ -1,0 +1,163 @@
+import { createColumnHelper } from "@tanstack/react-table";
+import { MoreHorizontal, Clock, Sparkles, CheckCircle2, XCircle } from "lucide-react";
+import { DataTable } from "~/components/shared/data-table";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Switch } from "~/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import type { MockService } from "~/mockdata/services.mock";
+
+interface ServiceTableProps {
+  services: MockService[];
+  isLoading: boolean;
+  onEdit: (service: MockService) => void;
+  onDelete: (serviceId: number) => void;
+  onToggleStatus: (serviceId: number, currentStatus: boolean) => void;
+}
+
+const columnHelper = createColumnHelper<MockService>();
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
+};
+
+const getServiceIcon = (name: string) => {
+  if (name.includes("hấp")) return "👔";
+  if (name.includes("giày")) return "👟";
+  if (name.includes("túi")) return "👜";
+  if (name.includes("chăn") || name.includes("mền")) return "🛏️";
+  return "👕";
+};
+
+export function ServiceTable({
+  services,
+  isLoading,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+}: ServiceTableProps) {
+  const columns = [
+    columnHelper.accessor("name", {
+      header: "Dịch vụ",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-2xl shadow-sm">
+            {getServiceIcon(row.original.name)}
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">{row.original.name}</p>
+            <p className="text-sm text-gray-500 line-clamp-1">{row.original.description}</p>
+          </div>
+        </div>
+      ),
+    }),
+
+    columnHelper.accessor("basePrice", {
+      header: "Giá",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-blue-600">
+            {formatCurrency(row.original.basePrice)}
+          </span>
+        </div>
+      ),
+    }),
+
+    columnHelper.accessor("unit", {
+      header: "Đơn vị",
+      cell: ({ row }) => (
+        <Badge variant="outline" className="bg-gray-50 text-gray-700 font-medium px-3">
+          /{row.original.unit}
+        </Badge>
+      ),
+    }),
+
+    columnHelper.accessor("estimatedTime", {
+      header: "Thờii gian",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 text-gray-600">
+          <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+            <Clock size={16} className="text-orange-500" />
+          </div>
+          <span className="font-medium">{row.original.estimatedTime} giờ</span>
+        </div>
+      ),
+    }),
+
+    columnHelper.accessor("isActive", {
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={row.original.isActive}
+            onCheckedChange={() =>
+              onToggleStatus(row.original.id, row.original.isActive)
+            }
+          />
+          <Badge
+            className={
+              row.original.isActive
+                ? "bg-green-50 text-green-700 border-green-200 font-medium"
+                : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
+            }
+            variant="outline"
+          >
+            {row.original.isActive ? (
+              <>
+                <CheckCircle2 className="mr-1 h-3 w-3" />
+                Hoạt động
+              </>
+            ) : (
+              <>
+                <XCircle className="mr-1 h-3 w-3" />
+                Vô hiệu
+              </>
+            )}
+          </Badge>
+        </div>
+      ),
+    }),
+
+    columnHelper.display({
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
+              <MoreHorizontal size={16} className="text-gray-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => onEdit(row.original)} className="cursor-pointer">
+              ✏️ Chỉnh sửa
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(row.original.id)}
+              className="cursor-pointer text-red-600 focus:text-red-600"
+            >
+              🗑️ Xóa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    }),
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      data={services}
+      isLoading={isLoading}
+      emptyMessage="Không tìm thấy dịch vụ nào"
+    />
+  );
+}
