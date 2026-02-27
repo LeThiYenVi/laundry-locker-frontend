@@ -147,7 +147,10 @@ export default function PartnerLockers() {
                       onChange={handleLockerChange}
                     />
                   </div>
-                  <StatusFilter value={filterStatus} onChange={setFilterStatus} />
+                  <StatusFilter
+                    value={filterStatus}
+                    onChange={setFilterStatus}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -162,7 +165,9 @@ export default function PartnerLockers() {
                 totalBoxes={selectedLocker.totalBoxes}
                 filterStatus={filterStatus}
                 onBoxClick={handleBoxClick}
-                onEmergencyClick={(box) => setEmergencyModal({ open: true, box })}
+                onEmergencyClick={(box) =>
+                  setEmergencyModal({ open: true, box })
+                }
               />
             )}
           </>

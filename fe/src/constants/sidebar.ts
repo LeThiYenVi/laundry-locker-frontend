@@ -1,72 +1,91 @@
-import { Home, Truck, Users, Package, ListOrdered, UserCog, Store, Sparkles, CreditCard, Gift, Handshake, Clock, LayoutDashboard, DollarSign, Boxes, Bell, Settings, Briefcase } from "lucide-react";
+import {
+  Home,
+  Truck,
+  Users,
+  Package,
+  ListOrdered,
+  UserCog,
+  Store,
+  Sparkles,
+  CreditCard,
+  Gift,
+  Handshake,
+  Clock,
+  LayoutDashboard,
+  DollarSign,
+  Boxes,
+  Bell,
+  Settings,
+  Briefcase,
+} from "lucide-react";
 import type { NavItem } from "@/types";
 
 // Sidebar Navigation Items - Labels are i18n keys
 export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { 
-    icon: Home, 
-    path: "/admin/dashboard", 
-    label: "admin.sidebar.dashboard" 
+  {
+    icon: Home,
+    path: "/admin/dashboard",
+    label: "admin.sidebar.dashboard",
   },
-  { 
-    icon: UserCog, 
-    path: "/admin/users", 
+  {
+    icon: UserCog,
+    path: "/admin/users",
     label: "admin.sidebar.users",
-    permission: "manage_users"
+    permission: "manage_users",
   },
-  { 
-    icon: Store, 
-    path: "/admin/stores", 
+  {
+    icon: Store,
+    path: "/admin/stores",
     label: "admin.sidebar.stores",
-    permission: "manage_stores"
+    permission: "manage_stores",
   },
-  { 
-    icon: Truck, 
-    path: "/admin/lockers", 
+  {
+    icon: Truck,
+    path: "/admin/lockers",
     label: "admin.sidebar.lockers",
-    permission: "manage_lockers"
+    permission: "manage_lockers",
   },
-  { 
-    icon: Sparkles, 
-    path: "/admin/services", 
+  {
+    icon: Sparkles,
+    path: "/admin/services",
     label: "admin.sidebar.services",
-    permission: "manage_services"
+    permission: "manage_services",
   },
-  { 
-    icon: Package, 
-    path: "/admin/orders", 
+  {
+    icon: Package,
+    path: "/admin/orders",
     label: "admin.sidebar.orders",
-    permission: "view_orders"
+    permission: "view_orders",
   },
-  { 
-    icon: CreditCard, 
-    path: "/admin/payments", 
+  {
+    icon: CreditCard,
+    path: "/admin/payments",
     label: "admin.sidebar.payments",
-    permission: "view_payments"
+    permission: "view_payments",
   },
-  { 
-    icon: Gift, 
-    path: "/admin/loyalty", 
+  {
+    icon: Gift,
+    path: "/admin/loyalty",
     label: "admin.sidebar.loyalty",
-    permission: "manage_loyalty"
+    permission: "manage_loyalty",
   },
-  { 
-    icon: Handshake, 
-    path: "/admin/partners", 
+  {
+    icon: Handshake,
+    path: "/admin/partners",
     label: "admin.sidebar.partners",
-    permission: "manage_partners"
+    permission: "manage_partners",
   },
-  { 
-    icon: ListOrdered, 
-    path: "/admin/feedback", 
+  {
+    icon: ListOrdered,
+    path: "/admin/feedback",
     label: "admin.sidebar.feedback",
-    permission: "manage_feedback"
+    permission: "manage_feedback",
   },
-  { 
-    icon: Clock, 
-    path: "/admin/scheduler", 
+  {
+    icon: Clock,
+    path: "/admin/scheduler",
     label: "admin.sidebar.scheduler",
-    permission: "admin_access"
+    permission: "admin_access",
   },
 ];
 
@@ -79,14 +98,54 @@ export const SIDEBAR_BRAND = {
 
 // Partner Navigation Items
 export const PARTNER_NAV_ITEMS: NavItem[] = [
-  { icon: LayoutDashboard, path: "/partner/dashboard",     label: "partner.sidebar.dashboard",     permission: "partner_access" },
-  { icon: Package,         path: "/partner/orders",        label: "partner.sidebar.orders",        permission: "partner_access" },
-  { icon: Boxes,           path: "/partner/lockers",       label: "partner.sidebar.lockers",       permission: "partner_access" },
-  { icon: Briefcase,       path: "/partner/services",      label: "partner.sidebar.services",      permission: "partner_access" },
-  { icon: Users,           path: "/partner/staff",         label: "partner.sidebar.staff",         permission: "partner_access" },
-  { icon: DollarSign,      path: "/partner/revenue",       label: "partner.sidebar.revenue",       permission: "partner_access" },
-  { icon: Bell,            path: "/partner/notifications", label: "partner.sidebar.notifications", permission: "partner_access" },
-  { icon: Settings,        path: "/partner/settings",      label: "partner.sidebar.settings",      permission: "partner_access" },
+  {
+    icon: LayoutDashboard,
+    path: "/partner/dashboard",
+    label: "partner.sidebar.dashboard",
+    permission: "partner_access",
+  },
+  {
+    icon: Package,
+    path: "/partner/orders",
+    label: "partner.sidebar.orders",
+    permission: "partner_access",
+  },
+  {
+    icon: Boxes,
+    path: "/partner/lockers",
+    label: "partner.sidebar.lockers",
+    permission: "partner_access",
+  },
+  {
+    icon: Briefcase,
+    path: "/partner/services",
+    label: "partner.sidebar.services",
+    permission: "partner_access",
+  },
+  {
+    icon: Users,
+    path: "/partner/staff",
+    label: "partner.sidebar.staff",
+    permission: "partner_access",
+  },
+  {
+    icon: DollarSign,
+    path: "/partner/revenue",
+    label: "partner.sidebar.revenue",
+    permission: "partner_access",
+  },
+  {
+    icon: Bell,
+    path: "/partner/notifications",
+    label: "partner.sidebar.notifications",
+    permission: "partner_access",
+  },
+  {
+    icon: Settings,
+    path: "/partner/settings",
+    label: "partner.sidebar.settings",
+    permission: "partner_access",
+  },
 ];
 
 // Sidebar Styling Config

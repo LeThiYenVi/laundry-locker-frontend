@@ -25,7 +25,9 @@ export default function PartnerServices() {
           <h1 className="text-4xl font-bold text-foreground">
             {t("partner.services.title")}
           </h1>
-          <p className="text-muted-foreground mt-2">{t("partner.services.subtitle")}</p>
+          <p className="text-muted-foreground mt-2">
+            {t("partner.services.subtitle")}
+          </p>
         </div>
       </div>
 
@@ -44,7 +46,10 @@ export default function PartnerServices() {
             <ServiceStats stats={stats} />
           </div>
           <div className="mb-6">
-            <CategoryFilter value={filterCategory} onChange={setFilterCategory} />
+            <CategoryFilter
+              value={filterCategory}
+              onChange={setFilterCategory}
+            />
           </div>
           <ServiceList services={filteredServices} />
         </>

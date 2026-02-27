@@ -1,4 +1,3 @@
-
 export const PARTNER_SIDEBAR_CONFIG = {
   width: "w-20",
   bgColor: "bg-gradient-to-b from-blue-900 to-blue-950",

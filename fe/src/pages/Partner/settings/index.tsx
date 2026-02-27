@@ -21,7 +21,9 @@ export default function PartnerSettings() {
         <h1 className="text-4xl font-bold text-foreground">
           {t("partner.settings.title")}
         </h1>
-        <p className="text-muted-foreground mt-2">{t("partner.settings.subtitle")}</p>
+        <p className="text-muted-foreground mt-2">
+          {t("partner.settings.subtitle")}
+        </p>
       </div>
 
       {isLoading ? (

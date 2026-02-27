@@ -116,7 +116,9 @@ export default function PartnerOrders() {
           <h1 className="text-4xl font-bold text-foreground">
             {t("partner.orders.title")}
           </h1>
-          <p className="text-muted-foreground mt-2">{t("partner.orders.subtitle")}</p>
+          <p className="text-muted-foreground mt-2">
+            {t("partner.orders.subtitle")}
+          </p>
         </div>
       </div>
 
@@ -135,44 +137,46 @@ export default function PartnerOrders() {
         />
       ) : (
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="ALL">{t("partner.orders.tabs.all")}</TabsTrigger>
-          <TabsTrigger value="WAITING">
-            {t("partner.orders.tabs.waiting")}
-          </TabsTrigger>
-          <TabsTrigger value="COLLECTED">
-            {t("partner.orders.tabs.collected")}
-          </TabsTrigger>
-          <TabsTrigger value="PROCESSING">
-            {t("partner.orders.tabs.processing")}
-          </TabsTrigger>
-          <TabsTrigger value="READY">
-            {t("partner.orders.tabs.ready")}
-          </TabsTrigger>
-          <TabsTrigger value="RETURNED">
-            {t("partner.orders.tabs.returned")}
-          </TabsTrigger>
-          <TabsTrigger value="COMPLETED">
-            {t("partner.orders.tabs.completed")}
-          </TabsTrigger>
-        </TabsList>
+          <TabsList className="mb-6">
+            <TabsTrigger value="ALL">
+              {t("partner.orders.tabs.all")}
+            </TabsTrigger>
+            <TabsTrigger value="WAITING">
+              {t("partner.orders.tabs.waiting")}
+            </TabsTrigger>
+            <TabsTrigger value="COLLECTED">
+              {t("partner.orders.tabs.collected")}
+            </TabsTrigger>
+            <TabsTrigger value="PROCESSING">
+              {t("partner.orders.tabs.processing")}
+            </TabsTrigger>
+            <TabsTrigger value="READY">
+              {t("partner.orders.tabs.ready")}
+            </TabsTrigger>
+            <TabsTrigger value="RETURNED">
+              {t("partner.orders.tabs.returned")}
+            </TabsTrigger>
+            <TabsTrigger value="COMPLETED">
+              {t("partner.orders.tabs.completed")}
+            </TabsTrigger>
+          </TabsList>
 
-        <OrdersTable
-          orders={orders}
-          totalPages={totalPages}
-          totalElements={totalElements}
-          currentPage={currentPage}
-          pageSize={size}
-          isAccepting={isAccepting}
-          isProcessing={isProcessing}
-          isMarkingReady={isMarkingReady}
-          onPageChange={setPage}
-          getPageNumbers={getPageNumbers}
-          onAcceptOrder={onAcceptOrder}
-          onOpenWeightModal={onOpenWeightModal}
-          onProcessOrder={(order) => handleProcessOrder(order.id)}
-          onMarkReady={onMarkReady}
-        />
+          <OrdersTable
+            orders={orders}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            currentPage={currentPage}
+            pageSize={size}
+            isAccepting={isAccepting}
+            isProcessing={isProcessing}
+            isMarkingReady={isMarkingReady}
+            onPageChange={setPage}
+            getPageNumbers={getPageNumbers}
+            onAcceptOrder={onAcceptOrder}
+            onOpenWeightModal={onOpenWeightModal}
+            onProcessOrder={(order) => handleProcessOrder(order.id)}
+            onMarkReady={onMarkReady}
+          />
         </Tabs>
       )}
 

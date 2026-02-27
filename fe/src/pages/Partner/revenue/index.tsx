@@ -14,7 +14,9 @@ export default function PartnerRevenue() {
         <h1 className="text-4xl font-bold text-foreground">
           {t("partner.revenue.title")}
         </h1>
-        <p className="text-muted-foreground mt-2">{t("partner.revenue.subtitle")}</p>
+        <p className="text-muted-foreground mt-2">
+          {t("partner.revenue.subtitle")}
+        </p>
       </div>
 
       {isLoading ? (

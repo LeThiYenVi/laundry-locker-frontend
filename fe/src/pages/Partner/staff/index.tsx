@@ -14,7 +14,9 @@ export default function PartnerStaff() {
         <h1 className="text-4xl font-bold text-foreground">
           {t("partner.staff.title")}
         </h1>
-        <p className="text-muted-foreground mt-2">{t("partner.staff.subtitle")}</p>
+        <p className="text-muted-foreground mt-2">
+          {t("partner.staff.subtitle")}
+        </p>
       </div>
 
       {isLoading ? (
