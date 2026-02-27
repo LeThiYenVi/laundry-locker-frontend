@@ -9,17 +9,23 @@ import { store } from './stores/store.ts';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/auth-context.tsx';
 import { I18nextProvider } from 'react-i18next';
+import { MockDataProvider } from './context/mock/mock-data-context.tsx';
+import { ErrorBoundary } from '~/components/shared/error-boundary/ErrorBoundary';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <AuthProvider>
-          <I18nProvider>
-            <App />
-          </I18nProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <BrowserRouter>
+          <AuthProvider>
+            <MockDataProvider>
+              <I18nProvider>
+                <App />
+              </I18nProvider>
+            </MockDataProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </Provider>
+    </ErrorBoundary>
   </StrictMode>,
 )
