@@ -91,11 +91,11 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-muted p-8">
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-4xl font-bold text-foreground">
             {t(ADMIN_DASHBOARD.TITLE)}
           </h1>
 
@@ -110,7 +110,7 @@ function DashboardPage() {
             </Button>
             <Button
               size="default"
-              className="flex items-center gap-2 bg-pink-200 text-gray-900 hover:bg-pink-300"
+              className="flex items-center gap-2 bg-pink-200 text-foreground hover:bg-pink-300"
             >
               <Plus size={18} />
               {t(ADMIN_DASHBOARD.CREATE_SCENARIO)}
@@ -152,17 +152,17 @@ function DashboardPage() {
           {/* Operations Card - Total Orders */}
           <Card className="bg-linear-to-br from-blue-100 to-blue-50 rounded-3xl p-6 border border-blue-200">
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-white rounded-xl">
-                <TrendingUp className="text-blue-600" size={24} />
+              <div className="p-3 bg-card rounded-xl">
+                <TrendingUp className="text-primary" size={24} />
               </div>
               <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
                 {overview.ordersToday} today
               </span>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-foreground mb-2">
               Total Orders
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {overview.totalOrders.toLocaleString()} orders ·{" "}
               {overview.pendingOrders} pending
             </p>
@@ -186,17 +186,17 @@ function DashboardPage() {
           {/* Data Transfer Card - Revenue */}
           <Card className="bg-linear-to-br from-cyan-100 to-cyan-50 rounded-3xl p-6 border border-cyan-200">
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-white rounded-xl">
+              <div className="p-3 bg-card rounded-xl">
                 <Database className="text-cyan-600" size={24} />
               </div>
               <span className="px-3 py-1 bg-black text-white text-sm font-medium rounded-full">
                 ${overview.revenueToday.toLocaleString()}
               </span>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-foreground mb-2">
               Total Revenue
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               ${overview.totalRevenue.toLocaleString()} ·{" "}
               {overview.activeServices} services
             </p>
@@ -226,7 +226,7 @@ function DashboardPage() {
                 available
               </p>
             </div>
-            <Button className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
+            <Button className="w-full py-3 bg-card text-black font-semibold rounded-xl hover:bg-gray-100 transition-colors">
               View Details
             </Button>
           </Card>
@@ -234,9 +234,9 @@ function DashboardPage() {
       )}
 
       {/* Statistics Section */}
-      <div className="bg-white rounded-3xl p-8 mb-8 border border-gray-200">
+      <div className="bg-card rounded-3xl p-8 mb-8 border border-border">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             {t(ADMIN_DASHBOARD.STATISTICS.TITLE)}
           </h2>
           <div className="relative w-40">
@@ -290,7 +290,7 @@ function DashboardPage() {
 
       {/* Recommendations Section */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 className="text-2xl font-bold text-foreground mb-6">
           {t(ADMIN_DASHBOARD.RECOMMENDATIONS.TITLE)}
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -305,7 +305,7 @@ function DashboardPage() {
             return (
               <Card
                 key={idx}
-                className="bg-white rounded-3xl p-8 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-lg cursor-pointer group"
+                className="bg-card rounded-3xl p-8 border border-border hover:border-gray-300 transition-all duration-200 hover:shadow-lg cursor-pointer group"
               >
                 <div
                   className={`w-16 h-16 bg-linear-to-br ${item.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}
@@ -316,7 +316,7 @@ function DashboardPage() {
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t(labelKey)}
                 </h3>
               </Card>

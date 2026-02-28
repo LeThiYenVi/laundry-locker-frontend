@@ -68,6 +68,24 @@ export function useStores() {
     );
   }, []);
 
+  // Refetch function
+  const refetch = () => {
+    if (isMockEnabled) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), mockDelay);
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     stores: filteredStores,
     totalElements: mockStores.length,
@@ -82,6 +100,9 @@ export function useStores() {
     pageSize,
     setPageSize,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
     isCreateModalOpen,
     setIsCreateModalOpen,
     isEditModalOpen,

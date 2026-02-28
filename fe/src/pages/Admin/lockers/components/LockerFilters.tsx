@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "~/components/ui/input";
-import { StatusTabs } from "~/components/shared/status-tabs";
+import { StatusDropdown } from "~/components/shared/status-tabs";
 import { LockerStatus } from "~/types/admin/enums";
 import type { LockerStatusFilter } from "../hooks/useLockers";
 
@@ -12,7 +12,7 @@ interface LockerFiltersProps {
   statusCounts: Record<string, number>;
 }
 
-const tabs = [
+const options = [
   { value: "ALL", label: "Tất cả", color: "blue" as const },
   { value: LockerStatus.ACTIVE, label: "Hoạt động", color: "green" as const },
   { value: LockerStatus.MAINTENANCE, label: "Bảo trì", color: "yellow" as const },
@@ -27,34 +27,31 @@ export function LockerFilters({
   onSearchChange,
   statusCounts,
 }: LockerFiltersProps) {
-  const tabsWithCounts = tabs.map((tab) => ({
-    ...tab,
-    count: statusCounts[tab.value] || 0,
+  const optionsWithCounts = options.map((opt) => ({
+    ...opt,
+    count: statusCounts[opt.value] || 0,
   }));
 
   return (
-    <div className="space-y-4 mb-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex-1 overflow-x-auto pb-2 lg:pb-0">
-          <StatusTabs
-            tabs={tabsWithCounts}
-            activeTab={status}
-            onTabChange={(value) => onStatusChange(value as LockerStatusFilter)}
-          />
-        </div>
+    <div className="flex flex-col sm:flex-row items-center gap-3">
+      <StatusDropdown
+        options={optionsWithCounts}
+        value={status}
+        onChange={(value) => onStatusChange(value as LockerStatusFilter)}
+        placeholder="Trạng thái"
+      />
 
-        <div className="relative w-full lg:w-72 flex-shrink-0">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <Input
-            placeholder="Tìm kiếm tủ đồ..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 h-10"
-          />
-        </div>
+      <div className="relative w-full sm:w-72">
+        <Search
+          size={18}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          placeholder="Tìm kiếm tủ đồ..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10 h-10"
+        />
       </div>
     </div>
   );

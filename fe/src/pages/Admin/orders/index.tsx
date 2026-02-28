@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
+import { TableToolbar } from "~/components/shared/data-table";
 import { OrderTable } from "./components/OrderTable";
 import { OrderFilters } from "./components/OrderFilters";
 import { CreateOrderModal } from "./components/CreateOrderModal";
@@ -20,6 +21,9 @@ export default function OrdersPage() {
     searchQuery,
     setSearchQuery,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
   } = useOrders();
 
   const handleCreateOrder = (orderData: {
@@ -39,22 +43,31 @@ export default function OrdersPage() {
       <PageHeader
         title={t("admin.orders.title")}
         description={t("admin.orders.description")}
-        action={{
-          label: t("admin.orders.createOrder"),
-          onClick: () => setIsCreateModalOpen(true),
-          icon: Plus,
-        }}
       />
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <OrderFilters
-            status={status}
-            onStatusChange={setStatus}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusCounts={statusCounts}
-          />
+          {/* Toolbar - 1 hàng */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <OrderFilters
+              status={status}
+              onStatusChange={setStatus}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusCounts={statusCounts}
+            />
+            
+            <TableToolbar
+              createButton={{
+                label: t("admin.orders.createOrder"),
+                onClick: () => setIsCreateModalOpen(true),
+                icon: Plus,
+              }}
+              onRefresh={refetch}
+              onClearFilters={clearFilters}
+              canClearFilters={hasActiveFilters}
+            />
+          </div>
 
           <OrderTable orders={orders} isLoading={isLoading} />
         </CardContent>

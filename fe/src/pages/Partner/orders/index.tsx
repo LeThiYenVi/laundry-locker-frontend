@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Package } from "lucide-react";
+import { Package, RefreshCw, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Button } from "~/components/ui/button";
 import { PageLoading, ErrorState } from "~/components/ui";
+import { StatusDropdown } from "~/components/shared/status-tabs";
 import { useOrders } from "./hooks/useOrders";
 import { SearchFilter } from "./components/SearchFilter";
 import { OrdersTable } from "./components/OrdersTable";
@@ -10,8 +11,18 @@ import { ErrorToast } from "./components/ErrorToast";
 import { WebSocketIndicator } from "./components/WebSocketIndicator";
 import { AccessCodeModal } from "./components/AccessCodeModal";
 import { WeightUpdateModal } from "./components/WeightUpdateModal";
-import { STATUS_LABELS } from "./utils/order-helpers";
 import type { PartnerOrder, StaffAccessCode } from "@/types/partner.type";
+import type { OrderStatus } from "@/types/partner.enum";
+
+const statusOptions = [
+  { value: "ALL", label: "Tất cả", color: "blue" as const },
+  { value: "WAITING", label: "Chờ xử lý", color: "yellow" as const },
+  { value: "COLLECTED", label: "Đã lấy", color: "purple" as const },
+  { value: "PROCESSING", label: "Đang xử lý", color: "blue" as const },
+  { value: "READY", label: "Sẵn sàng", color: "green" as const },
+  { value: "RETURNED", label: "Đã trả", color: "gray" as const },
+  { value: "COMPLETED", label: "Hoàn thành", color: "green" as const },
+];
 
 export default function PartnerOrders() {
   const {
@@ -92,6 +103,13 @@ export default function PartnerOrders() {
     }
   };
 
+  const clearFilters = () => {
+    handleTabChange("ALL");
+    setSearchQuery("");
+  };
+
+  const hasActiveFilters = activeTab !== "ALL" || searchQuery !== "";
+
   return (
     <div className="min-h-screen bg-background p-8">
       {/* Error Toast */}
@@ -122,10 +140,43 @@ export default function PartnerOrders() {
         </div>
       </div>
 
-      {/* Search & Filter */}
-      <SearchFilter searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      {/* Toolbar - 1 hàng */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <StatusDropdown
+            options={statusOptions}
+            value={activeTab}
+            onChange={(value) => handleTabChange(value as OrderStatus | "ALL")}
+            placeholder={t("common.status")}
+          />
+          <SearchFilter searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        </div>
 
-      {/* Tabs & Table */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+            className="h-9"
+          >
+            <X size={16} className="mr-1.5" />
+            Xóa lọc
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refetch}
+            disabled={isFetching}
+            className="h-9"
+          >
+            <RefreshCw size={16} className={`mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
+            Tải lại
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
       {isLoading ? (
         <PageLoading message={t("partner.orders.loadingTitle")} />
       ) : error ? (
@@ -136,48 +187,22 @@ export default function PartnerOrders() {
           onRetry={refetch}
         />
       ) : (
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="ALL">
-              {t("partner.orders.tabs.all")}
-            </TabsTrigger>
-            <TabsTrigger value="WAITING">
-              {t("partner.orders.tabs.waiting")}
-            </TabsTrigger>
-            <TabsTrigger value="COLLECTED">
-              {t("partner.orders.tabs.collected")}
-            </TabsTrigger>
-            <TabsTrigger value="PROCESSING">
-              {t("partner.orders.tabs.processing")}
-            </TabsTrigger>
-            <TabsTrigger value="READY">
-              {t("partner.orders.tabs.ready")}
-            </TabsTrigger>
-            <TabsTrigger value="RETURNED">
-              {t("partner.orders.tabs.returned")}
-            </TabsTrigger>
-            <TabsTrigger value="COMPLETED">
-              {t("partner.orders.tabs.completed")}
-            </TabsTrigger>
-          </TabsList>
-
-          <OrdersTable
-            orders={orders}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            currentPage={currentPage}
-            pageSize={size}
-            isAccepting={isAccepting}
-            isProcessing={isProcessing}
-            isMarkingReady={isMarkingReady}
-            onPageChange={setPage}
-            getPageNumbers={getPageNumbers}
-            onAcceptOrder={onAcceptOrder}
-            onOpenWeightModal={onOpenWeightModal}
-            onProcessOrder={(order) => handleProcessOrder(order.id)}
-            onMarkReady={onMarkReady}
-          />
-        </Tabs>
+        <OrdersTable
+          orders={orders}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          currentPage={currentPage}
+          pageSize={size}
+          isAccepting={isAccepting}
+          isProcessing={isProcessing}
+          isMarkingReady={isMarkingReady}
+          onPageChange={setPage}
+          getPageNumbers={getPageNumbers}
+          onAcceptOrder={onAcceptOrder}
+          onOpenWeightModal={onOpenWeightModal}
+          onProcessOrder={(order) => handleProcessOrder(order.id)}
+          onMarkReady={onMarkReady}
+        />
       )}
 
       {/* Modals */}

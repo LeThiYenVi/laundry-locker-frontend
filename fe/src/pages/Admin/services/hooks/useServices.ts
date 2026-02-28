@@ -78,6 +78,24 @@ export function useServices() {
     );
   }, []);
 
+  // Refetch function
+  const refetch = () => {
+    if (isMockEnabled) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), mockDelay);
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     services: filteredServices,
     totalElements: mockServices.length,
@@ -92,6 +110,9 @@ export function useServices() {
     pageSize,
     setPageSize,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
     isCreateModalOpen,
     setIsCreateModalOpen,
     isEditModalOpen,

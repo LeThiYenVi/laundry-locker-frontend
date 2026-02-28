@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
+import { TableToolbar } from "~/components/shared/data-table";
 import { LockerTable } from "./components/LockerTable";
 import { LockerFilters } from "./components/LockerFilters";
 import { LockerStats } from "./components/LockerStats";
@@ -20,6 +21,9 @@ export default function LockersPage() {
     handleViewDetails,
     handleMaintenance,
     handleActivate,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
   } = useLockers();
 
   return (
@@ -33,13 +37,22 @@ export default function LockersPage() {
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <LockerFilters
-            status={status}
-            onStatusChange={setStatus}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusCounts={statusCounts}
-          />
+          {/* Toolbar - 1 hàng */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <LockerFilters
+              status={status}
+              onStatusChange={setStatus}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusCounts={statusCounts}
+            />
+            
+            <TableToolbar
+              onRefresh={refetch}
+              onClearFilters={clearFilters}
+              canClearFilters={hasActiveFilters}
+            />
+          </div>
 
           <LockerTable
             lockers={lockers}

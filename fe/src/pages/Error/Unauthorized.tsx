@@ -7,7 +7,7 @@ export default function UnauthorizedPage(): React.JSX.Element {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-red-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-destructive/10 to-background p-4">
       <div className="max-w-2xl w-full text-center space-y-8">
         {/* Illustration Area */}
         <div className="relative flex justify-center items-end gap-8 mb-8">
@@ -37,7 +37,7 @@ export default function UnauthorizedPage(): React.JSX.Element {
 
             {/* Lock icon on barrier */}
             <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-yellow-400 rounded-full p-2">
-              <Lock className="h-6 w-6 text-red-600" />
+              <Lock className="h-6 w-6 text-destructive" />
             </div>
           </div>
 
@@ -90,24 +90,24 @@ export default function UnauthorizedPage(): React.JSX.Element {
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-3">
             <ShieldAlert className="h-12 w-12 text-red-500" />
-            <h1 className="text-6xl font-bold text-gray-900">401</h1>
+            <h1 className="text-6xl font-bold text-foreground">401</h1>
           </div>
           
-          <h2 className="text-3xl font-semibold text-gray-800">
+          <h2 className="text-3xl font-semibold text-foreground">
             Truy cập bị từ chối
           </h2>
           
-          <p className="text-lg text-gray-600 max-w-md mx-auto">
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
             Bạn không có quyền truy cập vào trang này.
             Vui lòng đăng nhập hoặc liên hệ quản trị viên để được cấp quyền.
           </p>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 max-w-md mx-auto">
             <div className="flex items-start gap-3">
               <ShieldAlert className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-left">
-                <p className="font-medium text-red-900 mb-2">Lý do có thể:</p>
-                <ul className="text-red-800 space-y-1">
+                <p className="font-medium text-foreground mb-2">Lý do có thể:</p>
+                <ul className="text-destructive/80 space-y-1">
                   <li>• Bạn chưa đăng nhập</li>
                   <li>• Phiên đăng nhập đã hết hạn</li>
                   <li>• Tài khoản không có quyền truy cập</li>
@@ -148,18 +148,18 @@ export default function UnauthorizedPage(): React.JSX.Element {
         </div>
 
         {/* Help Section */}
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-muted-foreground">
           <p className="mb-2">Cần hỗ trợ?</p>
           <div className="flex items-center justify-center gap-4">
-            <a href="/contact" className="text-blue-600 hover:underline">
+            <a href="/contact" className="text-primary hover:underline">
               Liên hệ hỗ trợ
             </a>
             <span>•</span>
-            <a href="/help" className="text-blue-600 hover:underline">
+            <a href="/help" className="text-primary hover:underline">
               Trung tâm trợ giúp
             </a>
             <span>•</span>
-            <a href="mailto:support@laundrylocker.com" className="text-blue-600 hover:underline">
+            <a href="mailto:support@laundrylocker.com" className="text-primary hover:underline">
               Email
             </a>
           </div>

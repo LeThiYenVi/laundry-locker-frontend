@@ -27,11 +27,11 @@ export default function PartnerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-background p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900">{t("partner.dashboard.title")}</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-4xl font-bold text-foreground">{t("partner.dashboard.title")}</h1>
+        <p className="text-muted-foreground mt-2">
           {t("partner.dashboard.subtitle")}
         </p>
       </div>

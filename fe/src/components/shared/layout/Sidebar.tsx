@@ -93,8 +93,8 @@ export function Sidebar({
       <button
         onClick={toggleSidebar}
         className={cn(
-          "fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-blue-950 text-white shadow-lg lg:hidden",
-          "hover:bg-blue-900 transition-colors",
+          "fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-sidebar-background text-white shadow-lg lg:hidden",
+          "hover:bg-sidebar-accent transition-colors",
         )}
         aria-label="Toggle menu"
       >
@@ -110,12 +110,12 @@ export function Sidebar({
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed left-0 top-0 h-screen bg-blue-950 flex flex-col z-50 rounded-r-md shadow-2xl",
+          "fixed left-0 top-0 h-screen bg-sidebar-background flex flex-col z-50 rounded-r-md shadow-2xl",
           isTablet && !isMobileOpen && "overflow-hidden",
         )}
       >
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between p-4 border-b border-blue-900/50 h-16">
+        <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16">
           <AnimatePresence mode="wait">
             {(isExpanded || isMobileOpen) && (
               <motion.div
@@ -125,7 +125,7 @@ export function Sidebar({
                 transition={{ duration: 0.2 }}
                 className="flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-ring flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-lg">L</span>
                 </div>
                 <span className="text-white font-semibold text-lg">
@@ -141,7 +141,7 @@ export function Sidebar({
               onClick={toggleSidebar}
               className={cn(
                 "p-2 rounded-lg transition-colors",
-                "hover:bg-blue-900 text-blue-300 hover:text-white",
+                "hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground",
                 !isExpanded && "mx-auto",
               )}
               aria-label={isExpanded ? "Thu gọn" : "Mở rộng"}
@@ -158,7 +158,7 @@ export function Sidebar({
           {isTablet && isMobileOpen && (
             <button
               onClick={() => setIsMobileOpen(false)}
-              className="p-2 rounded-lg text-blue-300 hover:text-white hover:bg-blue-900"
+              className="p-2 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             >
               <X size={20} />
             </button>
@@ -179,10 +179,10 @@ export function Sidebar({
                 className={({ isActive: active }) =>
                   cn(
                     "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
-                    "hover:bg-blue-900/50",
+                    "hover:bg-sidebar-accent/50",
                     active
-                      ? "bg-blue-900 text-white shadow-lg shadow-blue-900/20"
-                      : "text-blue-300 hover:text-white",
+                      ? "bg-sidebar-accent text-white shadow-lg shadow-sidebar-primary/20"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
                     !isExpanded && !isMobileOpen && "justify-center px-2",
                   )
                 }
@@ -208,13 +208,13 @@ export function Sidebar({
                 {isActive && (isExpanded || isMobileOpen) && (
                   <motion.div
                     layoutId="activeIndicator"
-                    className="absolute right-2 w-1.5 h-1.5 bg-orange-400 rounded-full"
+                    className="absolute right-2 w-1.5 h-1.5 bg-primary rounded-full"
                   />
                 )}
 
                 {/* Tooltip for collapsed state */}
                 {!isExpanded && !isMobileOpen && !isTablet && (
-                  <div className="absolute left-full ml-2 px-3 py-2 bg-blue-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                  <div className="absolute left-full ml-2 px-3 py-2 bg-sidebar-accent text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
                     {t(item.label)}
                     <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-blue-900" />
                   </div>
@@ -225,13 +225,13 @@ export function Sidebar({
         </nav>
 
         {/* User Section */}
-        <div className="p-3 border-t border-blue-900/50 space-y-2">
+        <div className="p-3 border-t border-sidebar-border space-y-2">
           {/* Settings */}
           <button
             onClick={onSettingsClick}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all",
-              "text-blue-300 hover:text-white hover:bg-blue-900/50",
+              "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
               !isExpanded && !isMobileOpen && "justify-center",
             )}
           >
@@ -256,7 +256,7 @@ export function Sidebar({
             onClick={handleLogout}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all",
-              "text-red-400 hover:text-red-300 hover:bg-red-950/30",
+              "text-destructive hover:text-destructive/80 hover:bg-destructive/10",
               !isExpanded && !isMobileOpen && "justify-center",
             )}
           >
@@ -279,11 +279,11 @@ export function Sidebar({
           {/* User Info */}
           <div
             className={cn(
-              "flex items-center gap-3 px-3 py-3 rounded-xl bg-blue-900/30",
+              "flex items-center gap-3 px-3 py-3 rounded-xl bg-sidebar-accent/30",
               !isExpanded && !isMobileOpen && "justify-center",
             )}
           >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sidebar-primary to-sidebar-ring flex items-center justify-center flex-shrink-0 shadow-lg">
               <User size={18} className="text-white" />
             </div>
             <AnimatePresence mode="wait">
@@ -298,7 +298,7 @@ export function Sidebar({
                   <p className="text-white font-medium text-sm truncate">
                     {userName}
                   </p>
-                  <p className="text-blue-400 text-xs truncate">Admin</p>
+                  <p className="text-sidebar-primary text-xs truncate">Admin</p>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -2,6 +2,7 @@ import { UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
+import { TableToolbar } from "~/components/shared/data-table";
 import { UserTable } from "./components/UserTable";
 import { UserFilters } from "./components/UserFilters";
 import { useUsers } from "./hooks/useUsers";
@@ -16,6 +17,9 @@ export default function UsersPage() {
     searchQuery,
     setSearchQuery,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
   } = useUsers();
 
   return (
@@ -23,22 +27,31 @@ export default function UsersPage() {
       <PageHeader
         title={t("admin.users.title")}
         description={t("admin.users.description")}
-        action={{
-          label: t("admin.users.addUser"),
-          onClick: () => console.log("Add user"),
-          icon: UserPlus,
-        }}
       />
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <UserFilters
-            status={status}
-            onStatusChange={setStatus}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusCounts={statusCounts}
-          />
+          {/* Toolbar - 1 hàng */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <UserFilters
+              status={status}
+              onStatusChange={setStatus}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusCounts={statusCounts}
+            />
+            
+            <TableToolbar
+              createButton={{
+                label: t("admin.users.addUser"),
+                onClick: () => console.log("Add user"),
+                icon: UserPlus,
+              }}
+              onRefresh={refetch}
+              onClearFilters={clearFilters}
+              canClearFilters={hasActiveFilters}
+            />
+          </div>
 
           <UserTable users={users} isLoading={isLoading} />
         </CardContent>

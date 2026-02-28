@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
+import { Plus } from "lucide-react";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
+import { TableToolbar } from "~/components/shared/data-table";
 import { PartnerTable } from "./components/PartnerTable";
 import { PartnerFilters } from "./components/PartnerFilters";
 import { PartnerStats } from "./components/PartnerStats";
@@ -22,6 +24,9 @@ export default function PartnersPage() {
     handleApprove,
     handleReject,
     handleSuspend,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
   } = usePartners();
 
   return (
@@ -35,14 +40,27 @@ export default function PartnersPage() {
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <PartnerFilters
-            status={status}
-            onStatusChange={setStatus}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusCounts={statusCounts}
-            onCreate={handleCreate}
-          />
+          {/* Toolbar - 1 hàng */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <PartnerFilters
+              status={status}
+              onStatusChange={setStatus}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusCounts={statusCounts}
+            />
+            
+            <TableToolbar
+              createButton={{
+                label: t("admin.partners.addPartner"),
+                onClick: handleCreate,
+                icon: Plus,
+              }}
+              onRefresh={refetch}
+              onClearFilters={clearFilters}
+              canClearFilters={hasActiveFilters}
+            />
+          </div>
 
           <PartnerTable
             partners={partners}

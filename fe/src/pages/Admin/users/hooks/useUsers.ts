@@ -17,6 +17,7 @@ export function useUsers() {
     data: apiData,
     isLoading: apiLoading,
     error: apiError,
+    refetch,
   } = useGetAllUsersQuery(
     { pageNumber: page, pageSize },
     { skip: isMockEnabled } // Skip API call if mock is enabled
@@ -98,6 +99,16 @@ export function useUsers() {
     };
   }, [users]);
 
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     users: filteredUsers,
     totalElements,
@@ -114,6 +125,10 @@ export function useUsers() {
     setPage,
     pageSize,
     setPageSize,
+    // Actions
+    refetch,
+    clearFilters,
+    hasActiveFilters,
     // Stats
     statusCounts,
     // Source indicator

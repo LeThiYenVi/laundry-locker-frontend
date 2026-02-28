@@ -68,6 +68,12 @@ export function useLockers() {
     setSelectedLocker(locker || null);
   };
 
+  const clearFilters = () => {
+    setFilterStatus("ALL");
+  };
+
+  const hasActiveFilters = filterStatus !== "ALL";
+
   return {
     lockers,
     selectedLocker,
@@ -80,6 +86,8 @@ export function useLockers() {
     isFetching,
     error,
     refetch,
+    clearFilters,
+    hasActiveFilters,
     errorToast,
     setErrorToast,
   };
