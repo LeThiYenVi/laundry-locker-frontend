@@ -396,6 +396,8 @@ export interface CompleteRegistrationRequest {
   firstName: string;
   lastName: string;
   birthday: string; // ISO date string
+  phoneNumber?: string;
+  email?: string;
 }
 
 export interface CompleteRegistrationResponse {

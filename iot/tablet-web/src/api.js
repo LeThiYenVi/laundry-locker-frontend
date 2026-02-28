@@ -61,6 +61,9 @@ export const phoneCompleteRegistration = (tempToken, firstName, lastName, birthd
 export const kioskQuickRegister = (tempToken) =>
   request('POST', '/api/auth/kiosk/quick-register', { tempToken });
 
+export const validatePromotionCode = (code, token) =>
+  request('GET', `/api/promotions/validate/${code.toUpperCase()}`, null, token);
+
 // ===== Services =====
 export const getServices = (token, lockerId, category = 'STORAGE') =>
   request('GET', `/api/services?lockerId=${lockerId}&category=${category}`, null, token);

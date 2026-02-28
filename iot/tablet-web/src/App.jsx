@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from './api';
 import { setupRecaptcha, sendPhoneOtp } from './firebase';
+import {
+  Lock, Package, Smartphone, Mail, ArrowLeft, MapPin,
+  CheckCircle, KeyRound, Hash, User, CreditCard,
+  Unlock, Home, Loader2, Delete, Circle, ClipboardList,
+  Wifi, ChevronRight, ShieldCheck, X
+} from 'lucide-react';
 import './App.css';
 
 // ============================================
 // Config
-// Đọc URL Params trước (dành cho production/deploy) -> Fallback về .env (dành cho Dev)
 // ============================================
 const urlParams = new URLSearchParams(window.location.search);
 
@@ -39,9 +44,9 @@ export default function App() {
   const [lockerInfo, setLockerInfo] = useState(null);
   const cdRef = useRef(null);
 
-  // Fetch locker info (includes store name) — retry when jwt becomes available
+  // Fetch locker info
   useEffect(() => {
-    if (lockerInfo) return; // already fetched
+    if (lockerInfo) return;
     (async () => {
       try {
         const res = await api.getLockerById(LOCKER_ID, jwt || undefined);
@@ -99,7 +104,7 @@ export default function App() {
       {screen === 'register' && <RegisterScreen go={go} goHome={goHome} tempToken={tempToken} setJwt={setJwt} setUserName={setUserName} />}
       {screen === 'boxes' && <BoxSelectionScreen go={go} goHome={goHome} jwt={jwt} userName={userName} selectedBox={selectedBox} setSelectedBox={setSelectedBox} lockerInfo={lockerInfo} />}
       {screen === 'services' && <ServicesScreen go={go} goHome={goHome} jwt={jwt} userName={userName} services={services} setServices={setServices} selectedSvcs={selectedSvcs} setSelectedSvcs={setSelectedSvcs} />}
-      {screen === 'order-info' && <OrderInfoScreen go={go} back={back} jwt={jwt} selectedSvcs={selectedSvcs} selectedBox={selectedBox} setOrderId={setOrderId} setOrderPin={setOrderPin} setOrderCode={setOrderCode} setTotalPrice={setTotalPrice} />}
+      {screen === 'order-info' && <OrderInfoScreen go={go} back={back} jwt={jwt} services={services} selectedSvcs={selectedSvcs} selectedBox={selectedBox} setOrderId={setOrderId} setOrderPin={setOrderPin} setOrderCode={setOrderCode} setTotalPrice={setTotalPrice} />}
       {screen === 'payment' && <PaymentScreen go={go} goHome={goHome} jwt={jwt} orderId={orderId} orderPin={orderPin} orderCode={orderCode} totalPrice={totalPrice} selectedBox={selectedBox} showSuccess={showSuccess} />}
       {screen === 'pin' && <PinScreen goHome={goHome} showSuccess={showSuccess} />}
       {screen === 'staff' && <StaffScreen goHome={goHome} showSuccess={showSuccess} />}
@@ -114,7 +119,7 @@ export default function App() {
 function Header({ onBack, title }) {
   return (
     <div className="header">
-      <button className="back-btn" onClick={onBack}>←</button>
+      <button className="back-btn" onClick={onBack}><ArrowLeft size={20} /></button>
       <h2>{title}</h2>
     </div>
   );
@@ -128,7 +133,7 @@ function Msg({ type, text }) {
 function Btn({ children, onClick, loading, disabled, variant = 'primary', style, id }) {
   return (
     <button id={id} className={`btn btn-${variant}`} onClick={onClick} disabled={loading || disabled} style={style}>
-      {loading ? <><span className="spinner" /> Đang xử lý...</> : children}
+      {loading ? <><Loader2 size={18} className="spinner" style={{ border: 'none', animation: 'spin 0.6s linear infinite' }} /> Đang xử lý...</> : children}
     </button>
   );
 }
@@ -140,37 +145,35 @@ function HomeScreen({ go, lockerInfo }) {
   return (
     <div className="screen">
       <div className="home-logo">
-        <span className="icon">🔐</span>
-        <h1>LAUNDRY LOCKER</h1>
+        <div className="icon-wrap">
+          <Lock size={40} strokeWidth={2.5} />
+        </div>
+        <h1>Lock.R</h1>
         <p className="sub">Hệ thống tủ giặt thông minh</p>
       </div>
       {lockerInfo && (
-        <div style={{
-          background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 16px',
-          marginBottom: 16, textAlign: 'center', border: '1px solid rgba(255,255,255,0.12)'
-        }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
-            📍 {lockerInfo.storeName || lockerInfo.name}
+        <div className="locker-info-card">
+          <div className="locker-name">
+            <MapPin size={16} color="var(--accent)" />
+            {lockerInfo.storeName || lockerInfo.name}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
-            {lockerInfo.address}
-          </div>
+          <div className="locker-address">{lockerInfo.address}</div>
           {lockerInfo.totalBoxes != null && (
-            <div style={{
-              display: 'flex', justifyContent: 'center', gap: 16, marginTop: 6,
-              fontSize: 13, fontWeight: 600
-            }}>
-              <span style={{ color: '#4ade80' }}>✅ Trống: {lockerInfo.availableBoxes ?? '—'}</span>
-              <span style={{ color: 'var(--text-secondary)' }}>/ {lockerInfo.totalBoxes} ô</span>
+            <div className="locker-stats">
+              <span className="stat-available"><CheckCircle size={14} style={{ marginRight: 4, verticalAlign: -2 }} />{lockerInfo.availableBoxes ?? '—'} Trống</span>
+              <span className="stat-total">/ {lockerInfo.totalBoxes} ô</span>
             </div>
           )}
         </div>
       )}
-      <div className="home-status">📡 Kiosk sẵn sàng phục vụ</div>
+      <div className="home-status">
+        <Wifi size={16} />
+        Kiosk sẵn sàng phục vụ
+      </div>
       <div className="home-actions">
-        <Btn onClick={() => go('login')}>📦 Gửi đồ mới</Btn>
-        <Btn variant="secondary" onClick={() => go('pin')}>🔢 Nhập mã PIN</Btn>
-        <Btn variant="outline" onClick={() => go('staff')}>👷 Mã nhân viên</Btn>
+        <Btn onClick={() => go('login')}><Package size={20} /> Gửi đồ mới</Btn>
+        <Btn variant="secondary" onClick={() => go('pin')}><Hash size={20} /> Nhập mã PIN</Btn>
+        <Btn variant="outline" onClick={() => go('staff')}><ShieldCheck size={20} /> Mã nhân viên</Btn>
       </div>
       <div className="footer">Powered by Laundry Locker IoT</div>
     </div>
@@ -185,7 +188,6 @@ function LoginScreen({ go, goHome, email, setEmail, phone, setPhone, loginMethod
   const [msg, setMsg] = useState('');
   const recaptchaReady = useRef(false);
 
-  // Setup reCAPTCHA when switching to phone
   useEffect(() => {
     if (loginMethod === 'phone' && !recaptchaReady.current) {
       try {
@@ -195,7 +197,6 @@ function LoginScreen({ go, goHome, email, setEmail, phone, setPhone, loginMethod
     }
   }, [loginMethod]);
 
-  // Cleanup recaptchaReady when switching away
   useEffect(() => {
     if (loginMethod !== 'phone') recaptchaReady.current = false;
   }, [loginMethod]);
@@ -216,12 +217,10 @@ function LoginScreen({ go, goHome, email, setEmail, phone, setPhone, loginMethod
     if (!phone || phone.length < 9) { setMsg('Vui lòng nhập số điện thoại hợp lệ'); return; }
     setLoading(true); setMsg('');
     try {
-      // Setup reCAPTCHA if not ready
       if (!recaptchaReady.current) {
         setupRecaptcha('phone-send-btn');
         recaptchaReady.current = true;
       }
-      // Format to E.164
       let formatted = phone.trim();
       if (formatted.startsWith('0')) formatted = '+84' + formatted.slice(1);
       else if (!formatted.startsWith('+')) formatted = '+84' + formatted;
@@ -232,7 +231,6 @@ function LoginScreen({ go, goHome, email, setEmail, phone, setPhone, loginMethod
     } catch (err) {
       console.error('Firebase phone OTP error:', err);
       setMsg(err.message || 'Lỗi gửi OTP. Vui lòng thử lại.');
-      // Reset reCAPTCHA on error
       recaptchaReady.current = false;
     }
     setLoading(false);
@@ -240,40 +238,36 @@ function LoginScreen({ go, goHome, email, setEmail, phone, setPhone, loginMethod
 
   return (
     <div className="screen">
-      <Header onBack={goHome} title="Đăng nhập" />
+      <Header onBack={goHome} title="Nhập thông tin" />
       <div className="login-tabs">
         <div className={`login-tab ${loginMethod === 'phone' ? 'active' : ''}`} onClick={() => { setLoginMethod('phone'); setMsg(''); }}>
-          📱 Số điện thoại
+          <Smartphone size={16} /> Số điện thoại
         </div>
         <div className={`login-tab ${loginMethod === 'email' ? 'active' : ''}`} onClick={() => { setLoginMethod('email'); setMsg(''); }}>
-          📧 Email
+          <Mail size={16} /> Email
         </div>
       </div>
 
       {loginMethod === 'phone' ? (
         <>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
-            Nhập số điện thoại để nhận mã OTP xác thực
-          </p>
+          <p className="subtitle">Nhập số điện thoại để nhận mã OTP xác thực</p>
           <div className="form-group">
             <label>Số điện thoại</label>
             <input className="input" type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
               placeholder="0901234567" inputMode="tel" autoComplete="tel"
               onKeyDown={e => e.key === 'Enter' && handleSendPhone()} />
           </div>
-          <Btn id="phone-send-btn" onClick={handleSendPhone} loading={loading}>📱 Gửi mã OTP</Btn>
+          <Btn id="phone-send-btn" onClick={handleSendPhone} loading={loading}><Smartphone size={18} /> Gửi mã OTP</Btn>
         </>
       ) : (
         <>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
-            Nhập email để nhận mã OTP xác thực
-          </p>
+          <p className="subtitle">Nhập email để nhận mã OTP xác thực</p>
           <div className="form-group">
             <label>Email</label>
             <input className="input" type="email" value={email} onChange={e => setEmail(e.target.value)}
               placeholder="example@gmail.com" autoComplete="email" onKeyDown={e => e.key === 'Enter' && handleSendEmail()} />
           </div>
-          <Btn onClick={handleSendEmail} loading={loading}>📧 Gửi mã OTP</Btn>
+          <Btn onClick={handleSendEmail} loading={loading}><Mail size={18} /> Gửi mã OTP</Btn>
         </>
       )}
       {msg && <Msg type="error" text={msg} />}
@@ -293,7 +287,6 @@ function PhoneOtpScreen({ go, back, phone, setJwt, setTempToken, setUserName }) 
     if (otp.length !== 6) { setMsg('Vui lòng nhập đủ 6 số OTP'); return; }
     setLoading(true); setMsg('');
     try {
-      // Verify OTP with Firebase
       const confirmation = window.confirmationResult;
       if (!confirmation) { setMsg('Phiên đã hết hạn. Vui lòng quay lại.'); setLoading(false); return; }
 
@@ -301,7 +294,6 @@ function PhoneOtpScreen({ go, back, phone, setJwt, setTempToken, setUserName }) 
       const idToken = await userCredential.user.getIdToken();
       console.log('%c[AUTH] Firebase phone verified, sending to backend', 'color:#fbbf24');
 
-      // Send Firebase ID token to backend
       const res = await api.phoneLogin(idToken);
       if (res.success && res.data) {
         if (res.data.newUser || res.data.isNewUser) {
@@ -332,7 +324,7 @@ function PhoneOtpScreen({ go, back, phone, setJwt, setTempToken, setUserName }) 
   return (
     <div className="screen">
       <Header onBack={back} title="Xác thực OTP" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}>
+      <p className="subtitle">
         Mã OTP đã gửi đến <strong>{phone}</strong>
       </p>
       <div className="form-group">
@@ -342,7 +334,7 @@ function PhoneOtpScreen({ go, back, phone, setJwt, setTempToken, setUserName }) 
           style={{ textAlign: 'center', fontSize: 24, letterSpacing: 8, fontWeight: 700 }}
           onKeyDown={e => e.key === 'Enter' && handleVerify()} />
       </div>
-      <Btn onClick={handleVerify} loading={loading}>✅ Xác nhận</Btn>
+      <Btn onClick={handleVerify} loading={loading}><CheckCircle size={18} /> Xác nhận</Btn>
       {msg && <Msg type="error" text={msg} />}
     </div>
   );
@@ -381,7 +373,7 @@ function OtpScreen({ go, back, email, setJwt, setTempToken, setUserName }) {
   return (
     <div className="screen">
       <Header onBack={back} title="Xác thực OTP" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}>
+      <p className="subtitle">
         Mã OTP đã gửi đến <strong>{email}</strong>
       </p>
       <div className="form-group">
@@ -391,7 +383,7 @@ function OtpScreen({ go, back, email, setJwt, setTempToken, setUserName }) {
           style={{ textAlign: 'center', fontSize: 24, letterSpacing: 8, fontWeight: 700 }}
           onKeyDown={e => e.key === 'Enter' && handleVerify()} />
       </div>
-      <Btn onClick={handleVerify} loading={loading}>✅ Xác nhận</Btn>
+      <Btn onClick={handleVerify} loading={loading}><CheckCircle size={18} /> Xác nhận</Btn>
       {msg && <Msg type="error" text={msg} />}
     </div>
   );
@@ -403,25 +395,28 @@ function OtpScreen({ go, back, email, setJwt, setTempToken, setUserName }) {
 function RegisterScreen({ go, goHome, tempToken, setJwt, setUserName }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const reqSent = useRef(false);
 
-  // Auto quick-register on mount
   useEffect(() => {
-    let ignore = false;
+    if (reqSent.current) return;
+    reqSent.current = true;
+
     (async () => {
       setLoading(true); setMsg('');
       try {
         const res = await api.kioskQuickRegister(tempToken);
-        if (!ignore && res.success && res.data) {
+        if (res.success && res.data) {
           setJwt(res.data.accessToken);
           setUserName('Khách');
           go('boxes');
-        } else if (!ignore) {
+        } else {
           setMsg(res.message || 'Lỗi đăng ký nhanh');
         }
-      } catch { if (!ignore) setMsg('Lỗi kết nối server'); }
-      if (!ignore) setLoading(false);
+      } catch {
+        setMsg('Lỗi kết nối server');
+      }
+      setLoading(false);
     })();
-    return () => { ignore = true; };
   }, [tempToken, setJwt, setUserName, go]);
 
   return (
@@ -429,12 +424,12 @@ function RegisterScreen({ go, goHome, tempToken, setJwt, setUserName }) {
       <Header onBack={goHome} title="Đăng ký nhanh" />
       {loading && (
         <div style={{ textAlign: 'center', padding: 40 }}>
-          <span className="spinner" style={{ width: 32, height: 32 }} />
-          <p style={{ color: 'var(--text-secondary)', marginTop: 16 }}>Đang tạo tài khoản...</p>
+          <Loader2 size={36} className="spinner" style={{ border: 'none', animation: 'spin 0.6s linear infinite', color: 'var(--accent)' }} />
+          <p style={{ color: 'var(--text-secondary)', marginTop: 16, fontSize: 14 }}>Đang tạo tài khoản...</p>
         </div>
       )}
       {msg && <Msg type="error" text={msg} />}
-      {msg && <Btn onClick={goHome} variant="secondary" style={{ marginTop: 16 }}>← Quay lại</Btn>}
+      {msg && <Btn onClick={goHome} variant="secondary" style={{ marginTop: 16 }}><ArrowLeft size={18} /> Quay lại</Btn>}
     </div>
   );
 }
@@ -467,60 +462,53 @@ function BoxSelectionScreen({ go, goHome, jwt, userName, selectedBox, setSelecte
     return () => { ignore = true; };
   }, []);
 
-  const boxColor = '#60a5fa';
-
   return (
     <div className="screen">
       <Header onBack={goHome} title="Chọn ô tủ" />
-      {userName && <div className="user-info">👤 {userName}</div>}
+      {userName && <div className="user-info"><User size={16} /> {userName}</div>}
       {lockerInfo && (
-        <div style={{
-          background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px',
-          marginBottom: 12, border: '1px solid rgba(255,255,255,0.1)'
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
-            📍 {lockerInfo.storeName || lockerInfo.name}
+        <div className="locker-info-card">
+          <div className="locker-name">
+            <MapPin size={16} color="var(--accent)" />
+            {lockerInfo.storeName || lockerInfo.name}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+          <div className="locker-address">
             {lockerInfo.address} • Tủ: {lockerInfo.code}
           </div>
           {lockerInfo.totalBoxes != null && (
-            <div style={{ fontSize: 11, color: '#4ade80', marginTop: 4 }}>
-              ✅ {lockerInfo.availableBoxes ?? boxes.length} ô trống / {lockerInfo.totalBoxes} ô
+            <div className="locker-stats">
+              <span className="stat-available">
+                <CheckCircle size={14} style={{ marginRight: 4, verticalAlign: -2 }} />
+                {lockerInfo.availableBoxes ?? boxes.length} ô trống
+              </span>
+              <span className="stat-total">/ {lockerInfo.totalBoxes} ô</span>
             </div>
           )}
         </div>
       )}
       {!lockerInfo && (
-        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>
-          Chọn 1 ô tủ trống để gửi đồ
-        </p>
+        <p className="subtitle">Chọn 1 ô tủ trống để gửi đồ</p>
       )}
 
-      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>⏳ Đang tải...</p>}
+      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}><Loader2 size={20} style={{ animation: 'spin 0.6s linear infinite', verticalAlign: -4, marginRight: 8 }} />Đang tải...</p>}
       {msg && !loading && <Msg type="error" text={msg} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+      <div className="box-grid">
         {boxes.map(box => {
           const sel = selectedBox?.id === box.id;
           return (
             <button key={box.id} onClick={() => setSelectedBox(box)}
-              style={{
-                padding: '14px 8px', borderRadius: 12,
-                border: sel ? `2px solid ${boxColor}` : '2px solid rgba(255,255,255,0.1)',
-                background: sel ? `${boxColor}22` : 'rgba(255,255,255,0.05)',
-                cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
-              }}>
-              <div style={{ fontSize: 28 }}>📦</div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#fff', marginTop: 4 }}>Ô {box.boxNumber}</div>
-              <div style={{ fontSize: 11, color: '#4ade80', marginTop: 2 }}>Trống</div>
+              className={`box-item ${sel ? 'selected' : ''}`}>
+              <div className="box-icon"><Package size={28} /></div>
+              <div className="box-number">Ô {box.boxNumber}</div>
+              <div className="box-status">Trống</div>
             </button>
           );
         })}
       </div>
 
       <Btn onClick={() => go('services')} disabled={!selectedBox}>
-        Tiếp tục → Chọn dịch vụ
+        Tiếp tục <ChevronRight size={18} /> Chọn dịch vụ
       </Btn>
     </div>
   );
@@ -556,13 +544,13 @@ function ServicesScreen({ go, goHome, jwt, userName, services, setServices, sele
   return (
     <div className="screen">
       <Header onBack={goHome} title="Chọn dịch vụ" />
-      {userName && <div className="user-info">👤 {userName}</div>}
+      {userName && <div className="user-info"><User size={16} /> {userName}</div>}
       <div className="svc-list">
-        {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>⏳ Đang tải dịch vụ...</p>}
+        {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}><Loader2 size={20} style={{ animation: 'spin 0.6s linear infinite', verticalAlign: -4, marginRight: 8 }} />Đang tải dịch vụ...</p>}
         {!loading && services.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 24 }}>Không có dịch vụ</p>}
         {services.map(svc => (
           <div key={svc.id} className={`svc-card ${selectedSvcs.includes(svc.id) ? 'selected' : ''}`} onClick={() => toggle(svc.id)}>
-            <div className="svc-check">{selectedSvcs.includes(svc.id) ? '✓' : ''}</div>
+            <div className="svc-check">{selectedSvcs.includes(svc.id) ? <CheckCircle size={16} /> : ''}</div>
             <div className="svc-info">
               <div className="svc-name">{svc.name}</div>
               <div className="svc-price">{fmt(svc.price)} / {svc.unit || 'lần'}</div>
@@ -571,7 +559,7 @@ function ServicesScreen({ go, goHome, jwt, userName, services, setServices, sele
           </div>
         ))}
       </div>
-      <Btn onClick={() => go('order-info')} disabled={selectedSvcs.length === 0}>Tiếp tục →</Btn>
+      <Btn onClick={() => go('order-info')} disabled={selectedSvcs.length === 0}>Tiếp tục <ChevronRight size={18} /></Btn>
     </div>
   );
 }
@@ -579,19 +567,69 @@ function ServicesScreen({ go, goHome, jwt, userName, services, setServices, sele
 // ============================================
 // ORDER INFO
 // ============================================
-function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId, setOrderPin, setOrderCode, setTotalPrice }) {
+function OrderInfoScreen({ go, back, jwt, services, selectedSvcs, selectedBox, setOrderId, setOrderPin, setOrderCode, setTotalPrice }) {
   const [note, setNote] = useState('');
   const [recvName, setRecvName] = useState('');
   const [recvPhone, setRecvPhone] = useState('');
+
+  // Promo states
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState('');
+  const [promoDetail, setPromoDetail] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+
+  // Calculate pricing
+  const selectedServicesList = services?.filter(s => selectedSvcs.includes(s.id)) || [];
+  const subtotal = selectedServicesList.reduce((sum, s) => sum + s.price, 0);
+  const total = Math.max(0, subtotal - promoDiscount);
+
+  const handleApplyPromo = async () => {
+    const code = promoCode.trim();
+    if (!code) return;
+
+    setPromoLoading(true); setPromoError(''); setPromoApplied(false);
+    setPromoDiscount(0); setPromoDetail(null);
+
+    try {
+      const res = await api.validatePromotionCode(code, jwt);
+      if (res.success && res.data) {
+        const promo = res.data;
+        if (promo.minOrderAmount && subtotal < promo.minOrderAmount) {
+          setPromoError(`Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(promo.minOrderAmount)}đ để áp dụng mã này`);
+        } else {
+          // calculate discount
+          let discount = 0;
+          if (promo.discountType === 'PERCENTAGE') {
+            discount = subtotal * promo.discountValue / 100;
+            if (promo.maxDiscountAmount) discount = Math.min(discount, promo.maxDiscountAmount);
+          } else if (promo.discountType === 'FIXED_AMOUNT') {
+            discount = promo.discountValue;
+          }
+          discount = Math.min(discount, subtotal);
+
+          setPromoDetail(promo);
+          setPromoDiscount(discount);
+          setPromoApplied(true);
+        }
+      } else {
+        setPromoError(res.message || 'Mã không hợp lệ');
+      }
+    } catch (err) {
+      setPromoError('Lỗi kiểm tra mã, vui lòng thử lại');
+    }
+    setPromoLoading(false);
+  };
 
   const handleCreate = async () => {
     if (!selectedBox) { setMsg('Chưa chọn ô tủ'); return; }
     setLoading(true); setMsg('');
     try {
-      console.log('%c[ORDER] Creating order:', 'color:#fbbf24', { lockerId: LOCKER_ID, boxId: selectedBox?.id, services: selectedSvcs });
-      const res = await api.createOrder(jwt, {
+      const payload = {
         type: 'STORAGE',
         lockerId: LOCKER_ID,
         boxIds: [selectedBox.id],
@@ -599,7 +637,13 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId,
         customerNote: note || undefined,
         receiverName: recvName || undefined,
         receiverPhone: recvPhone || undefined,
-      });
+      };
+      if (promoApplied && promoCode.trim()) {
+        payload.promotionCode = promoCode.trim();
+      }
+
+      console.log('%c[ORDER] Creating order:', 'color:#fbbf24', payload);
+      const res = await api.createOrder(jwt, payload);
       if (res.success && res.data) {
         console.log('%c[ORDER] ✅ Created:', 'color:#4ade80', { id: res.data.id, pin: res.data.pinCode, code: res.data.orderCode });
         setOrderId(res.data.id);
@@ -614,6 +658,8 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId,
     setLoading(false);
   };
 
+  const fmt = (p) => new Intl.NumberFormat('vi-VN').format(p) + 'đ';
+
   return (
     <div className="screen">
       <Header onBack={back} title="Thông tin đơn hàng" />
@@ -621,7 +667,7 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId,
         <label>Ghi chú (tùy chọn)</label>
         <input className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Ví dụ: Đồ dễ vỡ, cần cẩn thận..." />
       </div>
-      <div className="divider">Người nhận (tùy chọn)</div>
+      <div className="divider" style={{ marginTop: 20 }}>Người nhận (tùy chọn)</div>
       <div className="form-group">
         <label>Tên người nhận</label>
         <input className="input" value={recvName} onChange={e => setRecvName(e.target.value)} placeholder="Để trống nếu tự nhận" />
@@ -630,7 +676,45 @@ function OrderInfoScreen({ go, back, jwt, selectedSvcs, selectedBox, setOrderId,
         <label>Số điện thoại người nhận</label>
         <input className="input" type="tel" value={recvPhone} onChange={e => setRecvPhone(e.target.value)} placeholder="0901234567" inputMode="tel" />
       </div>
-      <Btn onClick={handleCreate} loading={loading}>📋 Tạo đơn hàng</Btn>
+
+      <div className="divider" style={{ marginTop: 20 }}>Mã giảm giá/Ưu đãi</div>
+      <div className="form-group">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input className="input" value={promoCode} onChange={e => {
+            setPromoCode(e.target.value.toUpperCase());
+            if (promoApplied || promoError) { setPromoApplied(false); setPromoError(''); setPromoDiscount(0); setPromoDetail(null); }
+          }} placeholder="Nhập mã khuyến mãi" style={{ flex: 1, textTransform: 'uppercase' }} disabled={promoApplied || promoLoading} />
+          {!promoApplied ? (
+            <button className="btn btn-primary" onClick={handleApplyPromo} disabled={!promoCode.trim() || promoLoading} style={{ width: 'auto', padding: '0 20px', borderRadius: 12 }}>
+              {promoLoading ? <Loader2 size={18} className="spinner" /> : 'Áp dụng'}
+            </button>
+          ) : (
+             <button className="btn btn-secondary" onClick={() => { setPromoCode(''); setPromoApplied(false); setPromoDiscount(0); }} style={{ width: 'auto', padding: '0 20px', borderRadius: 12, backgroundColor: '#f1f5f9', color: '#64748b' }}>
+               <X size={18} /> Gỡ bỏ
+             </button>
+          )}
+        </div>
+        {promoError && <div style={{ color: '#ef4444', fontSize: 13, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}><Circle size={12} fill="#ef4444" color="#ef4444"/> {promoError}</div>}
+        {promoApplied && promoDetail && (
+          <div style={{ marginTop: 12, padding: 12, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12 }}>
+            <div style={{ color: '#166534', fontWeight: 600, fontSize: 14 }}>{promoDetail.title}</div>
+            <div style={{ color: '#22c55e', fontSize: 13, marginTop: 4 }}>Đã giảm: {fmt(promoDiscount)}</div>
+          </div>
+        )}
+      </div>
+
+      <div className="order-sum" style={{ marginTop: 24 }}>
+        <div className="order-row"><span style={{ color: 'var(--text-secondary)' }}>Tạm tính ({selectedServicesList.length} dịch vụ):</span> <strong>{fmt(subtotal)}</strong></div>
+        {promoApplied && promoDiscount > 0 && (
+          <div className="order-row"><span style={{ color: '#22c55e' }}>Khuyến mãi:</span> <strong style={{ color: '#ef4444' }}>-{fmt(promoDiscount)}</strong></div>
+        )}
+        <div className="order-row" style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Tổng cộng:</span> 
+          <strong style={{ fontSize: 20, color: 'var(--accent)' }}>{fmt(total)}</strong>
+        </div>
+      </div>
+
+      <Btn onClick={handleCreate} loading={loading} style={{ marginTop: 24 }}><ClipboardList size={18} /> Tạo đơn hàng</Btn>
       {msg && <Msg type="error" text={msg} />}
     </div>
   );
@@ -646,7 +730,6 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
   const [polling, setPolling] = useState(false);
   const pollRef = useRef(null);
 
-  // Cleanup polling on unmount
   useEffect(() => {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
@@ -655,11 +738,10 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
 
   const successExtra = { orderCode, orderPin, boxNumber: selectedBox?.boxNumber };
 
-  // Confirm order after successful unlock (DROP_OFF)
   const confirmAfterUnlock = async () => {
     try {
       await api.confirmOrder(jwt, orderId);
-    } catch { /* best-effort, don't block success screen */ }
+    } catch { /* best-effort */ }
   };
 
   const skipPay = async () => {
@@ -683,7 +765,6 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
       const res = await api.createPayment(jwt, orderId, method);
       if (res.success && res.data?.paymentUrl) {
         setPayUrl(res.data.paymentUrl);
-        // Start polling payment status
         startPaymentPolling();
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi tạo thanh toán');
@@ -701,7 +782,6 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
         if (res.success && res.data?.isPaid) {
           clearInterval(pollRef.current);
           setPolling(false);
-          // Payment confirmed → auto unlock
           await openAfterPay();
         }
       } catch { /* ignore polling errors */ }
@@ -727,34 +807,34 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
     <div className="screen">
       <Header onBack={goHome} title="Thanh toán" />
       <div className="order-sum">
-        <p>📋 Mã đơn: <strong>{orderCode}</strong></p>
-        <p>🔑 PIN: <strong>{orderPin}</strong></p>
-        <p>💰 Tổng: <strong>{fmt(totalPrice)}</strong></p>
-        {selectedBox && <p>📦 Ô tủ: <strong>#{selectedBox.boxNumber}</strong></p>}
+        <div className="order-row"><ClipboardList size={16} /> Mã đơn: <strong>{orderCode}</strong></div>
+        <div className="order-row"><KeyRound size={16} /> PIN: <strong>{orderPin}</strong></div>
+        <div className="order-row"><CreditCard size={16} /> Tổng: <strong>{fmt(totalPrice)}</strong></div>
+        {selectedBox && <div className="order-row"><Package size={16} /> Ô tủ: <strong>#{selectedBox.boxNumber}</strong></div>}
       </div>
       <Btn variant="secondary" onClick={skipPay} loading={loading === 'skip'} style={{ marginBottom: 12 }}>
-        🔓 Mở tủ trước — Thanh toán sau
+        <Unlock size={18} /> Mở tủ trước — Thanh toán sau
       </Btn>
       <div className="divider">Hoặc thanh toán ngay</div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <Btn variant="secondary" onClick={() => payOnline('VNPAY')} loading={loading === 'VNPAY'} style={{ flex: 1 }}>
-          💳 VNPay
+      <div className="pay-row">
+        <Btn variant="secondary" onClick={() => payOnline('VNPAY')} loading={loading === 'VNPAY'}>
+          <CreditCard size={18} /> VNPay
         </Btn>
-        <Btn variant="secondary" onClick={() => payOnline('MOMO')} loading={loading === 'MOMO'} style={{ flex: 1 }}>
-          📱 MoMo
+        <Btn variant="secondary" onClick={() => payOnline('MOMO')} loading={loading === 'MOMO'}>
+          <Smartphone size={18} /> MoMo
         </Btn>
       </div>
       {payUrl && (
         <div className="pay-link">
-          <p style={{ color: '#c8d6e5', fontSize: 13, marginBottom: 8 }}>📱 Quét QR hoặc mở link để thanh toán:</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}><Smartphone size={14} style={{ verticalAlign: -2, marginRight: 4 }} />Quét QR hoặc mở link để thanh toán:</p>
           <a href={payUrl} target="_blank" rel="noreferrer">{payUrl}</a>
-          {polling && <p style={{ color: '#f59e0b', marginTop: 6, fontSize: 13 }}>⏳ Đang chờ xác nhận thanh toán...</p>}
+          {polling && <p className="polling-status"><Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} />Đang chờ xác nhận thanh toán...</p>}
           {!polling && <p>Sau khi thanh toán xong, nhấn nút bên dưới.</p>}
         </div>
       )}
       {payUrl && (
         <Btn onClick={openAfterPay} loading={loading === 'open'} style={{ marginTop: 12 }}>
-          🔓 Đã thanh toán — Mở tủ
+          <Unlock size={18} /> Đã thanh toán — Mở tủ
         </Btn>
       )}
       {msg && <Msg type="error" text={msg} />}
@@ -768,7 +848,7 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
 function PinScreen({ goHome, showSuccess }) {
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
-  const [pinState, setPinState] = useState(''); // '', 'error', 'success'
+  const [pinState, setPinState] = useState('');
   const [msg, setMsg] = useState('');
 
   const pressKey = (num) => {
@@ -788,7 +868,6 @@ function PinScreen({ goHome, showSuccess }) {
     if (code.length !== 6) return;
     setLoading(true);
     try {
-      // Step 1: Look up order by PIN to get boxId
       console.log('%c[PIN] Looking up order by PIN:', 'color:#fbbf24', code);
       const orderRes = await api.getOrderByPin(code);
       if (!orderRes.success || !orderRes.data) {
@@ -798,13 +877,11 @@ function PinScreen({ goHome, showSuccess }) {
         setLoading(false);
         return;
       }
-      const boxId = orderRes.data.box?.id || orderRes.data.boxId;
+      const boxId = orderRes.data.sendBoxId || orderRes.data.receiveBoxId || orderRes.data.box?.id || orderRes.data.boxId;
       console.log('%c[PIN] Found order → boxId:', 'color:#4ade80', boxId, orderRes.data);
 
-      // Step 2: Verify PIN
       const verifyRes = await api.verifyPin(code, boxId);
       if (verifyRes.success && verifyRes.data?.valid) {
-        // Step 3: Unlock box
         const unlockRes = await api.unlockBox(code, boxId, 'PICKUP');
         if (unlockRes.success || unlockRes.data?.success) {
           setPinState('success');
@@ -836,7 +913,7 @@ function PinScreen({ goHome, showSuccess }) {
   return (
     <div className="screen">
       <Header onBack={goHome} title="Nhập mã PIN" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8, textAlign: 'center' }}>
+      <p className="subtitle" style={{ textAlign: 'center' }}>
         Nhập mã PIN 6 số để mở tủ
       </p>
       <div className="pin-row">
@@ -852,10 +929,10 @@ function PinScreen({ goHome, showSuccess }) {
         ))}
         <div className="key fn" onClick={clearAll}>Xóa</div>
         <div className="key" onClick={() => pressKey('0')}>0</div>
-        <div className="key fn" onClick={backspace}>⌫</div>
+        <div className="key fn" onClick={backspace}><Delete size={20} /></div>
       </div>
       <Btn onClick={() => submitPin(pin)} loading={loading} disabled={pin.length < 6} style={{ marginTop: 16 }}>
-        🔓 Mở khóa
+        <Unlock size={18} /> Mở khóa
       </Btn>
       {msg && <Msg type="error" text={msg} />}
     </div>
@@ -889,9 +966,7 @@ function StaffScreen({ goHome, showSuccess }) {
   return (
     <div className="screen">
       <Header onBack={goHome} title="Mã nhân viên" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20 }}>
-        Nhập Order ID và mã truy cập nhân viên
-      </p>
+      <p className="subtitle">Nhập Order ID và mã truy cập nhân viên</p>
       <div className="form-group">
         <label>Order ID</label>
         <input className="input" type="number" value={oid} onChange={e => setOid(e.target.value)} placeholder="Ví dụ: 123" inputMode="numeric" />
@@ -904,7 +979,7 @@ function StaffScreen({ goHome, showSuccess }) {
         <label>Tên nhân viên (tùy chọn)</label>
         <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Tên nhân viên" />
       </div>
-      <Btn onClick={handleUnlock} loading={loading}>🔓 Mở khóa</Btn>
+      <Btn onClick={handleUnlock} loading={loading}><Unlock size={18} /> Mở khóa</Btn>
       {msg && <Msg type="error" text={msg} />}
     </div>
   );
@@ -917,34 +992,33 @@ function SuccessScreen({ goHome, title, msg, extra, countdown }) {
   return (
     <div className="screen">
       <div className="success-box">
-        <span className="icon">✅</span>
+        <div className="icon-wrap">
+          <CheckCircle size={48} strokeWidth={2} />
+        </div>
         <h2>{title}</h2>
         <p>{msg}</p>
       </div>
       {extra && (
-        <div style={{
-          background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 18px',
-          marginTop: 16, border: '1px solid rgba(255,255,255,0.1)', textAlign: 'left'
-        }}>
+        <div className="extra-card">
           {extra.orderCode && (
-            <div style={{ fontSize: 14, color: '#fff', marginBottom: 6 }}>
-              📋 Mã đơn: <strong>{extra.orderCode}</strong>
+            <div className="extra-row">
+              <ClipboardList size={16} color="var(--accent)" /> Mã đơn: <strong>{extra.orderCode}</strong>
             </div>
           )}
           {extra.orderPin && (
-            <div style={{ fontSize: 14, color: '#f59e0b', marginBottom: 6 }}>
-              🔑 Mã PIN lấy đồ: <strong style={{ fontSize: 18, letterSpacing: 2 }}>{extra.orderPin}</strong>
+            <div className="extra-row pin-highlight">
+              <KeyRound size={16} /> Mã PIN lấy đồ: <strong>{extra.orderPin}</strong>
             </div>
           )}
           {extra.boxNumber && (
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-              📦 Ô tủ: <strong>#{extra.boxNumber}</strong>
+            <div className="extra-row">
+              <Package size={16} color="var(--text-secondary)" /> Ô tủ: <strong>#{extra.boxNumber}</strong>
             </div>
           )}
         </div>
       )}
       <div className="countdown">Về trang chủ sau {countdown}s</div>
-      <Btn variant="secondary" onClick={goHome} style={{ marginTop: 20 }}>🏠 Về trang chủ</Btn>
+      <Btn variant="secondary" onClick={goHome} style={{ marginTop: 20 }}><Home size={18} /> Về trang chủ</Btn>
     </div>
   );
 }

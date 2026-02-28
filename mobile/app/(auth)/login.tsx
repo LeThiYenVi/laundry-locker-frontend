@@ -7,12 +7,18 @@ import {
   getAuth,
   signInWithPhoneNumber,
 } from "@react-native-firebase/auth";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
+import AntDesign from "react-native-vector-icons/AntDesign";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -28,6 +34,14 @@ type LoginMethod = "phone" | "email";
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+
+  // Header animations
+  const logoScale = useRef(new Animated.Value(0.5)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const titleSlide = useRef(new Animated.Value(20)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const formSlide = useRef(new Animated.Value(40)).current;
+  const formOpacity = useRef(new Animated.Value(0)).current;
 
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("email");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -52,7 +66,52 @@ export default function LoginScreen() {
 
   useEffect(() => {
     const subscriber = getAuth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
+    return subscriber;
+  }, []);
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.stagger(200, [
+      Animated.parallel([
+        Animated.spring(logoScale, {
+          toValue: 1,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(titleSlide, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(titleOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(formSlide, {
+          toValue: 0,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(formOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
   }, []);
 
   // Auto-focus OTP input when OTP screen appears
@@ -402,18 +461,62 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}></View>
-        <ThemedText style={styles.appName}>Laundry Locker</ThemedText>
-        <ThemedText style={styles.tagline}>
-          Giặt ủi thông minh, tiện lợi
-        </ThemedText>
-      </View>
+      {/* Animated Gradient Header */}
+      <LinearGradient
+        colors={["#001F2D", "#003D5B", "#0077B6"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        {/* Decorative circles */}
+        <View style={styles.headerDecor1} />
+        <View style={styles.headerDecor2} />
 
-      <KeyboardAvoidingView
-        style={styles.formContainer}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              transform: [{ scale: logoScale }],
+              opacity: logoOpacity,
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={["rgba(255,255,255,0.2)", "rgba(255,255,255,0.05)"]}
+            style={styles.logoGradientRing}
+          >
+            <View style={styles.logoInner}>
+              <Image
+                source={require("@/assets/images/logo.svg")}
+                style={{ width: 60, height: 60 }}
+                contentFit="contain"
+              />
+            </View>
+          </LinearGradient>
+        </Animated.View>
+
+        <Animated.View
+          style={{
+            alignItems: "center",
+            opacity: titleOpacity,
+            transform: [{ translateY: titleSlide }],
+          }}
+        >
+          <ThemedText style={styles.appName}>Lock.R Locker</ThemedText>
+          <ThemedText style={styles.tagline}>
+            Locker thông minh, tiện lợi
+          </ThemedText>
+        </Animated.View>
+      </LinearGradient>
+
+      <Animated.View
+        style={[
+          styles.formContainer,
+          {
+            opacity: formOpacity,
+            transform: [{ translateY: formSlide }],
+          },
+        ]}
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Method Toggle */}
@@ -571,15 +674,21 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.oauthButton}
               onPress={() => handleOAuthLogin("google")}
-            ></TouchableOpacity>
+            >
+              <AntDesign name="google" size={26} color="#EA4335" />
+            </TouchableOpacity>
             <TouchableOpacity
-              style={styles.oauthButton}
+              style={[styles.oauthButton, { backgroundColor: "#1877F2" }]}
               onPress={() => handleOAuthLogin("facebook")}
-            ></TouchableOpacity>
+            >
+              <FontAwesome name="facebook" size={26} color="#fff" />
+            </TouchableOpacity>
             <TouchableOpacity
-              style={styles.oauthButton}
+              style={[styles.oauthButton, { backgroundColor: "#0068FF" }]}
               onPress={() => handleOAuthLogin("zalo")}
-            ></TouchableOpacity>
+            >
+              <ThemedText style={[styles.oauthIcon, { color: "#fff", fontSize: 16, fontWeight: "800" }]}>Zalo</ThemedText>
+            </TouchableOpacity>
           </View>
 
           <ThemedText style={styles.termsText}>
@@ -589,7 +698,7 @@ export default function LoginScreen() {
             <ThemedText style={styles.termsLink}>Chính sách bảo mật</ThemedText>
           </ThemedText>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </Animated.View>
     </View>
   );
 }
@@ -601,17 +710,47 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    paddingTop: 80,
-    paddingBottom: 40,
+    paddingTop: 70,
+    paddingBottom: 36,
+    overflow: "hidden",
+  },
+  headerDecor1: {
+    position: "absolute",
+    top: -40,
+    right: -50,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  headerDecor2: {
+    position: "absolute",
+    bottom: -30,
+    left: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "rgba(0,180,216,0.08)",
   },
   logoContainer: {
+    marginBottom: 16,
+  },
+  logoGradientRing: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  logoInner: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   appName: {
     fontSize: 28,
@@ -788,6 +927,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     justifyContent: "center",
     alignItems: "center",
+  },
+  oauthIcon: {
+    fontSize: 24,
+    fontWeight: "700",
   },
   termsText: {
     fontSize: 12,
