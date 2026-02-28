@@ -12,6 +12,7 @@ import {
     ActivityIndicator,
     Alert,
     Modal,
+    RefreshControl,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -30,6 +31,29 @@ export default function ProfileScreen() {
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [newAvatarUrl, setNewAvatarUrl] = useState("");
   const [updatingAvatar, setUpdatingAvatar] = useState(false);
+
+  // Edit Profile State
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    email: "",
+    birthday: "",
+  });
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  // Change Password State
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  // Refreshing state
+  const [refreshing, setRefreshing] = useState(false);
 
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -93,6 +117,82 @@ export default function ProfileScreen() {
     fetchOrderStats();
     fetchLoyalty();
   }, [fetchProfile, fetchOrderStats, fetchLoyalty]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchProfile(), fetchOrderStats(), fetchLoyalty()]);
+    setRefreshing(false);
+  }, [fetchProfile, fetchOrderStats, fetchLoyalty]);
+
+  const openEditModal = () => {
+    setEditForm({
+      firstName: displayUser?.firstName || "",
+      lastName: displayUser?.lastName || "",
+      phoneNumber: displayUser?.phoneNumber || "",
+      email: displayUser?.email || "",
+      birthday: "",
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleUpdateProfile = async () => {
+    setUpdatingProfile(true);
+    try {
+      const result = await userService.updateProfile({
+        firstName: editForm.firstName || undefined,
+        lastName: editForm.lastName || undefined,
+        phoneNumber: editForm.phoneNumber || undefined,
+        email: editForm.email || undefined,
+        birthday: editForm.birthday || undefined,
+      });
+      if (result.success) {
+        setProfileData(result.data);
+        if (refreshUser) refreshUser();
+        setEditModalVisible(false);
+        Alert.alert("Thành công", "Cập nhật hồ sơ thành công");
+      } else {
+        Alert.alert("Lỗi", result.message || "Không thể cập nhật hồ sơ");
+      }
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+      const msg = error?.response?.data?.message || "Đã xảy ra lỗi khi cập nhật";
+      Alert.alert("Lỗi", msg);
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      Alert.alert("Lỗi", "Mật khẩu mới phải có ít nhất 6 ký tự");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      Alert.alert("Lỗi", "Mật khẩu mới và xác nhận mật khẩu không khớp");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const result = await userService.changePassword(passwordForm);
+      if (result.success) {
+        setPasswordModalVisible(false);
+        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        Alert.alert("Thành công", "Đổi mật khẩu thành công");
+      } else {
+        Alert.alert("Lỗi", result.message || "Không thể đổi mật khẩu");
+      }
+    } catch (error: any) {
+      console.error("Change password error:", error);
+      const msg = error?.response?.data?.message || "Mật khẩu hiện tại không đúng hoặc đã xảy ra lỗi";
+      Alert.alert("Lỗi", msg);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const handleUpdateAvatar = async () => {
       if (!newAvatarUrl.trim()) {
@@ -210,6 +310,9 @@ export default function ProfileScreen() {
       <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#003D5B"]} />
+        }
       >
         {/* Statistics Cards */}
         <View style={styles.statsContainer}>
@@ -240,7 +343,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Thông tin tài khoản</ThemedText>
           
-          <View style={styles.infoCard}>
+          <TouchableOpacity style={styles.infoCard} onPress={openEditModal}>
              <View style={styles.infoIconContainer}>
                <Icon name="badge" type="material" size={20} color="#003D5B" />
              </View>
@@ -250,9 +353,10 @@ export default function ProfileScreen() {
                  {displayName}
                </ThemedText>
              </View>
-           </View>
+             <Icon name="chevron-right" type="material" size={24} color="#999" />
+           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.infoCard}>
+          <TouchableOpacity style={styles.infoCard} onPress={openEditModal}>
             <View style={styles.infoIconContainer}>
               <Icon name="phone" type="material" size={20} color="#003D5B" />
             </View>
@@ -268,7 +372,7 @@ export default function ProfileScreen() {
             <Icon name="chevron-right" type="material" size={24} color="#999" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.infoCard}>
+          <TouchableOpacity style={styles.infoCard} onPress={openEditModal}>
             <View style={styles.infoIconContainer}>
               <Icon name="email" type="material" size={20} color="#003D5B" />
             </View>
@@ -397,23 +501,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionCard}
-              onPress={async () => {
-                try {
-                  const res = await loyaltyService.getAvailableRewards();
-                  if (res.success && res.data) {
-                    const { availableRewards, membershipTier, currentPoints } = res.data;
-                    const rewardList = availableRewards?.length > 0
-                      ? availableRewards.slice(0, 5).map(r => `• ${r.name} (${r.pointsRequired} điểm)`).join('\n')
-                      : 'Chưa có voucher khả dụng';
-                    Alert.alert(
-                      `Voucher — ${membershipTier || 'Thành viên'}`,
-                      `Điểm hiện tại: ${currentPoints || 0}\n\n${rewardList}`
-                    );
-                  }
-                } catch (e) {
-                  Alert.alert('Thông báo', 'Không thể tải voucher. Vui lòng thử lại.');
-                }
-              }}
+              onPress={() => router.push("/user/vouchers?tab=vouchers")}
             >
               <View style={styles.quickActionIcon}>
                 <Icon name="card-giftcard" type="material" size={28} color="#FF9800" />
@@ -422,19 +510,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionCard}
-              onPress={async () => {
-                try {
-                  const res = await loyaltyService.getStampCards();
-                  if (res.success && res.data) {
-                    const cardList = res.data.length > 0
-                      ? res.data.map(c => `• ${c.serviceName}: ${c.currentStamps}/${c.stampsRequired} tem (${c.freeRewardsAvailable} thưởng)`).join('\n')
-                      : 'Chưa có thẻ tích điểm';
-                    Alert.alert('Ưu đãi tích điểm', cardList);
-                  }
-                } catch (e) {
-                  Alert.alert('Thông báo', 'Không thể tải ưu đãi. Vui lòng thử lại.');
-                }
-              }}
+              onPress={() => router.push("/user/vouchers?tab=rewards")}
             >
               <View style={styles.quickActionIcon}>
                 <Icon name="local-offer" type="material" size={28} color="#4CAF50" />
@@ -470,7 +546,7 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingsCard}>
+          <TouchableOpacity style={styles.settingsCard} onPress={() => setPasswordModalVisible(true)}>
             <View style={styles.settingsIconContainer}>
               <Icon name="security" type="material" size={22} color="#003D5B" />
             </View>
@@ -548,6 +624,153 @@ export default function ProfileScreen() {
                      <ActivityIndicator size="small" color="#fff" />
                 ) : (
                     <ThemedText style={styles.textStyle}>Cập nhật</ThemedText>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <ThemedText style={styles.modalText}>Chỉnh sửa hồ sơ</ThemedText>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Họ</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập họ"
+                value={editForm.lastName}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, lastName: text }))}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Tên</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập tên"
+                value={editForm.firstName}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, firstName: text }))}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Số điện thoại</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập số điện thoại"
+                value={editForm.phoneNumber}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, phoneNumber: text }))}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Email</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập email"
+                value={editForm.email}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, email: text }))}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <ThemedText style={styles.textStyle}>Hủy</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonUpdate]}
+                onPress={handleUpdateProfile}
+                disabled={updatingProfile}
+              >
+                {updatingProfile ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText style={styles.textStyle}>Lưu</ThemedText>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={passwordModalVisible}
+        onRequestClose={() => setPasswordModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <ThemedText style={styles.modalText}>Đổi mật khẩu</ThemedText>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Mật khẩu hiện tại</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập mật khẩu hiện tại"
+                value={passwordForm.currentPassword}
+                onChangeText={(text) => setPasswordForm(prev => ({ ...prev, currentPassword: text }))}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Mật khẩu mới</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Tối thiểu 6 ký tự"
+                value={passwordForm.newPassword}
+                onChangeText={(text) => setPasswordForm(prev => ({ ...prev, newPassword: text }))}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Xác nhận mật khẩu</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập lại mật khẩu mới"
+                value={passwordForm.confirmPassword}
+                onChangeText={(text) => setPasswordForm(prev => ({ ...prev, confirmPassword: text }))}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => {
+                  setPasswordModalVisible(false);
+                  setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                }}
+              >
+                <ThemedText style={styles.textStyle}>Hủy</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonUpdate]}
+                onPress={handleChangePassword}
+                disabled={changingPassword}
+              >
+                {changingPassword ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText style={styles.textStyle}>Đổi</ThemedText>
                 )}
               </TouchableOpacity>
             </View>
@@ -904,6 +1127,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     textAlign: "center"
+  },
+  // Form field styles
+  formField: {
+    width: "100%",
+    marginBottom: 12,
+  },
+  formLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
   },
   // Loyalty styles
   loyaltyCard: {

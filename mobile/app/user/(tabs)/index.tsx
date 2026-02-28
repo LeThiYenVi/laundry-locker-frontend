@@ -2,14 +2,15 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { storeService } from "@/services/user";
-import { Store } from "@/types";
-import { Avatar, Icon, SearchBar } from "@rneui/themed";
+import { notificationService, storeService, userService } from "@/services/user";
+import { Store, User } from "@/types";
+import { Avatar, Icon } from "@rneui/themed";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -23,14 +24,68 @@ import {
 export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { user } = useAuth();
   const backgroundColor = Colors[colorScheme ?? "light"].background;
   const textColor = Colors[colorScheme ?? "light"].text;
-  const [search, setSearch] = useState("");
   const [stores, setStores] = useState<Store[]>([]);
   const [isLoadingStores, setIsLoadingStores] = useState(true);
   const [storeError, setStoreError] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<User | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Filter chips for quick navigation
+  const filterChips = [
+    { label: "Đơn hàng", icon: "receipt", route: "/user/(tabs)/orders" },
+    { label: "Lockers", icon: "inbox", route: "/user/(tabs)/lockers" },
+    { label: "Cửa hàng", icon: "storefront", route: "/user/stores" },
+    { label: "Thông báo", icon: "notifications", route: "/user/(tabs)/notifications" },
+    { label: "Ưu đãi", icon: "card-giftcard", route: "/user/(tabs)/profile" },
+    { label: "Tạo đơn", icon: "add-circle", route: "/user/create-order" },
+  ];
+
+  // Dynamic greeting based on time of day with emoji
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "☀️ Chào buổi sáng";
+    if (hour < 14) return "🌤️ Chào buổi trưa";
+    if (hour < 18) return "🌅 Chào buổi chiều";
+    return "🌙 Chào buổi tối";
+  }, []);
+
+  // Use fetched profile data, fallback to auth context user
+  const displayUser = profileData || user;
+
+  // Display name from user data
+  const displayName = displayUser?.lastName && displayUser?.firstName
+    ? `${displayUser.lastName} ${displayUser.firstName}`
+    : displayUser?.fullName || "Người dùng";
+
+  // Avatar source
+  const avatarSource = displayUser?.imageUrl || displayUser?.avatarUrl;
 
   const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await userService.getProfile();
+      if (response.success) {
+        setProfileData(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    }
+  }, []);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await notificationService.getUnreadCount();
+      if (response.success && response.data) {
+        setUnreadCount(response.data.count || 0);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread count:", error);
+    }
+  }, []);
 
   const fetchStores = async () => {
     try {
@@ -51,14 +106,18 @@ export default function HomeScreen() {
     }
   };
 
-  // Fetch stores on mount
+  // Fetch data on mount
   useEffect(() => {
+    fetchProfile();
     fetchStores();
+    fetchUnreadCount();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
+    fetchProfile();
     fetchStores();
+    fetchUnreadCount();
   };
 
   // Get the first store or use default data
@@ -84,47 +143,69 @@ export default function HomeScreen() {
         >
           <View style={styles.headerContent}>
             <View style={styles.greetingRow}>
-              <View style={{ width: '80%', flexDirection: 'row', alignItems: 'center' }}>
-                <Avatar
-                  size={56}
-                  rounded
-                  source={{ uri: "https://randomuser.me/api/portraits/men/36.jpg" }}
-                  containerStyle={styles.avatarContainer}
-                />
-                <View style={[styles.greetingTextContainer, { marginLeft: 12 }]}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                {/* Avatar with gradient border */}
+                <LinearGradient
+                  colors={["#003D5B", "#0077B6", "#00B4D8"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.avatarGradientBorder}
+                >
+                  <View style={styles.avatarInner}>
+                    <Avatar
+                      size={52}
+                      rounded
+                      source={avatarSource ? { uri: avatarSource } : undefined}
+                      icon={!avatarSource ? { name: "person", type: "material" } : undefined}
+                      containerStyle={styles.avatarContainer}
+                    />
+                  </View>
+                </LinearGradient>
+                <View style={[styles.greetingTextContainer, { marginLeft: 14 }]}>
                   <ThemedText type="title" style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
-                    Hi Lertermer!
+                    Hi {displayName}!
                   </ThemedText>
-                  <ThemedText style={styles.subGreeting}>Good Morning</ThemedText>
+                  <ThemedText style={styles.subGreeting}>{greeting}</ThemedText>
                 </View>
               </View>
-              <View style={{ width: '20%', alignItems: 'flex-end' }}>
-              <Image
-                source={require("@/assets/images/logo.svg")}
-                style={{ width: "100%", height: 60 }}
-                contentFit="contain"
-              />
-              </View>
+              {/* Notification Bell */}
+              <TouchableOpacity
+                style={styles.notificationBell}
+                onPress={() => router.push("/user/(tabs)/notifications")}
+                activeOpacity={0.7}
+              >
+                <Icon name="notifications-none" type="material" size={28} color="#003D5B" />
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <ThemedText style={styles.notificationBadgeText}>
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </ThemedText>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </LinearGradient>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <SearchBar
-            placeholder="Tìm kiếm địa điểm, dịch vụ..."
-            onChangeText={setSearch}
-            value={search}
-            platform="default"
-            containerStyle={styles.searchBarContainer}
-            inputContainerStyle={styles.searchBarInputContainer}
-            inputStyle={styles.searchBarInput}
-            searchIcon={
-              <Icon name="search" type="material" color="#B0C4DE" size={20} />
-            }
-            placeholderTextColor="#B0C4DE"
-          />
-        </View>
+        {/* Quick Filter Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterContainer}
+          style={{ marginBottom: 24 }}
+        >
+          {filterChips.map((chip, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.filterChip}
+              onPress={() => router.push(chip.route as any)}
+              activeOpacity={0.7}
+            >
+              <Icon name={chip.icon} type="material" size={18} color="#003D5B" />
+              <ThemedText style={styles.filterChipText}>{chip.label}</ThemedText>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
         {/* Welcome Card */}
         <View style={styles.welcomeCard}>
@@ -302,12 +383,57 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     justifyContent: "space-between",
   },
+  avatarGradientBorder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#0077B6",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  avatarInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
   avatarContainer: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+  },
+  notificationBell: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(0,61,91,0.1)",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#fff",
   },
   greetingTextContainer: {
     flex: 1,
@@ -353,28 +479,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 24,
   },
-  searchBarContainer: {
-    backgroundColor: "transparent",
-    borderTopWidth: 0,
-    borderBottomWidth: 0,
-    padding: 0,
+  filterContainer: {
+    paddingHorizontal: 24,
+    gap: 10,
   },
-  searchBarInputContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    height: 52,
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.6)",
+    borderColor: "#E2E8F0",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  searchBarInput: {
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: "600",
     color: "#003D5B",
-    fontSize: 15,
   },
   headerGradient: {
     paddingTop: 60,

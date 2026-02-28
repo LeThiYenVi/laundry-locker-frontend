@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
-import { orderService, serviceService } from "@/services/user";
+import { orderService, serviceService, promotionService } from "@/services/user";
+import type { PromotionValidateResponse } from "@/services/user/promotionService";
 import { LaundryService, Order, OrderType, ServiceCategory } from "@/types";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,22 +40,7 @@ export default function CreateOrderScreen() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
-  // New state for STORAGE - receiver info
-  const [sendToOther, setSendToOther] = useState(false);
-  const [receiverName, setReceiverName] = useState("");
-  const [receiverPhone, setReceiverPhone] = useState("");
-  
-  // New state for STORAGE - intended pickup time
-  const [intendedReceiveAt, setIntendedReceiveAt] = useState<Date | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  
-  // New state for promo code (both categories)
-  const [promotionCode, setPromotionCode] = useState("");
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoDiscount, setPromoDiscount] = useState(0);
-  
-  // New state for LAUNDRY - estimated weight
-  const [estimatedWeight, setEstimatedWeight] = useState("");
+  // Removed additional details state like note, receiver info, promo code to confirm-order.tsx
 
   const fetchServices = useCallback(async (category: ServiceCategory) => {
     try {
@@ -125,65 +111,22 @@ export default function CreateOrderScreen() {
       Alert.alert("Chưa chọn dịch vụ", "Vui lòng chọn ít nhất 1 dịch vụ");
       return;
     }
-    setShowConfirmModal(true);
-  };
-
-  const handleCreateOrder = async () => {
-    setShowConfirmModal(false);
     
-    try {
-      setIsCreating(true);
-      
-      // Build base order data
-      const orderData: any = {
-        type: selectedCategory as OrderType,
-        serviceCategory: selectedCategory,
-        lockerId: parseInt(params.lockerId),
-        boxId: parseInt(params.boxId),
-        customerNote: customerNote.trim() || undefined,
-        serviceIds: selectedServices,
-      };
-
-      // Add promo code if entered
-      if (promotionCode.trim()) {
-        orderData.promotionCode = promotionCode.trim();
+    // Pass selected data to the new confirm order screen
+    router.push({
+      pathname: '/user/confirm-order',
+      params: {
+        storeId: params.storeId,
+        storeName: params.storeName,
+        lockerId: params.lockerId,
+        lockerName: params.lockerName,
+        boxId: params.boxId,
+        boxNumber: params.boxNumber,
+        selectedCategory,
+        serviceIds: selectedServices.join(','),
       }
-
-      // LAUNDRY specific fields
-      if (selectedCategory === 'LAUNDRY') {
-        if (estimatedWeight && parseFloat(estimatedWeight) > 0) {
-          orderData.estimatedWeight = parseFloat(estimatedWeight);
-        }
-      }
-
-      // STORAGE specific fields
-      if (selectedCategory === 'STORAGE') {
-        if (intendedReceiveAt) {
-          orderData.intendedReceiveAt = intendedReceiveAt.toISOString();
-        }
-        if (sendToOther && receiverName.trim() && receiverPhone.trim()) {
-          orderData.receiverName = receiverName.trim();
-          orderData.receiverPhone = receiverPhone.trim();
-        }
-      }
-
-      console.log('[CreateOrder] Sending:', orderData);
-      const response = await orderService.createOrder(orderData);
-      
-      if (response.success && response.data) {
-        setCreatedOrder(response.data);
-        setShowSuccessModal(true);
-      }
-    } catch (error: any) {
-      Alert.alert(
-        "Tạo đơn thất bại",
-        error.message || "Không thể tạo đơn hàng. Vui lòng thử lại."
-      );
-    } finally {
-      setIsCreating(false);
-    }
+    });
   };
-
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -443,141 +386,6 @@ export default function CreateOrderScreen() {
           )}
         </View>
 
-        {/* Customer Note */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Ghi chú thêm</ThemedText>
-          <View style={styles.noteInputContainer}>
-              <View style={{ marginTop: 12 }}>
-                <Icon name="edit" type="material" size={20} color="#B0C4DE" />
-              </View>
-              <TextInput
-                style={styles.noteInput}
-                placeholder="Ví dụ: Giặt riêng đồ trắng, ủi ly quần tây..."
-                placeholderTextColor="#A0A0A0"
-                value={customerNote}
-                onChangeText={setCustomerNote}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-          </View>
-        </View>
-
-        {/* STORAGE: Receiver Section */}
-        {selectedCategory === 'STORAGE' && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <ThemedText style={styles.sectionTitle}>Người nhận đồ</ThemedText>
-              <TouchableOpacity
-                style={styles.toggleButton}
-                onPress={() => setSendToOther(!sendToOther)}
-              >
-                <View style={[styles.toggleTrack, sendToOther && styles.toggleTrackActive]}>
-                  <View style={[styles.toggleThumb, sendToOther && styles.toggleThumbActive]} />
-                </View>
-                <ThemedText style={styles.toggleLabel}>
-                  {sendToOther ? 'Gửi cho người khác' : 'Tự nhận'}
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-            
-            {sendToOther && (
-              <View style={styles.receiverInputs}>
-                <View style={styles.inputRow}>
-                  <Icon name="person" type="material" size={20} color="#666" />
-                  <TextInput
-                    style={styles.textInputField}
-                    placeholder="Tên người nhận"
-                    placeholderTextColor="#A0A0A0"
-                    value={receiverName}
-                    onChangeText={setReceiverName}
-                  />
-                </View>
-                <View style={styles.inputRow}>
-                  <Icon name="phone" type="material" size={20} color="#666" />
-                  <TextInput
-                    style={styles.textInputField}
-                    placeholder="Số điện thoại người nhận"
-                    placeholderTextColor="#A0A0A0"
-                    value={receiverPhone}
-                    onChangeText={setReceiverPhone}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* STORAGE: Time Picker Section */}
-        {selectedCategory === 'STORAGE' && (
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Thời gian nhận dự kiến</ThemedText>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => {
-                // Set default to tomorrow 10:00 AM if not set
-                if (!intendedReceiveAt) {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  tomorrow.setHours(10, 0, 0, 0);
-                  setIntendedReceiveAt(tomorrow);
-                }
-                setShowDatePicker(true);
-              }}
-            >
-              <Icon name="event" type="material" size={22} color="#003D5B" />
-              <ThemedText style={styles.datePickerText}>
-                {intendedReceiveAt ? formatDateTime(intendedReceiveAt) : 'Chọn thời gian nhận đồ'}
-              </ThemedText>
-              <Icon name="chevron-right" type="material" size={22} color="#666" />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Promo Code Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Mã giảm giá</ThemedText>
-          <View style={styles.promoInputRow}>
-            <View style={styles.promoInputContainer}>
-              <Icon name="local-offer" type="material" size={20} color="#666" />
-              <TextInput
-                style={styles.promoInput}
-                placeholder="Nhập mã khuyến mãi"
-                placeholderTextColor="#A0A0A0"
-                value={promotionCode}
-                onChangeText={(text) => {
-                  setPromotionCode(text.toUpperCase());
-                  setPromoApplied(false);
-                }}
-                autoCapitalize="characters"
-              />
-            </View>
-            <TouchableOpacity
-              style={[styles.promoApplyButton, promoApplied && styles.promoAppliedButton]}
-              onPress={() => {
-                if (promotionCode.trim()) {
-                  setPromoApplied(true);
-                  // Note: actual discount will be calculated by backend
-                }
-              }}
-              disabled={!promotionCode.trim()}
-            >
-              <ThemedText style={styles.promoApplyText}>
-                {promoApplied ? '✓ Đã áp dụng' : 'Áp dụng'}
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-          {promoApplied && (
-            <View style={styles.promoSuccessMsg}>
-              <Icon name="check-circle" type="material" size={16} color="#4CAF50" />
-              <ThemedText style={styles.promoSuccessText}>
-                Mã sẽ được kiểm tra khi tạo đơn
-              </ThemedText>
-            </View>
-          )}
-        </View>
-
         {/* Summary Note */}
         <View style={styles.disclaimerContainer}>
             <Icon name="info-outline" type="material" size={16} color="#003D5B" />
@@ -596,122 +404,31 @@ export default function CreateOrderScreen() {
             <View>
                <ThemedText style={styles.footerLabel}>Tổng ước tính</ThemedText>
                <ThemedText style={styles.footerPrice}>
-                  {formatPrice(
-                      services
-                      .filter(s => selectedServices.includes(s.id))
-                      .reduce((sum, s) => sum + s.price, 0)
-                  )}
-                  <ThemedText style={styles.footerUnit}> (Dự kiến)</ThemedText>
+                   {formatPrice(
+                       services
+                       .filter(s => selectedServices.includes(s.id))
+                       .reduce((sum, s) => sum + s.price, 0)
+                   )}
+                   <ThemedText style={styles.footerUnit}> (Dự kiến)</ThemedText>
                </ThemedText>
             </View>
             <TouchableOpacity
               style={[
                 styles.checkoutButton,
-                (selectedServices.length === 0 || isCreating) && styles.checkoutButtonDisabled,
+                selectedServices.length === 0 && styles.checkoutButtonDisabled,
               ]}
               onPress={handleCreateOrderPress}
-              disabled={selectedServices.length === 0 || isCreating}
+              disabled={selectedServices.length === 0}
             >
-              {isCreating ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
                 <>
-                  <ThemedText style={styles.checkoutButtonText}>Đặt đơn</ThemedText>
+                  <ThemedText style={styles.checkoutButtonText}>Tiếp tục</ThemedText>
                   <Icon name="arrow-forward" type="material" size={20} color="#fff" />
                 </>
-              )}
             </TouchableOpacity>
          </View>
       </View>
 
-      {/* Success Modal */}
-      <Modal
-        visible={showSuccessModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => {}}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.successHeader}>
-               <Icon name="check-circle" type="material" size={60} color="#4CAF50" />
-            </View>
-            <ThemedText style={styles.modalTitle}>Thành công!</ThemedText>
-            <ThemedText style={styles.modalSubtitle}>
-              Đơn hàng của bạn đã được gửi đi.
-            </ThemedText>
-
-            {(createdOrder?.pin || createdOrder?.pinCode) && (
-              <View style={styles.pinContainer}>
-                <ThemedText style={styles.pinLabel}>MÃ PIN MỞ TỦ</ThemedText>
-                <ThemedText style={styles.pinCode}>
-                  {createdOrder.pin || createdOrder.pinCode}
-                </ThemedText>
-                <View style={styles.pinInstruction}>
-                    <Icon name="touch-app" type="material" size={16} color="#003D5B" />
-                    <ThemedText style={styles.pinInstructionText}>
-                        {createdOrder.nextActionMessage || "Nhập mã này trên màn hình tủ"}
-                    </ThemedText>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.buttonStack}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => {
-                  setShowSuccessModal(false);
-                  router.push("/user/(tabs)/orders");
-                }}
-              >
-                <ThemedText style={styles.primaryButtonText}>Xem đơn hàng</ThemedText>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() => {
-                  setShowSuccessModal(false);
-                  router.back();
-                }}
-              >
-                <ThemedText style={styles.secondaryButtonText}>Quay về trang chủ</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Confirmation Modal */}
-      <Modal
-        visible={showConfirmModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowConfirmModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.confirmCard}>
-            <ThemedText style={styles.confirmTitle}>Xác nhận đặt đơn</ThemedText>
-            <ThemedText style={styles.confirmMessage}>
-                Bạn chắc chắn muốn tạo đơn hàng với {selectedServices.length} dịch vụ đã chọn?
-            </ThemedText>
-            
-            <View style={styles.confirmActions}>
-               <TouchableOpacity 
-                  style={styles.confirmButtonCancel}
-                  onPress={() => setShowConfirmModal(false)}
-               >
-                   <ThemedText style={styles.confirmButtonCancelText}>Hủy</ThemedText>
-               </TouchableOpacity>
-               <TouchableOpacity 
-                  style={styles.confirmButtonOk}
-                  onPress={handleCreateOrder}
-               >
-                   <ThemedText style={styles.confirmButtonOkText}>Đồng ý</ThemedText>
-               </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Confirmation and Success Modals have been moved to confirm-order.tsx */}
     </View>
   );
 }
@@ -1369,14 +1086,166 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
-  promoSuccessMsg: {
+  promoInputApplied: {
+    borderColor: "#4CAF50",
+    backgroundColor: "#F1F8E9",
+  },
+  promoInputError: {
+    borderColor: "#FFCDD2",
+    backgroundColor: "#FFF5F5",
+  },
+  promoRemoveBtn: {
+    padding: 4,
+  },
+  promoErrorMsg: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     marginTop: 8,
   },
-  promoSuccessText: {
+  promoErrorText: {
+    fontSize: 13,
+    color: "#F44336",
+    flex: 1,
+  },
+  promoSuccessCard: {
+    marginTop: 10,
+    backgroundColor: "#F1F8E9",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#C8E6C9",
+  },
+  promoSuccessHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  promoSuccessTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2E7D32",
+  },
+  promoSuccessCode: {
+    fontSize: 12,
+    color: "#66BB6A",
+    marginTop: 2,
+  },
+  promoDiscountRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#C8E6C9",
+  },
+  promoDiscountLabel: {
+    fontSize: 13,
+    color: "#555",
+  },
+  promoDiscountValue: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#F44336",
+  },
+  footerPriceOriginal: {
+    fontSize: 13,
+    color: "#999",
+    textDecorationLine: "line-through",
+  },
+  footerPriceDiscounted: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#F44336",
+  },
+  // Confirm Summary Styles
+  confirmSection: {
+    paddingBottom: 12,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  confirmRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  confirmLabel: {
+    fontSize: 13,
+    color: "#888",
+    fontWeight: "500",
+  },
+  confirmValue: {
+    fontSize: 13,
+    color: "#333",
+    fontWeight: "600",
+    flex: 1,
+  },
+  confirmSectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#003D5B",
+    marginBottom: 8,
+  },
+  confirmServiceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+    paddingLeft: 8,
+  },
+  confirmServiceName: {
+    fontSize: 13,
+    color: "#444",
+    flex: 1,
+  },
+  confirmServicePrice: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#222",
+  },
+  confirmNoteText: {
+    fontSize: 13,
+    color: "#555",
+    fontStyle: "italic",
+    paddingLeft: 26,
+    marginTop: 2,
+  },
+  confirmPriceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  confirmPriceLabel: {
+    fontSize: 13,
+    color: "#666",
+  },
+  confirmPriceValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#222",
+  },
+  confirmPromoLabel: {
     fontSize: 13,
     color: "#4CAF50",
+    fontWeight: "500",
+  },
+  confirmPromoValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#F44336",
+  },
+  confirmTotalLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#003D5B",
+  },
+  confirmTotalValue: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#E91E63",
   },
 });
