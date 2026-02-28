@@ -203,10 +203,10 @@ export default function LoginPage(): React.JSX.Element {
         <>
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-2">Xác thực 2FA</h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Mã OTP đã được gửi đến <strong>{maskedEmail}</strong>
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Vui lòng kiểm tra email và nhập mã OTP 6 chữ số
             </p>
           </div>
@@ -216,7 +216,7 @@ export default function LoginPage(): React.JSX.Element {
             className="grid gap-4 w-full max-w-md"
           >
             <label className="flex flex-col">
-              <span className="text-sm font-medium text-gray-700">Mã OTP</span>
+              <span className="text-sm font-medium text-foreground">Mã OTP</span>
               <Input
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
@@ -230,7 +230,7 @@ export default function LoginPage(): React.JSX.Element {
             </label>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -250,7 +250,7 @@ export default function LoginPage(): React.JSX.Element {
                 type="submit"
                 size="lg"
                 disabled={loading || otpCode.length < 6}
-                className="flex-1 rounded-2xl bg-blue-900 hover:bg-blue-400"
+                className="flex-1 rounded-2xl bg-primary hover:opacity-90"
               >
                 {loading ? "Verifying..." : "Xác nhận"}
               </Button>
@@ -269,7 +269,7 @@ export default function LoginPage(): React.JSX.Element {
           className="grid gap-4 w-full max-w-md"
         >
           <label className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700">Email</span>
+            <span className="text-sm font-medium text-foreground">Email</span>
             <Input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -281,7 +281,7 @@ export default function LoginPage(): React.JSX.Element {
           </label>
 
           <label className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {t("label.password")}
             </span>
             <Input
@@ -295,7 +295,7 @@ export default function LoginPage(): React.JSX.Element {
           </label>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
               {error}
             </div>
           )}
@@ -305,13 +305,13 @@ export default function LoginPage(): React.JSX.Element {
               type="submit"
               size="lg"
               disabled={loading}
-              className="rounded-2xl bg-blue-900 hover:bg-blue-400"
+              className="rounded-2xl bg-primary hover:opacity-90"
             >
               {loading ? "Signing in..." : "Login"}
             </Button>
             <Link
               to="/auth/forgot"
-              className="text-sm text-blue-800 hover:underline"
+              className="text-sm text-primary hover:underline"
             >
               {t("link.forgot")}
             </Link>
@@ -327,10 +327,10 @@ export default function LoginPage(): React.JSX.Element {
         <>
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-2">Nhập mã OTP</h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Mã OTP đã được gửi đến <strong>{partnerContactInfo}</strong>
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Vui lòng nhập mã OTP 6 chữ số để đăng nhập
             </p>
           </div>
@@ -340,7 +340,7 @@ export default function LoginPage(): React.JSX.Element {
             className="grid gap-4 w-full max-w-md"
           >
             <label className="flex flex-col">
-              <span className="text-sm font-medium text-gray-700">Mã OTP</span>
+              <span className="text-sm font-medium text-foreground">Mã OTP</span>
               <Input
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
@@ -354,7 +354,7 @@ export default function LoginPage(): React.JSX.Element {
             </label>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -375,7 +375,7 @@ export default function LoginPage(): React.JSX.Element {
                 type="submit"
                 size="lg"
                 disabled={loading || otpCode.length < 6}
-                className="flex-1 rounded-2xl bg-blue-900 hover:bg-blue-400"
+                className="flex-1 rounded-2xl bg-primary hover:opacity-90"
               >
                 {loading ? "Verifying..." : "Đăng nhập"}
               </Button>
@@ -388,7 +388,7 @@ export default function LoginPage(): React.JSX.Element {
     return (
       <>
         <h2 className="text-2xl font-semibold">Đăng nhập Partner</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Nhập email hoặc số điện thoại để nhận mã OTP
         </p>
 
@@ -397,14 +397,14 @@ export default function LoginPage(): React.JSX.Element {
           className="grid gap-4 w-full max-w-md"
         >
           {/* Contact Type Toggle */}
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+          <div className="flex gap-2 p-1 bg-muted rounded-lg">
             <button
               type="button"
               onClick={() => setPartnerContactType("EMAIL")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all ${
                 partnerContactType === "EMAIL"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
+                  ? "bg-card text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Mail size={16} />
@@ -415,8 +415,8 @@ export default function LoginPage(): React.JSX.Element {
               onClick={() => setPartnerContactType("PHONE")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all ${
                 partnerContactType === "PHONE"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
+                  ? "bg-card text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Phone size={16} />
@@ -425,7 +425,7 @@ export default function LoginPage(): React.JSX.Element {
           </div>
 
           <label className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {partnerContactType === "EMAIL" ? "Email" : "Số điện thoại"}
             </span>
             <Input
@@ -443,7 +443,7 @@ export default function LoginPage(): React.JSX.Element {
           </label>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
               {error}
             </div>
           )}
@@ -452,7 +452,7 @@ export default function LoginPage(): React.JSX.Element {
             type="submit"
             size="lg"
             disabled={loading || !partnerContact}
-            className="rounded-2xl bg-blue-900 hover:bg-blue-400"
+            className="rounded-2xl bg-primary hover:opacity-90"
           >
             {loading ? "Đang gửi..." : "Gửi mã OTP"}
           </Button>
@@ -462,7 +462,7 @@ export default function LoginPage(): React.JSX.Element {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-900 via-transparent to-orange-200 relative overflow-hidden w-full">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-brand-600 via-background to-brand-200 relative overflow-hidden w-full">
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         viewBox="0 0 1200 800"
@@ -482,7 +482,7 @@ export default function LoginPage(): React.JSX.Element {
       </svg>
 
       <div className="relative z-10 w-full max-w-6xl mx-6 rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
-        <Card className="bg-white p-8 md:p-12">
+        <Card className="bg-card p-8 md:p-12">
           <CardContent className="flex flex-col gap-6">
             <div className="flex items-center gap-4">
               <img src={Logo} alt="Logo" className="h-16 w-auto" />
@@ -524,7 +524,7 @@ export default function LoginPage(): React.JSX.Element {
           </CardContent>
         </Card>
 
-        <div className="relative flex items-center justify-center p-8 md:p-12 bg-linear-to-br from-primary to-secondary text-white">
+        <div className="relative flex items-center justify-center p-8 md:p-12 bg-linear-to-br from-primary to-brand-400 text-white">
           <Card className="bg-transparent shadow-none">
             <CardContent className="max-w-sm text-white text-center">
               <div className="mb-6">
@@ -538,7 +538,7 @@ export default function LoginPage(): React.JSX.Element {
               <h3 className="text-xl font-semibold mb-2">{t("right.title")}</h3>
               <p className="mb-4 text-sm opacity-90">{t("right.subtitle")}</p>
 
-              <div className="w-full rounded-xl bg-white/10 p-4 backdrop-blur-sm relative">
+              <div className="w-full rounded-xl bg-card/10 p-4 backdrop-blur-sm relative">
                 <img
                   src={LOGIN_IMAGE}
                   alt="Locker illustration"

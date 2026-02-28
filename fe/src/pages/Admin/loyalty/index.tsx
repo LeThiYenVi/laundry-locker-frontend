@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
+import { TableToolbar } from "~/components/shared/data-table";
 import { Gift, Star, Trophy, Users, TrendingUp } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -140,6 +142,13 @@ const columns: ColumnDef<LoyaltyMember>[] = [
 ];
 
 export default function LoyaltyPage() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -224,12 +233,18 @@ export default function LoyaltyPage() {
       {/* Members Table */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
+          {/* Toolbar */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Danh sách thành viên</h3>
-            <Button variant="outline" size="sm">
-              <Gift size={16} className="mr-2" />
-              Tạo ưu đãi
-            </Button>
+            <TableToolbar
+              createButton={{
+                label: "Tạo ưu đãi",
+                onClick: () => console.log("Tạo ưu đãi"),
+                icon: Gift,
+              }}
+              onRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
+            />
           </div>
           <DataTable
             columns={columns}

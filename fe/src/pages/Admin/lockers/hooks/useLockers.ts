@@ -75,6 +75,24 @@ export function useLockers() {
     );
   }, []);
 
+  // Refetch function
+  const refetch = () => {
+    if (isMockEnabled) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), mockDelay);
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     lockers: filteredLockers,
     totalElements: mockLockers.length,
@@ -90,6 +108,9 @@ export function useLockers() {
     pageSize,
     setPageSize,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
     handleViewDetails,
     handleMaintenance,
     handleActivate,

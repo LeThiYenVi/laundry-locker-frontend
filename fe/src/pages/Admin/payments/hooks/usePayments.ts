@@ -46,6 +46,24 @@ export function usePayments() {
     [PaymentStatus.REFUNDED]: mockPayments.filter((p) => p.status === PaymentStatus.REFUNDED).length,
   }), []);
 
+  // Refetch function
+  const refetch = () => {
+    if (isMockEnabled) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), mockDelay);
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     payments: filteredPayments,
     totalElements: mockPayments.length,
@@ -61,6 +79,9 @@ export function usePayments() {
     pageSize,
     setPageSize,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
     isMock: isMockEnabled,
   };
 }

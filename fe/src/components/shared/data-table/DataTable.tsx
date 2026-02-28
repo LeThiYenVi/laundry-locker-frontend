@@ -58,9 +58,9 @@ export function DataTable<TData, TValue>({
 
   if (isLoading) {
     return (
-      <div className="w-full rounded-xl border border-gray-200 bg-white p-8">
+      <div className="w-full rounded-xl border border-border bg-card p-8">
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-200 border-t-blue-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary/30 border-t-primary" />
         </div>
       </div>
     );
@@ -68,10 +68,10 @@ export function DataTable<TData, TValue>({
 
   if (data.length === 0) {
     return (
-      <div className="w-full rounded-xl border border-gray-200 bg-white p-12">
-        <div className="flex flex-col items-center justify-center text-gray-400">
+      <div className="w-full rounded-xl border border-border bg-card p-12">
+        <div className="flex flex-col items-center justify-center text-muted-foreground/60">
           <svg
-            className="w-16 h-16 mb-4 text-gray-300"
+            className="w-16 h-16 mb-4 text-muted-foreground/40"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -83,8 +83,8 @@ export function DataTable<TData, TValue>({
               d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-lg font-medium text-gray-500">{emptyMessage}</p>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-lg font-medium text-muted-foreground">{emptyMessage}</p>
+          <p className="text-sm text-muted-foreground/60 mt-1">
             Dữ liệu sẽ hiển thị tại đây
           </p>
         </div>
@@ -94,25 +94,25 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="bg-gray-50/80 border-b border-gray-200 hover:bg-gray-50/80"
+                className="bg-muted/80 border-b border-border hover:bg-muted/80"
               >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-gray-600 font-semibold text-xs uppercase tracking-wider py-4 px-4 first:pl-6 last:pr-6"
+                    className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3 px-4 first:pl-6 last:pr-6"
                   >
                     {header.isPlaceholder ? null : (
                       <div
                         className={cn(
                           "flex items-center gap-1",
                           header.column.getCanSort() &&
-                            "cursor-pointer select-none hover:text-gray-900"
+                            "cursor-pointer select-none hover:text-foreground"
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
@@ -121,10 +121,10 @@ export function DataTable<TData, TValue>({
                           header.getContext()
                         )}
                         {header.column.getIsSorted() === "asc" && (
-                          <ChevronUp size={14} className="text-blue-600" />
+                          <ChevronUp size={14} className="text-primary" />
                         )}
                         {header.column.getIsSorted() === "desc" && (
-                          <ChevronDown size={14} className="text-blue-600" />
+                          <ChevronDown size={14} className="text-primary" />
                         )}
                       </div>
                     )}
@@ -140,15 +140,15 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className={cn(
-                    "border-b border-gray-100 transition-colors duration-200",
-                    "hover:bg-blue-50/30",
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                    "border-b border-border/50 transition-colors duration-200",
+                    "hover:bg-primary/5",
+                    index % 2 === 0 ? "bg-card" : "bg-muted/30"
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="py-4 px-4 text-sm text-gray-700 first:pl-6 last:pr-6"
+                      className="py-2.5 px-4 text-sm text-card-foreground first:pl-6 last:pr-6"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

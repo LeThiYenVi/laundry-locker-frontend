@@ -24,14 +24,14 @@ export function PageHeader({
   return (
     <div className={cn("flex items-start justify-between mb-6", className)}>
       <div>
-        <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-        {description && <p className=" text-sm text-gray-500">{description}</p>}
+        <h1 className="text-xl font-bold text-foreground">{title}</h1>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
 
       {action && (
         <Button
           onClick={action.onClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-primary hover:opacity-90 text-primary-foreground"
         >
           <Icon size={18} />
           <span className="ml-2">{action.label}</span>

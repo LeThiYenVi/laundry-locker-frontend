@@ -72,7 +72,7 @@ export default function NotFoundPage(): React.JSX.Element {
   const currentPath = location.pathname;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-amber-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-muted to-background p-4">
       <div className="max-w-2xl w-full text-center space-y-8">
         {/* Illustration Area */}
         <div className="relative flex justify-center items-end gap-12 mb-8">
@@ -81,7 +81,7 @@ export default function NotFoundPage(): React.JSX.Element {
             {/* Fallen Signpost */}
             <div className="relative">
               <div className="w-32 h-12 bg-yellow-400 rounded-lg flex items-center justify-center transform -rotate-12 shadow-lg">
-                <span className="text-2xl font-bold text-gray-800">404</span>
+                <span className="text-2xl font-bold text-foreground">404</span>
               </div>
               <div className="w-4 h-20 bg-amber-900 rounded absolute top-6 left-1/2 -translate-x-1/2 transform rotate-45"></div>
             </div>
@@ -152,23 +152,23 @@ export default function NotFoundPage(): React.JSX.Element {
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-3">
             <Search className="h-12 w-12 text-amber-500" />
-            <h1 className="text-6xl font-bold text-gray-900">404</h1>
+            <h1 className="text-6xl font-bold text-foreground">404</h1>
           </div>
           
           {didRedirect ? (
             // Hiển thị khi đang redirect tự động
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-              <div className="flex items-center justify-center gap-2 text-blue-700">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 max-w-md mx-auto">
+              <div className="flex items-center justify-center gap-2 text-primary">
                 <Sparkles className="h-5 w-5" />
                 <span className="font-medium">Tự động chuyển hướng...</span>
               </div>
-              <p className="text-sm text-blue-600 mt-1">
+              <p className="text-sm text-primary mt-1">
                 Phát hiện URL gần đúng, đang chuyển đến trang phù hợp
               </p>
               <div className="mt-3 flex items-center justify-center gap-2 text-sm">
-                <code className="bg-blue-100 px-2 py-1 rounded text-blue-800">{currentPath}</code>
+                <code className="bg-primary/20 px-2 py-1 rounded text-primary">{currentPath}</code>
                 <span>→</span>
-                <code className="bg-green-100 px-2 py-1 rounded text-green-800">
+                <code className="bg-emerald-100 px-2 py-1 rounded text-emerald-700">
                   {findClosestRoute(currentPath)}
                 </code>
               </div>
@@ -176,28 +176,28 @@ export default function NotFoundPage(): React.JSX.Element {
           ) : (
             // Hiển thị khi không tìm được
             <>
-              <h2 className="text-3xl font-semibold text-gray-800">
+              <h2 className="text-3xl font-semibold text-foreground">
                 Không tìm thấy trang
               </h2>
               
-              <p className="text-lg text-gray-600 max-w-md mx-auto">
-                Đường dẫn <code className="bg-gray-100 px-2 py-1 rounded text-gray-800">{currentPath}</code> không tồn tại.
+              <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                Đường dẫn <code className="bg-gray-100 px-2 py-1 rounded text-foreground">{currentPath}</code> không tồn tại.
               </p>
 
               {/* Gợi ý các trang gần nhất */}
               {suggestions.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
+                <div className="bg-secondary/20 border border-secondary/30 rounded-lg p-4 max-w-md mx-auto">
                   <div className="flex items-start gap-3">
-                    <Sparkles className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <Sparkles className="h-5 w-5 text-secondary-foreground mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-left">
-                      <p className="font-medium text-amber-900 mb-2">Có thể bạn muốn tìm:</p>
+                      <p className="font-medium text-foreground mb-2">Có thể bạn muốn tìm:</p>
                       <div className="flex flex-wrap gap-2">
                         {suggestions.map((route) => (
                           <button
                             key={route}
                             onClick={() => navigate(route)}
-                            className="text-left px-3 py-1.5 bg-white border border-amber-300 rounded-md 
-                                     text-amber-800 hover:bg-amber-100 hover:border-amber-400 
+                            className="text-left px-3 py-1.5 bg-card border border-secondary/40 rounded-md 
+                                     text-foreground hover:bg-secondary/30 hover:border-amber-400 
                                      transition-colors text-sm"
                           >
                             {ROUTE_NAMES[route] || route}
@@ -209,12 +209,12 @@ export default function NotFoundPage(): React.JSX.Element {
                 </div>
               )}
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-w-md mx-auto">
+              <div className="bg-background border border-border rounded-lg p-4 max-w-md mx-auto">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-left">
-                    <p className="font-medium text-gray-900 mb-1">Gợi ý:</p>
-                    <ul className="text-gray-600 space-y-1">
+                    <p className="font-medium text-foreground mb-1">Gợi ý:</p>
+                    <ul className="text-muted-foreground space-y-1">
                       <li>• Kiểm tra lại đường dẫn URL</li>
                       <li>• Gõ <code>/login</code> thay vì <code>/auth/login</code></li>
                       <li>• Gõ <code>/order</code> thay vì <code>/admin/orders</code></li>
@@ -251,8 +251,8 @@ export default function NotFoundPage(): React.JSX.Element {
 
         {/* Quick Links */}
         {!didRedirect && (
-          <div className="max-w-md mx-auto pt-4 border-t border-gray-200">
-            <p className="text-sm text-gray-500 mb-3">Truy cập nhanh:</p>
+          <div className="max-w-md mx-auto pt-4 border-t border-border">
+            <p className="text-sm text-muted-foreground mb-3">Truy cập nhanh:</p>
             <div className="flex flex-wrap justify-center gap-2">
               {[
                 { path: "/admin/dashboard", label: "Dashboard" },
@@ -263,8 +263,8 @@ export default function NotFoundPage(): React.JSX.Element {
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md 
-                           text-gray-700 text-sm transition-colors"
+                  className="px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-md 
+                           text-card-foreground text-sm transition-colors"
                 >
                   {link.label}
                 </button>

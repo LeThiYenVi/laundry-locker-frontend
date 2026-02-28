@@ -1,5 +1,6 @@
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
+import { TableToolbar } from "~/components/shared/data-table";
 import { PaymentTable } from "./components/PaymentTable";
 import { PaymentFilters } from "./components/PaymentFilters";
 import { PaymentStats } from "./components/PaymentStats";
@@ -15,6 +16,9 @@ export default function PaymentsPage() {
     searchQuery,
     setSearchQuery,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
   } = usePayments();
 
   return (
@@ -28,13 +32,22 @@ export default function PaymentsPage() {
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <PaymentFilters
-            status={status}
-            onStatusChange={setStatus}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            statusCounts={statusCounts}
-          />
+          {/* Toolbar - 1 hàng */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <PaymentFilters
+              status={status}
+              onStatusChange={setStatus}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusCounts={statusCounts}
+            />
+            
+            <TableToolbar
+              onRefresh={refetch}
+              onClearFilters={clearFilters}
+              canClearFilters={hasActiveFilters}
+            />
+          </div>
 
           <PaymentTable
             payments={payments}

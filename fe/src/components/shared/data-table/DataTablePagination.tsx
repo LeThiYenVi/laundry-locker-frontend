@@ -58,13 +58,13 @@ export function DataTablePagination<TData>({
         className
       )}
     >
-      <div className="flex items-center gap-3 text-sm text-gray-600">
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <span>Hiển thị</span>
         <Select
           value={table.getState().pagination.pageSize.toString()}
           onValueChange={(value) => table.setPageSize(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] bg-white border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] bg-card border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -75,19 +75,19 @@ export function DataTablePagination<TData>({
             ))}
           </SelectContent>
         </Select>
-        <span className="text-gray-500">
-          <span className="font-medium text-gray-700">
+        <span className="text-muted-foreground">
+          <span className="font-medium text-foreground">
             {pageIndex * table.getState().pagination.pageSize + 1}
           </span>
           {" - "}
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-foreground">
             {Math.min(
               (pageIndex + 1) * table.getState().pagination.pageSize,
               totalRows
             )}
           </span>
           {" của "}
-          <span className="font-medium text-gray-700">{totalRows}</span>
+          <span className="font-medium text-foreground">{totalRows}</span>
         </span>
       </div>
 
@@ -97,7 +97,7 @@ export function DataTablePagination<TData>({
           size="icon"
           onClick={() => table.setPageIndex(0)}
           disabled={!table.getCanPreviousPage()}
-          className="h-8 w-8 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          className="h-8 w-8 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <ChevronsLeft size={16} />
         </Button>
@@ -106,7 +106,7 @@ export function DataTablePagination<TData>({
           size="icon"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
-          className="h-8 w-8 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          className="h-8 w-8 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <ChevronLeft size={16} />
         </Button>
@@ -114,7 +114,7 @@ export function DataTablePagination<TData>({
         <div className="flex items-center gap-1 mx-2">
           {getVisiblePages().map((page, idx) =>
             page === "ellipsis" ? (
-              <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">
+              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground/60">
                 ...
               </span>
             ) : (
@@ -124,8 +124,8 @@ export function DataTablePagination<TData>({
                 className={cn(
                   "w-8 h-8 rounded-lg text-sm font-medium transition-all duration-200",
                   pageIndex === page
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                    : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                    : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground border border-border"
                 )}
               >
                 {page + 1}
@@ -139,7 +139,7 @@ export function DataTablePagination<TData>({
           size="icon"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
-          className="h-8 w-8 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          className="h-8 w-8 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <ChevronRight size={16} />
         </Button>
@@ -148,7 +148,7 @@ export function DataTablePagination<TData>({
           size="icon"
           onClick={() => table.setPageIndex(pageCount - 1)}
           disabled={!table.getCanNextPage()}
-          className="h-8 w-8 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          className="h-8 w-8 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <ChevronsRight size={16} />
         </Button>

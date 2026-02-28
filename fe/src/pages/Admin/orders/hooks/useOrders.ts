@@ -133,6 +133,24 @@ export function useOrders() {
     };
   }, []);
 
+  // Refetch function (for mock data, just trigger reload)
+  const refetch = () => {
+    if (isMockEnabled) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), mockDelay);
+    }
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     orders: isMockEnabled ? filteredOrders : filteredOrders,
     totalElements: mockOrders.length,
@@ -148,6 +166,9 @@ export function useOrders() {
     pageSize,
     setPageSize,
     statusCounts,
+    refetch,
+    clearFilters,
+    hasActiveFilters,
     isMock: isMockEnabled,
   };
 }

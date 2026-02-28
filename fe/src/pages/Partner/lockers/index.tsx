@@ -1,4 +1,4 @@
-import { Box as BoxIcon, AlertTriangle, RefreshCw } from "lucide-react";
+import { Box as BoxIcon, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Button,
@@ -33,6 +33,8 @@ export default function PartnerLockers() {
     isFetching,
     error,
     refetch,
+    clearFilters,
+    hasActiveFilters,
     errorToast,
     setErrorToast,
   } = useLockers();
@@ -96,6 +98,15 @@ export default function PartnerLockers() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              className="border-[#B0C8DA]"
+            >
+              <X size={16} className="mr-2" />
+              Xóa lọc
+            </Button>
             <Button
               variant="outline"
               onClick={() => refetch()}

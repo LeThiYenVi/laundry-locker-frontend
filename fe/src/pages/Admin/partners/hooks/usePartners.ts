@@ -121,6 +121,16 @@ export function usePartners() {
     }
   }, [suspendPartner, refetch]);
 
+  // Clear all filters
+  const clearFilters = () => {
+    setStatus("ALL");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = status !== "ALL" || searchQuery !== "";
+
   return {
     partners,
     totalElements,
@@ -138,6 +148,8 @@ export function usePartners() {
     pageSize,
     setPageSize,
     statusCounts,
+    clearFilters,
+    hasActiveFilters,
     isCreateModalOpen,
     setIsCreateModalOpen,
     isEditModalOpen,

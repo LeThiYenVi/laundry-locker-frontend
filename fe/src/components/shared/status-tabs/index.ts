@@ -1,1 +1,2 @@
-export { StatusTabs } from "./StatusTabs";
+export * from "./StatusTabs";
+export * from "./StatusDropdown";
