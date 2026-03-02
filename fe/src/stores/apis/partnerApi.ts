@@ -12,6 +12,7 @@ import type {
   MarkReadyResponse,
   UpdateWeightRequest,
   PartnerLocker,
+  PartnerStore,
   LockerBox,
   StaffContact,
   CreateStaffContactRequest,
@@ -88,6 +89,22 @@ interface BackendOrderResponse {
   returnedAt?: string;
   receiveAt?: string;
   orderDetails?: unknown[];
+}
+
+// Backend LockerResponse DTO
+interface BackendStoreResponse {
+  id: number;
+  name: string;
+  status: string;
+  active?: boolean;
+  address: string;
+  contactPhone?: string;
+  longitude?: number;
+  latitude?: number;
+  image?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Backend LockerResponse DTO
@@ -536,6 +553,58 @@ export const partnerApi = baseApi.injectEndpoints({
     }),
 
     // ============================================
+    // Store Endpoints
+    // ============================================
+
+    getPartnerStores: builder.query<PartnerStore[], void>({
+      query: () => PARTNER_ENDPOINTS.STORES,
+      transformResponse: (response: ApiResponse<BackendStoreResponse[]>) =>
+        response.data.map((s) => ({
+          id: s.id,
+          name: s.name,
+          active: s.active,
+          status:
+            s.active !== undefined
+              ? s.active
+                ? "ACTIVE"
+                : "INACTIVE"
+              : (s.status ?? "ACTIVE"),
+          address: s.address,
+          contactPhone: s.contactPhone,
+          longitude: s.longitude,
+          latitude: s.latitude,
+          image: s.image,
+          description: s.description,
+          createdAt: s.createdAt,
+          updatedAt: s.updatedAt,
+        })),
+      providesTags: ["Lockers"],
+    }),
+
+    getStoreLockers: builder.query<PartnerLocker[], number>({
+      query: (storeId) => PARTNER_ENDPOINTS.STORE_LOCKERS(storeId),
+      transformResponse: (response: ApiResponse<BackendLockerResponse | BackendLockerResponse[]>) => {
+        const data = Array.isArray(response.data) ? response.data : [response.data];
+        return data.map(mapLockerResponse);
+      },
+      providesTags: ["Lockers"],
+    }),
+
+    getLockerBoxes: builder.query<LockerBox[], number>({
+      query: (lockerId) => PARTNER_ENDPOINTS.LOCKER_BOXES(lockerId),
+      transformResponse: (response: ApiResponse<BackendBoxResponse[]>) =>
+        response.data.map((box) => ({
+          id: box.id,
+          boxNumber: box.boxNumber,
+          isActive: box.isActive,
+          status: box.status,
+          description: box.description,
+          lockerId: box.lockerId,
+          lockerCode: box.lockerCode,
+        })),
+    }),
+
+    // ============================================
     // Locker Endpoints
     // ============================================
 
@@ -622,6 +691,9 @@ export const {
   useDeleteStaffContactMutation,
 
   // Lockers
+  useGetPartnerStoresQuery,
+  useGetStoreLockersQuery,
+  useGetLockerBoxesQuery,
   useGetPartnerLockersQuery,
   useGetAvailableBoxesQuery,
 

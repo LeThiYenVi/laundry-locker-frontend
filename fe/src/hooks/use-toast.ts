@@ -1,4 +1,4 @@
-export function toast() {
+export function toast(p0: string) {
   // minimal toast stub
   return {
     open: () => {},

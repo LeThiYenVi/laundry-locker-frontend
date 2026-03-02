@@ -19,9 +19,14 @@ import {
   PaginationEllipsis,
 } from "~/components/ui/pagination";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import type { PartnerOrder } from "@/types/partner.type";
 import { OrderActions } from "./OrderActions";
-import { getStatusBadgeClass, tableHeader, STATUS_LABELS } from "../utils/order-helpers";
+import {
+  getStatusBadgeClass,
+  tableHeader,
+  STATUS_LABELS,
+} from "../utils/order-helpers";
 import { Package } from "lucide-react";
 
 interface OrdersTableProps {
@@ -58,6 +63,11 @@ export function OrdersTable({
   onMarkReady,
 }: OrdersTableProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const handleViewDetail = (order: PartnerOrder) => {
+    navigate(`/partner/orders/${order.id}`);
+  };
 
   if (orders.length === 0) {
     return (
@@ -80,14 +90,30 @@ export function OrdersTable({
             <TableHead className={`${tableHeader.text} ${tableHeader.radius}`}>
               {t("partner.orders.columns.orderCode")}
             </TableHead>
-            <TableHead className={tableHeader.text}>{t("partner.orders.columns.customer")}</TableHead>
-            <TableHead className={tableHeader.text}>{t("partner.orders.columns.locker")}</TableHead>
-            <TableHead className={tableHeader.text}>{t("partner.orders.columns.service")}</TableHead>
-            <TableHead className={tableHeader.text}>{t("common.status")}</TableHead>
-            <TableHead className={tableHeader.text}>{t("partner.orders.columns.weight")}</TableHead>
-            <TableHead className={tableHeader.text}>{t("partner.orders.columns.total")}</TableHead>
-            <TableHead className={tableHeader.text}>{t("common.createdAt")}</TableHead>
-            <TableHead className={`${tableHeader.text} ${tableHeader.radius} text-right`}>
+            <TableHead className={tableHeader.text}>
+              {t("partner.orders.columns.customer")}
+            </TableHead>
+            <TableHead className={tableHeader.text}>
+              {t("partner.orders.columns.locker")}
+            </TableHead>
+            <TableHead className={tableHeader.text}>
+              {t("partner.orders.columns.service")}
+            </TableHead>
+            <TableHead className={tableHeader.text}>
+              {t("common.status")}
+            </TableHead>
+            <TableHead className={tableHeader.text}>
+              {t("partner.orders.columns.weight")}
+            </TableHead>
+            <TableHead className={tableHeader.text}>
+              {t("partner.orders.columns.total")}
+            </TableHead>
+            <TableHead className={tableHeader.text}>
+              {t("common.createdAt")}
+            </TableHead>
+            <TableHead
+              className={`${tableHeader.text} ${tableHeader.radius} text-right`}
+            >
               {t("common.actions")}
             </TableHead>
           </TableRow>
@@ -95,7 +121,10 @@ export function OrdersTable({
         <TableBody>
           {orders.map((order) => (
             <TableRow key={order.id} className="hover:bg-gray-50">
-              <TableCell className="font-mono font-semibold">
+              <TableCell
+                className="font-mono font-semibold text-blue-600 cursor-pointer hover:underline"
+                onClick={() => handleViewDetail(order)}
+              >
                 {order.orderCode}
               </TableCell>
               <TableCell>
@@ -120,7 +149,9 @@ export function OrdersTable({
               </TableCell>
               <TableCell>{order.weight ? `${order.weight} kg` : "-"}</TableCell>
               <TableCell className="font-semibold">
-                {order.totalPrice ? `${order.totalPrice.toLocaleString()}đ` : "-"}
+                {order.totalPrice
+                  ? `${order.totalPrice.toLocaleString()}đ`
+                  : "-"}
               </TableCell>
               <TableCell className="text-sm">
                 {new Date(order.createdAt).toLocaleDateString("vi-VN")}
@@ -132,6 +163,7 @@ export function OrdersTable({
                   onOpenWeightModal={onOpenWeightModal}
                   onProcessOrder={onProcessOrder}
                   onMarkReady={onMarkReady}
+                  onViewDetail={handleViewDetail}
                   isAccepting={isAccepting}
                   isProcessing={isProcessing}
                   isMarkingReady={isMarkingReady}
@@ -146,14 +178,19 @@ export function OrdersTable({
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 border-t">
           <p className="text-sm text-gray-600">
-            {t("table.showing")} {startIndex} - {endIndex} / {totalElements} {t("partner.orders.results")}
+            {t("table.showing")} {startIndex} - {endIndex} / {totalElements}{" "}
+            {t("partner.orders.results")}
           </p>
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => onPageChange(Math.max(0, currentPage - 1))}
-                  className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={
+                    currentPage === 0
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
 
@@ -172,14 +209,18 @@ export function OrdersTable({
                       {pageNum + 1}
                     </PaginationLink>
                   </PaginationItem>
-                )
+                ),
               )}
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => onPageChange(Math.min(totalPages - 1, currentPage + 1))}
+                  onClick={() =>
+                    onPageChange(Math.min(totalPages - 1, currentPage + 1))
+                  }
                   className={
-                    currentPage >= totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                    currentPage >= totalPages - 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
                   }
                 />
               </PaginationItem>

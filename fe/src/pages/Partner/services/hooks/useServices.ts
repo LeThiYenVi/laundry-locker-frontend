@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useGetPartnerServicesQuery } from "@/stores/apis/partnerApi";
 import type { PartnerService } from "@/types/partner.type";
 
@@ -18,13 +18,30 @@ export function useServices() {
   } = useGetPartnerServicesQuery();
 
   const [filterCategory, setFilterCategory] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<PartnerService | null>(
+    null,
+  );
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Filter services
   const filteredServices = useMemo(() => {
-    if (filterCategory === "ALL") return services;
-    return services.filter((service) => service.category === filterCategory);
-  }, [services, filterCategory]);
+    let result =
+      filterCategory === "ALL"
+        ? services
+        : services.filter((service) => service.category === filterCategory);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [services, filterCategory, searchQuery]);
 
   // Stats
   const stats: ServiceStats = useMemo(() => {
@@ -43,16 +60,27 @@ export function useServices() {
     };
   }, [services]);
 
+  const handleViewDetail = useCallback((service: PartnerService) => {
+    setSelectedService(service);
+    setIsDetailOpen(true);
+  }, []);
+
   return {
     services,
     filteredServices,
     filterCategory,
     setFilterCategory,
+    searchQuery,
+    setSearchQuery,
     stats,
     isLoading,
     error,
     refetch,
     errorToast,
     setErrorToast,
+    selectedService,
+    isDetailOpen,
+    setIsDetailOpen,
+    handleViewDetail,
   };
 }

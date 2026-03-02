@@ -196,9 +196,12 @@ export const PARTNER_ENDPOINTS = {
   STAFF: `${ROOT_URI.PARTNER}/staff`,
   STAFF_BY_ID: (id: number) => `${ROOT_URI.PARTNER}/staff/${id}`,
   STORES: `${ROOT_URI.PARTNER}/stores`,
+  STORE_LOCKERS: (storeId: number) => `api/lockers/${storeId}`,
   LOCKERS: `${ROOT_URI.PARTNER}/lockers`,
+  GET_BOXES_BY_LOCKER: (storeId: number) => `api/locker/${storeId}/boxes`,
   LOCKER_AVAILABLE_BOXES: (lockerId: number) =>
     `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
+  LOCKER_BOXES: (lockerId: number) => `/api/lockers/${lockerId}/boxes`,
   REVENUE: `${ROOT_URI.PARTNER}/revenue`,
 } as const;
 

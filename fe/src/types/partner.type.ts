@@ -190,6 +190,25 @@ export interface RevenueByPeriod {
 }
 
 // ============================================
+// Partner Store Types
+// ============================================
+
+export interface PartnerStore {
+  id: number;
+  name: string;
+  status: string;
+  active?: boolean;
+  address: string;
+  contactPhone?: string;
+  longitude?: number;
+  latitude?: number;
+  image?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
 // Partner Locker Types
 // ============================================
 

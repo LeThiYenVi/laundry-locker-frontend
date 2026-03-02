@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   useGetPartnerProfileQuery,
+  useUpdatePartnerProfileMutation,
 } from "@/stores/apis/partnerApi";
 
 export interface PartnerProfile {
@@ -17,29 +18,36 @@ export function useSettings() {
     refetch,
   } = useGetPartnerProfileQuery();
 
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateProfile, { isLoading: isUpdating }] =
+    useUpdatePartnerProfileMutation();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Map API response to form data
-  const profile: PartnerProfile | null = profileData ? {
-    businessName: profileData.businessName || "",
-    contactPhone: profileData.contactPhone || "",
-    businessAddress: profileData.businessAddress || "",
-  } : null;
+  const profile: PartnerProfile | null = profileData
+    ? {
+        businessName: profileData.businessName || "",
+        contactPhone: profileData.contactPhone || "",
+        businessAddress: profileData.businessAddress || "",
+      }
+    : null;
 
-  const handleUpdate = async (data: { businessName: string; phone: string; address: string }) => {
-    setIsUpdating(true);
+  const handleUpdate = async (data: {
+    businessName: string;
+    phone: string;
+    address: string;
+  }) => {
     try {
-      // Mock update - would call actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await updateProfile({
+        businessName: data.businessName,
+        contactPhone: data.phone,
+        businessAddress: data.address,
+      }).unwrap();
       setSuccessMessage("Cập nhật thành công!");
       setTimeout(() => setSuccessMessage(null), 3000);
       return true;
     } catch (error) {
       console.error("Failed to update profile:", error);
       return false;
-    } finally {
-      setIsUpdating(false);
     }
   };
 

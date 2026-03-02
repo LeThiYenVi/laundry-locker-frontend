@@ -1,229 +1,150 @@
-import { useState } from "react";
-import { Package, RefreshCw, X } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { RefreshCw, Search, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { PageLoading, ErrorState } from "~/components/ui";
-import { StatusDropdown } from "~/components/shared/status-tabs";
-import { useOrders } from "./hooks/useOrders";
-import { SearchFilter } from "./components/SearchFilter";
-import { OrdersTable } from "./components/OrdersTable";
-import { ErrorToast } from "./components/ErrorToast";
-import { WebSocketIndicator } from "./components/WebSocketIndicator";
+import { Input } from "~/components/ui/input";
+import { PageHeader } from "~/components/shared/page-header";
+import { ErrorState } from "~/components/ui";
+import { KanbanBoard } from "./board/KanbanBoard";
 import { AccessCodeModal } from "./components/AccessCodeModal";
 import { WeightUpdateModal } from "./components/WeightUpdateModal";
-import type { PartnerOrder, StaffAccessCode } from "@/types/partner.type";
-import type { OrderStatus } from "@/types/partner.enum";
-
-const statusOptions = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
-  { value: "WAITING", label: "Chờ xử lý", color: "yellow" as const },
-  { value: "COLLECTED", label: "Đã lấy", color: "purple" as const },
-  { value: "PROCESSING", label: "Đang xử lý", color: "blue" as const },
-  { value: "READY", label: "Sẵn sàng", color: "green" as const },
-  { value: "RETURNED", label: "Đã trả", color: "gray" as const },
-  { value: "COMPLETED", label: "Hoàn thành", color: "green" as const },
-];
+import { ErrorToast } from "./components/ErrorToast";
+import { useOrderBoard } from "./hooks/useOrderBoard";
 
 export default function PartnerOrders() {
   const {
-    activeTab,
-    searchQuery,
-    setSearchQuery,
-    handleTabChange,
-    orders,
-    totalPages,
-    totalElements,
-    currentPage,
-    size,
+    boardColumns,
     isLoading,
     isFetching,
     error,
     refetch,
-    setPage,
-    getPageNumbers,
-    handleAcceptOrder,
-    handleUpdateWeight,
-    handleProcessOrder,
-    handleMarkReady,
-    isAccepting,
+    totalOrders,
+    searchQuery,
+    setSearchQuery,
+    handleStatusChange,
     isUpdatingWeight,
-    isProcessing,
-    isMarkingReady,
+    weightModal,
+    setWeightModal,
+    submitWeight,
+    accessCodeModal,
+    setAccessCodeModal,
     errorToast,
     setErrorToast,
     wsConnected,
     wsError,
-  } = useOrders();
-  const { t } = useTranslation();
+  } = useOrderBoard();
 
-  // Modal states
-  const [accessCodeModal, setAccessCodeModal] = useState<{
-    open: boolean;
-    code: StaffAccessCode | null;
-    action: "COLLECT" | "RETURN";
-  }>({ open: false, code: null, action: "COLLECT" });
-
-  const [weightModal, setWeightModal] = useState<{
-    open: boolean;
-    order: PartnerOrder | null;
-    weight: string;
-  }>({ open: false, order: null, weight: "" });
-
-  // Handlers with modals
-  const onAcceptOrder = async (order: PartnerOrder) => {
-    const code = await handleAcceptOrder(order);
-    if (code) {
-      setAccessCodeModal({ open: true, code, action: "COLLECT" });
-    }
-  };
-
-  const onMarkReady = async (order: PartnerOrder) => {
-    const code = await handleMarkReady(order.id);
-    if (code) {
-      setAccessCodeModal({ open: true, code, action: "RETURN" });
-    }
-  };
-
-  const onOpenWeightModal = (order: PartnerOrder) => {
-    setWeightModal({
-      open: true,
-      order,
-      weight: order.weight?.toString() || "",
-    });
-  };
-
-  const onSubmitWeight = async () => {
-    if (!weightModal.order || !weightModal.weight) return;
-    const success = await handleUpdateWeight(
-      weightModal.order.id,
-      parseFloat(weightModal.weight),
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-64 gap-3">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Đang tải đơn hàng...</p>
+      </div>
     );
-    if (success) {
-      setWeightModal({ open: false, order: null, weight: "" });
-    }
-  };
+  }
 
-  const clearFilters = () => {
-    handleTabChange("ALL");
-    setSearchQuery("");
-  };
-
-  const hasActiveFilters = activeTab !== "ALL" || searchQuery !== "";
+  if (error) {
+    return (
+      <ErrorState
+        title="Không thể tải đơn hàng"
+        message="Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại."
+        onRetry={refetch}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="flex flex-col">
       {/* Error Toast */}
       <ErrorToast message={errorToast} onClose={() => setErrorToast(null)} />
 
-      {/* Polling Indicator */}
-      {isFetching && !isLoading && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <div className="bg-blue-100 text-blue-700 px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            {t("partner.common.updating")}
-          </div>
-        </div>
-      )}
+      {/* Page Header */}
+      <PageHeader
+        title="Quản lý đơn hàng"
+        description="Kéo thả đơn giữa các cột để cập nhật trạng thái"
+      />
 
-      {/* WebSocket Indicator */}
-      <WebSocketIndicator connected={wsConnected} error={wsError} />
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-4xl font-bold text-foreground">
-            {t("partner.orders.title")}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {t("partner.orders.subtitle")}
-          </p>
-        </div>
-      </div>
-
-      {/* Toolbar - 1 hàng */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <StatusDropdown
-            options={statusOptions}
-            value={activeTab}
-            onChange={(value) => handleTabChange(value as OrderStatus | "ALL")}
-            placeholder={t("common.status")}
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-xs">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
           />
-          <SearchFilter searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm theo mã đơn, tên khách..."
+            className="pl-9 h-9 text-sm"
+          />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-sm text-muted-foreground hidden sm:inline">
+            {totalOrders} đơn
+          </span>
+
+          {isFetching && !isLoading && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 size={12} className="animate-spin" />
+              Đang đồng bộ
+            </span>
+          )}
+
           <Button
-            variant="outline"
             size="sm"
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
-            className="h-9"
-          >
-            <X size={16} className="mr-1.5" />
-            Xóa lọc
-          </Button>
-          <Button
             variant="outline"
-            size="sm"
             onClick={refetch}
             disabled={isFetching}
             className="h-9"
           >
-            <RefreshCw size={16} className={`mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
-            Tải lại
+            <RefreshCw size={14} className={isFetching ? "animate-spin" : ""} />
+            <span className="ml-1.5 hidden sm:inline">Làm mới</span>
           </Button>
+
+          <div
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border ${
+              wsConnected
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-gray-50 text-gray-500 border-gray-200"
+            }`}
+            title={
+              wsConnected
+                ? "Kết nối real-time đang hoạt động"
+                : (wsError ?? "Đang kết nối...")
+            }
+          >
+            {wsConnected ? (
+              <Wifi size={12} className="text-green-600" />
+            ) : (
+              <WifiOff size={12} className="text-gray-400" />
+            )}
+            <span className="hidden sm:inline">
+              {wsConnected ? "Live" : "Offline"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      {isLoading ? (
-        <PageLoading message={t("partner.orders.loadingTitle")} />
-      ) : error ? (
-        <ErrorState
-          variant="server"
-          title={t("partner.orders.errorTitle")}
-          error={error}
-          onRetry={refetch}
-        />
-      ) : (
-        <OrdersTable
-          orders={orders}
-          totalPages={totalPages}
-          totalElements={totalElements}
-          currentPage={currentPage}
-          pageSize={size}
-          isAccepting={isAccepting}
-          isProcessing={isProcessing}
-          isMarkingReady={isMarkingReady}
-          onPageChange={setPage}
-          getPageNumbers={getPageNumbers}
-          onAcceptOrder={onAcceptOrder}
-          onOpenWeightModal={onOpenWeightModal}
-          onProcessOrder={(order) => handleProcessOrder(order.id)}
-          onMarkReady={onMarkReady}
-        />
-      )}
+      {/* Kanban Board */}
+      <KanbanBoard columns={boardColumns} onStatusChange={handleStatusChange} />
 
-      {/* Modals */}
+      {/* Access Code Modal */}
       <AccessCodeModal
         isOpen={accessCodeModal.open}
-        onClose={() =>
-          setAccessCodeModal({ open: false, code: null, action: "COLLECT" })
-        }
+        onClose={() => setAccessCodeModal((prev) => ({ ...prev, open: false }))}
         code={accessCodeModal.code}
         action={accessCodeModal.action}
       />
 
+      {/* Weight Update Modal */}
       <WeightUpdateModal
         isOpen={weightModal.open}
         onClose={() => setWeightModal({ open: false, order: null, weight: "" })}
         order={weightModal.order}
         weight={weightModal.weight}
-        onWeightChange={(weight) =>
-          setWeightModal((prev) => ({ ...prev, weight }))
+        onWeightChange={(w) =>
+          setWeightModal((prev) => ({ ...prev, weight: w }))
         }
-        onSubmit={onSubmitWeight}
+        onSubmit={submitWeight}
         isLoading={isUpdatingWeight}
       />
     </div>

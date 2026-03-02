@@ -18,7 +18,7 @@ import {
 // Loading fallback component
 function PageLoader(): ReactNode {
   return (
-    <div className="min-h-[400px] flex items-center justify-center">
+    <div className="min-h-100 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
         <p className="text-sm text-gray-500">Đang tải...</p>
@@ -51,9 +51,11 @@ const LoginPage = lazy(() => import("~/pages/auth/Login"));
 // Lazy load Partner Pages
 const PartnerDashboard = lazy(() => import("../pages/Partner/dashboard"));
 const PartnerOrders = lazy(() => import("../pages/Partner/orders"));
+const PartnerOrderDetail = lazy(() => import("../pages/Partner/orders/detail"));
 const PartnerStaff = lazy(() => import("../pages/Partner/staff"));
 const PartnerRevenue = lazy(() => import("../pages/Partner/revenue"));
-const PartnerLockers = lazy(() => import("../pages/Partner/lockers"));
+const PartnerStores = lazy(() => import("../pages/Partner/stores"));
+const PartnerStoreDetail = lazy(() => import("../pages/Partner/stores/[id]"));
 const PartnerServices = lazy(() => import("../pages/Partner/services"));
 const PartnerNotifications = lazy(
   () => import("../pages/Partner/notifications"),
@@ -319,6 +321,14 @@ const routesConfig: RouteObject[] = [
         ),
       },
       {
+        path: "orders/:orderId",
+        element: (
+          <LazyWrapper>
+            <PartnerOrderDetail />
+          </LazyWrapper>
+        ),
+      },
+      {
         path: "staff",
         element: (
           <LazyWrapper>
@@ -335,12 +345,25 @@ const routesConfig: RouteObject[] = [
         ),
       },
       {
-        path: "lockers",
+        path: "stores",
         element: (
           <LazyWrapper>
-            <PartnerLockers />
+            <PartnerStores />
           </LazyWrapper>
         ),
+      },
+      {
+        path: "stores/:storeId",
+        element: (
+          <LazyWrapper>
+            <PartnerStoreDetail />
+          </LazyWrapper>
+        ),
+      },
+      // Backward compatibility redirect
+      {
+        path: "lockers",
+        element: <Navigate to="/partner/stores" replace />,
       },
       {
         path: "services",
