@@ -31,6 +31,9 @@ export const baseApi = createApi({
     "AccessCodes", // Thêm cho Staff Access Code logic
     "PartnerOrder", // Thêm cho luồng xử lý đơn của Partner
     "Notifications", // Thêm cho hệ thống thông báo realtime
+    "NotificationStats", // Stats của notifications
+    "NotificationTemplates", // Templates của notifications
+    "Promotions", // Quản lý khuyến mãi
   ],
 
   endpoints: () => ({}),

@@ -106,7 +106,8 @@ const formatDate = (dateString: string) => {
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { order, isLoading, cancelOrder, updateStatus } = useOrderDetail(orderId);
+  const { order, isLoading, cancelOrder, updateStatus } =
+    useOrderDetail(orderId);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
   const handleCancel = () => {
@@ -156,9 +157,9 @@ export default function OrderDetailPage() {
   const status = statusConfig[order.status];
   const StatusIcon = status.icon;
 
-  const canCancel = ([OrderStatus.INITIALIZED, OrderStatus.WAITING] as OrderStatus[]).includes(
-    order.status
-  );
+  const canCancel = (
+    [OrderStatus.INITIALIZED, OrderStatus.WAITING] as OrderStatus[]
+  ).includes(order.status);
 
   return (
     <div className="space-y-6">
@@ -174,10 +175,7 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsStatusModalOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setIsStatusModalOpen(true)}>
             <Edit3 className="mr-2 h-4 w-4" />
             Cập nhật trạng thái
           </Button>
@@ -191,7 +189,9 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Status Banner */}
-      <div className={`${status.bg} ${status.color} rounded-lg p-4 flex items-center gap-3`}>
+      <div
+        className={`${status.bg} ${status.color} rounded-lg p-4 flex items-center gap-3`}
+      >
         <StatusIcon className="h-6 w-6" />
         <div>
           <p className="font-medium">Trạng thái: {status.label}</p>
@@ -214,19 +214,19 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.items?.map((item) => (
+                {order.orderDetails?.map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium">{item.name}</p>
+                      <p className="font-medium">{item.serviceName}</p>
                       <p className="text-sm text-gray-500">
-                        Số lượng: {item.qty}
+                        Số lượng: {item.quantity}
                       </p>
                     </div>
                     <p className="font-semibold text-blue-600">
-                      {formatCurrency(item.price * item.qty)}
+                      {formatCurrency(item.price * item.quantity)}
                     </p>
                   </div>
                 ))}
@@ -234,7 +234,7 @@ export default function OrderDetailPage() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Tổng cộng</span>
                   <span className="text-xl font-bold text-blue-600">
-                    {formatCurrency(order.total)}
+                    {formatCurrency(order.totalPrice)}
                   </span>
                 </div>
               </div>
@@ -268,16 +268,16 @@ export default function OrderDetailPage() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-gray-500">Họ tên</p>
-                <p className="font-medium">{order.customerName}</p>
+                <p className="font-medium">{order.senderName}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Mã khách hàng</p>
-                <p className="font-mono text-sm">{order.customerId}</p>
+                <p className="font-mono text-sm">{order.senderId}</p>
               </div>
-              {order.notes && (
+              {order.customerNote && (
                 <div>
                   <p className="text-sm text-gray-500">Ghi chú</p>
-                  <p className="text-sm">{order.notes}</p>
+                  <p className="text-sm">{order.customerNote}</p>
                 </div>
               )}
             </CardContent>
@@ -335,21 +335,29 @@ export default function OrderDetailPage() {
               <div className="flex justify-between">
                 <span className="text-gray-500">Trạng thái</span>
                 <Badge
-                  variant={order.isPaid ? "default" : "secondary"}
-                  className={order.isPaid ? "bg-green-100 text-green-700" : ""}
+                  variant={
+                    order.status === "COMPLETED" ? "default" : "secondary"
+                  }
+                  className={
+                    order.status === "COMPLETED"
+                      ? "bg-green-100 text-green-700"
+                      : ""
+                  }
                 >
-                  {order.isPaid ? "Đã thanh toán" : "Chưa thanh toán"}
+                  {order.status === "COMPLETED"
+                    ? "Đã thanh toán"
+                    : "Chưa thanh toán"}
                 </Badge>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Phương thức</span>
-                <span>{order.paymentMethod || "N/A"}</span>
+                <span>N/A</span>
               </div>
               <Separator />
               <div className="flex justify-between font-bold">
                 <span>Tổng tiền</span>
                 <span className="text-blue-600">
-                  {formatCurrency(order.total)}
+                  {formatCurrency(order.totalPrice)}
                 </span>
               </div>
             </CardContent>

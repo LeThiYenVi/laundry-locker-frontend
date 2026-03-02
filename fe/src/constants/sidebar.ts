@@ -1,14 +1,12 @@
 import {
   Home,
-  Truck,
   Users,
   Package,
-  ListOrdered,
+  // ListOrdered, // feedback - tạm ẩn
   UserCog,
   Store,
   Sparkles,
   CreditCard,
-  Gift,
   Handshake,
   Clock,
   LayoutDashboard,
@@ -17,6 +15,7 @@ import {
   Bell,
   Settings,
   Briefcase,
+  Tag,
 } from "lucide-react";
 import type { NavItem } from "@/types";
 
@@ -40,12 +39,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     permission: "manage_stores",
   },
   {
-    icon: Truck,
-    path: "/admin/lockers",
-    label: "admin.sidebar.lockers",
-    permission: "manage_lockers",
-  },
-  {
     icon: Sparkles,
     path: "/admin/services",
     label: "admin.sidebar.services",
@@ -64,27 +57,34 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     permission: "view_payments",
   },
   {
-    icon: Gift,
-    path: "/admin/loyalty",
-    label: "admin.sidebar.loyalty",
-    permission: "manage_loyalty",
-  },
-  {
     icon: Handshake,
     path: "/admin/partners",
     label: "admin.sidebar.partners",
     permission: "manage_partners",
   },
-  {
-    icon: ListOrdered,
-    path: "/admin/feedback",
-    label: "admin.sidebar.feedback",
-    permission: "manage_feedback",
-  },
+  // TODO: feedback - tạm ẩn vì chưa có endpoint
+  // {
+  //   icon: ListOrdered,
+  //   path: "/admin/feedback",
+  //   label: "admin.sidebar.feedback",
+  //   permission: "manage_feedback",
+  // },
   {
     icon: Clock,
     path: "/admin/scheduler",
     label: "admin.sidebar.scheduler",
+    permission: "admin_access",
+  },
+  {
+    icon: Bell,
+    path: "/admin/notifications",
+    label: "admin.sidebar.notifications",
+    permission: "admin_access",
+  },
+  {
+    icon: Tag,
+    path: "/admin/promotions",
+    label: "admin.sidebar.promotions",
     permission: "admin_access",
   },
 ];

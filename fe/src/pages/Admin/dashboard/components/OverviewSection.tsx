@@ -1,134 +1,129 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
 import {
-  TrendingUp,
-  TrendingDown,
   Users,
-  UserCircle,
   Store,
-  DollarSign,
-  Package,
-  CalendarCheck,
   Lock,
+  Wrench,
+  Package,
+  BoxSelect,
+  Clock,
 } from "lucide-react";
-import type { DashboardOverview } from "~/types/dashboard.types";
+import type { DashboardOverviewResponse } from "~/types/admin/dashboard";
 
 interface OverviewSectionProps {
-  overview: DashboardOverview;
+  data: DashboardOverviewResponse;
 }
 
-function StatItem({
+function StatRow({
   icon: Icon,
   label,
   value,
-  trend,
-  trendValue,
+  iconColor = "text-blue-600",
+  iconBg = "bg-blue-50",
 }: {
   icon: React.ElementType;
   label: string;
-  value: string;
-  trend?: "up" | "down" | "neutral";
-  trendValue?: string;
+  value: string | number;
+  iconColor?: string;
+  iconBg?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="p-2 bg-blue-50 rounded-lg shrink-0">
-        <Icon size={20} className="text-blue-600" />
+    <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className={`p-1.5 rounded-lg ${iconBg} shrink-0`}>
+        <Icon size={15} className={iconColor} />
       </div>
-      <div className="min-w-0">
-        <p className="text-sm text-gray-500 truncate">{label}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <p className="text-xl font-bold text-gray-900">{value}</p>
-          {trend && (
-            <Badge
-              variant={trend === "up" ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {trend === "up" ? (
-                <TrendingUp size={12} className="mr-1" />
-              ) : (
-                <TrendingDown size={12} className="mr-1" />
-              )}
-              {trendValue}
-            </Badge>
-          )}
-        </div>
-      </div>
+      <p className="text-sm text-gray-500 flex-1 truncate">{label}</p>
+      <p className="text-sm font-bold text-gray-900">
+        {typeof value === "number" ? value.toLocaleString("vi-VN") : value}
+      </p>
     </div>
   );
 }
 
-export function OverviewSection({ overview }: OverviewSectionProps) {
+export function OverviewSection({ data }: OverviewSectionProps) {
+  const totalBoxes = data.availableBoxes + data.occupiedBoxes;
+  const utilization =
+    totalBoxes > 0 ? Math.round((data.occupiedBoxes / totalBoxes) * 100) : 0;
+
   return (
-    <Card className="shadow-sm">
+    <Card className="shadow-sm h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold text-gray-900">
           Tổng quan hệ thống
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatItem
-            icon={Users}
-            label="Ngườii dùng"
-            value={overview.users.count}
-            trend={overview.users.trend as "up" | "down"}
-            trendValue={overview.users.change}
-          />
-          <StatItem
-            icon={UserCircle}
-            label="Đối tác"
-            value={overview.partners.count}
-            trend={overview.partners.trend as "up" | "down"}
-            trendValue={overview.partners.change}
-          />
-          <StatItem
-            icon={Store}
-            label="Cửa hàng"
-            value={overview.stores.count}
-            trend={overview.stores.trend as "up" | "down"}
-            trendValue={overview.stores.change}
-          />
-          <StatItem
-            icon={DollarSign}
-            label="Doanh thu"
-            value={overview.revenue.count}
-            trend={overview.revenue.trend as "up" | "down"}
-            trendValue={overview.revenue.change}
-          />
-          <StatItem
-            icon={Package}
-            label="Đơn hàng"
-            value={overview.orders.count}
-            trend={overview.orders.trend as "up" | "down"}
-            trendValue={overview.orders.change}
-          />
-          <StatItem
-            icon={CalendarCheck}
-            label="Đặt lịch"
-            value={overview.bookings.count}
-            trend={overview.bookings.trend as "up" | "down"}
-            trendValue={overview.bookings.change}
-          />
-          <StatItem
-            icon={Lock}
-            label="Tủ khóa"
-            value={overview.lockers.count}
-            trend={overview.lockers.trend as "up" | "down"}
-            trendValue={overview.lockers.change}
-          />
-          <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className="p-2 bg-green-50 rounded-lg shrink-0">
-              <TrendingUp size={20} className="text-green-600" />
+      <CardContent className="space-y-0.5">
+        <StatRow
+          icon={Users}
+          label="Người dùng"
+          value={data.totalUsers}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-50"
+        />
+        <StatRow
+          icon={Store}
+          label="Cửa hàng"
+          value={data.totalStores}
+          iconColor="text-purple-600"
+          iconBg="bg-purple-50"
+        />
+        <StatRow
+          icon={Lock}
+          label="Locker"
+          value={data.totalLockers}
+          iconColor="text-indigo-600"
+          iconBg="bg-indigo-50"
+        />
+        <StatRow
+          icon={Wrench}
+          label="Dịch vụ hoạt động"
+          value={data.activeServices}
+          iconColor="text-emerald-600"
+          iconBg="bg-emerald-50"
+        />
+
+        <div className="border-t my-2" />
+
+        <StatRow
+          icon={Package}
+          label="Box khả dụng"
+          value={data.availableBoxes}
+          iconColor="text-green-600"
+          iconBg="bg-green-50"
+        />
+        <StatRow
+          icon={BoxSelect}
+          label="Box đang sử dụng"
+          value={data.occupiedBoxes}
+          iconColor="text-amber-600"
+          iconBg="bg-amber-50"
+        />
+
+        {/* Box utilization bar */}
+        <div className="flex items-center gap-3 p-2.5">
+          <div className="flex-1">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Tỷ lệ sử dụng box</span>
+              <span className="font-bold text-gray-700">{utilization}%</span>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm text-gray-500 truncate">Tỷ lệ chuyển đổi</p>
-              <p className="text-xl font-bold text-gray-900">
-                {overview.conversionRate}
-              </p>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${utilization > 80 ? "bg-red-500" : utilization > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
+                style={{ width: `${utilization}%` }}
+              />
             </div>
           </div>
         </div>
+
+        <div className="border-t my-2" />
+
+        <StatRow
+          icon={Clock}
+          label="Đơn đang chờ xử lý"
+          value={data.pendingOrders}
+          iconColor="text-red-600"
+          iconBg="bg-red-50"
+        />
       </CardContent>
     </Card>
   );

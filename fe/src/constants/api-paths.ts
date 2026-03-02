@@ -9,6 +9,7 @@ export const ROOT_URI = {
   USERS: "/api/user",
   ADMIN: "/api/admin",
   PARTNER: "/api/partner",
+  LOYALTY: "/api/loyalty",
 } as const;
 
 // Authentication Endpoints
@@ -92,19 +93,19 @@ export const ADMIN_ENDPOINTS = {
     `${ROOT_URI.ADMIN}/payments/${paymentId}/status`,
 
   // Scheduler Management
+  SCHEDULER_STATUS: `${ROOT_URI.ADMIN}/scheduler/status`,
   SCHEDULER_AUTO_CANCEL: `${ROOT_URI.ADMIN}/scheduler/auto-cancel`,
   SCHEDULER_RELEASE_BOXES: `${ROOT_URI.ADMIN}/scheduler/release-boxes`,
   SCHEDULER_PICKUP_REMINDERS: `${ROOT_URI.ADMIN}/scheduler/pickup-reminders`,
-  SCHEDULER_STATUS: `${ROOT_URI.ADMIN}/scheduler/status`,
 
-  // Loyalty Management
-  LOYALTY_USERS: (userId: number) =>
-    `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
-  LOYALTY_POINTS: (userId: number) =>
-    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/points`,
-  LOYALTY_HISTORY: (userId: number) =>
-    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
+  // Loyalty Management (real endpoints only)
   LOYALTY_STATISTICS: `${ROOT_URI.ADMIN}/loyalty/statistics`,
+  LOYALTY_USER_SUMMARY: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}`,
+  LOYALTY_USER_ADJUST_POINTS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/adjust-points`,
+  LOYALTY_USER_HISTORY: (userId: number) =>
+    `${ROOT_URI.ADMIN}/loyalty/users/${userId}/history`,
 
   // Partner Management
   PARTNERS: `${ROOT_URI.ADMIN}/partners`,
@@ -117,11 +118,60 @@ export const ADMIN_ENDPOINTS = {
   PARTNER_SUSPEND: (partnerId: number) =>
     `${ROOT_URI.ADMIN}/partners/${partnerId}/suspend`,
 
+  // Promotion Management
+  PROMOTIONS: `${ROOT_URI.ADMIN}/promotions`,
+  PROMOTION_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/promotions/${id}`,
+  PROMOTIONS_ACTIVE: `${ROOT_URI.ADMIN}/promotions/active`,
+  PROMOTIONS_BY_STATUS: (status: string) =>
+    `${ROOT_URI.ADMIN}/promotions/status/${status}`,
+  PROMOTIONS_SEARCH: `${ROOT_URI.ADMIN}/promotions/search`,
+  PROMOTION_VALIDATE: (code: string) =>
+    `${ROOT_URI.ADMIN}/promotions/validate/${code}`,
+
+  // Notification Management
+  NOTIFICATIONS: `${ROOT_URI.ADMIN}/notifications`,
+  NOTIFICATION_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/notifications/${id}`,
+  NOTIFICATION_STATUS: (id: number) =>
+    `${ROOT_URI.ADMIN}/notifications/${id}/status`,
+  NOTIFICATION_STATS: `${ROOT_URI.ADMIN}/notifications/stats`,
+  NOTIFICATION_BROADCAST: `${ROOT_URI.ADMIN}/notifications/broadcast`,
+  NOTIFICATION_BULK_DELETE: `${ROOT_URI.ADMIN}/notifications/bulk`,
+  NOTIFICATION_TEMPLATES: `${ROOT_URI.ADMIN}/notifications/templates`,
+  NOTIFICATION_RESEND: (id: number) =>
+    `${ROOT_URI.ADMIN}/notifications/${id}/resend`,
+
+  // Feedback Management
+  FEEDBACK: `${ROOT_URI.ADMIN}/feedback`,
+  FEEDBACK_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/feedback/${id}`,
+  FEEDBACK_STATUS: (id: number) => `${ROOT_URI.ADMIN}/feedback/${id}/status`,
+  FEEDBACK_REPLY: (id: number) => `${ROOT_URI.ADMIN}/feedback/${id}/reply`,
+
+  // Report Management
+  REPORTS: `${ROOT_URI.ADMIN}/reports`,
+  REPORT_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}`,
+  REPORT_STATUS: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/status`,
+  REPORT_ASSIGN: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/assign`,
+  REPORT_NOTES: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/notes`,
+  REPORT_RESOLVE: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/resolve`,
+  REPORTS_STATS: `${ROOT_URI.ADMIN}/reports/stats`,
+
+  // Analytics
+  ANALYTICS_FEEDBACK: `${ROOT_URI.ADMIN}/analytics/feedback`,
+  ANALYTICS_SATISFACTION: `${ROOT_URI.ADMIN}/analytics/satisfaction`,
+
   // Legacy
   ANALYTICS: `${ROOT_URI.ADMIN}/analytics`,
   SCHEDULE: `${ROOT_URI.ADMIN}/schedule`,
   INTEGRATIONS: `${ROOT_URI.ADMIN}/integrations`,
   SETTINGS: `${ROOT_URI.ADMIN}/settings`,
+} as const;
+
+// Loyalty (User-facing) Endpoints
+export const LOYALTY_ENDPOINTS = {
+  PROFILE: `${ROOT_URI.LOYALTY}/profile`,
+  REWARDS: `${ROOT_URI.LOYALTY}/rewards`,
+  REDEEM: `${ROOT_URI.LOYALTY}/redeem`,
+  TRANSACTIONS: `${ROOT_URI.LOYALTY}/transactions`,
 } as const;
 
 // Partner Endpoints
@@ -159,7 +209,6 @@ export const API_PATHS = {
   ...ADMIN_ENDPOINTS,
   ...PARTNER_ENDPOINTS,
 } as const;
-
 // HTTP Methods & Metadata
 export const HTTP_METHODS = {
   GET: "GET",

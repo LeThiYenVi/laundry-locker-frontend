@@ -13,11 +13,19 @@ interface LockerFiltersProps {
 }
 
 const options = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
+  { value: "ALL", label: "Tất cả" },
   { value: LockerStatus.ACTIVE, label: "Hoạt động", color: "green" as const },
-  { value: LockerStatus.MAINTENANCE, label: "Bảo trì", color: "yellow" as const },
+  {
+    value: LockerStatus.MAINTENANCE,
+    label: "Bảo trì",
+    color: "yellow" as const,
+  },
   { value: LockerStatus.INACTIVE, label: "Vô hiệu", color: "gray" as const },
-  { value: LockerStatus.DISCONNECTED, label: "Mất kết nối", color: "red" as const },
+  {
+    value: LockerStatus.DISCONNECTED,
+    label: "Mất kết nối",
+    color: "red" as const,
+  },
 ];
 
 export function LockerFilters({

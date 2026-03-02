@@ -7,37 +7,46 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import {
-  LineChart,
+  ComposedChart,
+  Bar,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Area,
+  Legend,
 } from "recharts";
-
-interface ChartDataPoint {
-  date: string;
-  value: number;
-  orders: number;
-}
+import type { MonthlyDataPoint } from "~/types/admin/dashboard";
 
 interface MainChartProps {
-  data: ChartDataPoint[];
+  data: MonthlyDataPoint[];
   selectedYear: string;
   onYearChange: (year: string) => void;
 }
 
-export function MainChart({ data, selectedYear, onYearChange }: MainChartProps) {
+function formatRevenueTick(value: number) {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}tr`;
+  return `${value}`;
+}
+
+export function MainChart({
+  data,
+  selectedYear,
+  onYearChange,
+}: MainChartProps) {
   return (
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold text-gray-900">
-          Xu hướng
-        </CardTitle>
+        <div>
+          <CardTitle className="text-base font-semibold text-gray-900">
+            Xu hướng đơn hàng & doanh thu
+          </CardTitle>
+          <p className="text-xs text-gray-500 mt-0.5">Dữ liệu theo tháng</p>
+        </div>
         <Select value={selectedYear} onValueChange={onYearChange}>
-          <SelectTrigger className="w-[100px] h-8 text-sm">
+          <SelectTrigger className="w-25 h-8 text-sm">
             <SelectValue placeholder="Chọn năm" />
           </SelectTrigger>
           <SelectContent>
@@ -47,55 +56,87 @@ export function MainChart({ data, selectedYear, onYearChange }: MainChartProps) 
         </Select>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
+        <div className="h-75 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+            <ComposedChart
+              data={data}
+              margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e5e7eb"
+                vertical={false}
+              />
               <XAxis
-                dataKey="date"
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                dataKey="month"
+                tick={{ fill: "#6b7280", fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                yAxisId="orders"
+                orientation="left"
+                tick={{ fill: "#6b7280", fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `${value / 1000}k`}
+                label={{
+                  value: "Đơn",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 10,
+                  fill: "#9ca3af",
+                  fontSize: 11,
+                }}
+              />
+              <YAxis
+                yAxisId="revenue"
+                orientation="right"
+                tick={{ fill: "#6b7280", fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={formatRevenueTick}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",
                   borderRadius: "8px",
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+                  fontSize: 12,
                 }}
-                formatter={(value: number) => [
-                  value.toLocaleString("vi-VN"),
-                  "Đơn hàng",
+                formatter={(value: number, name: string) => [
+                  name === "orders"
+                    ? `${value.toLocaleString("vi-VN")} đơn`
+                    : `${formatRevenueTick(value)}đ`,
+                  name === "orders" ? "Đơn hàng" : "Doanh thu",
                 ]}
               />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="none"
-                fill="url(#colorValue)"
+              <Legend
+                formatter={(value) =>
+                  value === "orders" ? "Đơn hàng" : "Doanh thu"
+                }
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12 }}
+              />
+              <Bar
+                yAxisId="orders"
+                dataKey="orders"
+                fill="#3b82f6"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={32}
+                opacity={0.85}
               />
               <Line
+                yAxisId="revenue"
                 type="monotone"
-                dataKey="value"
-                stroke="#2563eb"
-                strokeWidth={2}
-                dot={{ fill: "#2563eb", r: 4 }}
-                activeDot={{ r: 6 }}
+                dataKey="revenue"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                dot={{ fill: "#10b981", r: 3 }}
+                activeDot={{ r: 5 }}
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

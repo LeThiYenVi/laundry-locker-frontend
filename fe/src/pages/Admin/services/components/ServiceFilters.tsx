@@ -12,7 +12,7 @@ interface ServiceFiltersProps {
 }
 
 const options = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
+  { value: "ALL", label: "Tất cả" },
   { value: "ACTIVE", label: "Hoạt động", color: "green" as const },
   { value: "INACTIVE", label: "Vô hiệu", color: "gray" as const },
 ];

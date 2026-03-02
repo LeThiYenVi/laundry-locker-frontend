@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { PageHeader } from "~/components/shared/page-header";
@@ -6,6 +7,7 @@ import { TableToolbar } from "~/components/shared/data-table";
 import { PartnerTable } from "./components/PartnerTable";
 import { PartnerFilters } from "./components/PartnerFilters";
 import { PartnerStats } from "./components/PartnerStats";
+import { PartnerDetailModal } from "./components/PartnerDetailModal";
 import { usePartners } from "./hooks/usePartners";
 
 export default function PartnersPage() {
@@ -29,6 +31,10 @@ export default function PartnersPage() {
     hasActiveFilters,
   } = usePartners();
 
+  const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
+    null,
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -49,7 +55,7 @@ export default function PartnersPage() {
               onSearchChange={setSearchQuery}
               statusCounts={statusCounts}
             />
-            
+
             <TableToolbar
               createButton={{
                 label: t("admin.partners.addPartner"),
@@ -65,6 +71,7 @@ export default function PartnersPage() {
           <PartnerTable
             partners={partners}
             isLoading={isLoading}
+            onViewDetail={setSelectedPartnerId}
             onEdit={handleEdit}
             onApprove={handleApprove}
             onReject={handleReject}
@@ -72,6 +79,11 @@ export default function PartnersPage() {
           />
         </CardContent>
       </Card>
+
+      <PartnerDetailModal
+        partnerId={selectedPartnerId}
+        onClose={() => setSelectedPartnerId(null)}
+      />
     </div>
   );
 }

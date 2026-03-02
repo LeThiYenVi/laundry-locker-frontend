@@ -1,75 +1,69 @@
-import { baseApi } from '../../baseAPi';
-import { ADMIN_ENDPOINTS } from '../../../constants';
+import { baseApi } from "../../baseAPi";
+import { ADMIN_ENDPOINTS } from "../../../constants";
+import type { ApiResponse, Page } from "../../../types";
 import type {
-  ApiResponse,
-  Page,
-  PageableRequest,
-  LoyaltySummaryResponse,
+  LoyaltyStatisticsDTO,
+  LoyaltyUserSummaryDTO,
   AdjustPointsRequest,
-  PointsTransactionResponse,
-  LoyaltyStatisticsResponse,
-} from '../../../types';
-import { AdjustUserPointsRequestSchema, createValidator } from '../../../schemas';
+  AdjustPointsResponseDTO,
+  PointsHistoryItemDTO,
+} from "../../../types/admin/loyalty";
 
-const TAGS = {
-  LOYALTY: 'Loyalty',
-} as const;
-
-const adjustPointsValidator = createValidator(AdjustUserPointsRequestSchema);
+const TAG = "Loyalty" as const;
 
 export const loyaltyManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Get user loyalty summary
-    getUserLoyaltySummary: builder.query<ApiResponse<LoyaltySummaryResponse>, number>({
-      query: (userId) => ADMIN_ENDPOINTS.LOYALTY_USERS(userId),
-      providesTags: (result, error, userId) => [{ type: TAGS.LOYALTY, id: userId }],
+    // GET /api/admin/loyalty/statistics
+    getLoyaltyStatistics: builder.query<
+      ApiResponse<LoyaltyStatisticsDTO>,
+      void
+    >({
+      query: () => ADMIN_ENDPOINTS.LOYALTY_STATISTICS,
+      providesTags: [TAG],
     }),
 
-    // Adjust user points
+    // GET /api/admin/loyalty/users/{userId}
+    getUserLoyaltySummary: builder.query<
+      ApiResponse<LoyaltyUserSummaryDTO>,
+      number
+    >({
+      query: (userId) => ADMIN_ENDPOINTS.LOYALTY_USER_SUMMARY(userId),
+      providesTags: (_, __, userId) => [{ type: TAG, id: userId }],
+    }),
+
+    // POST /api/admin/loyalty/users/{userId}/adjust-points
     adjustUserPoints: builder.mutation<
-      ApiResponse<PointsTransactionResponse>,
+      ApiResponse<AdjustPointsResponseDTO>,
       { userId: number; data: AdjustPointsRequest }
     >({
-      query: ({ userId, data }) => {
-        // Validate request body with Zod
-        adjustPointsValidator.validateRequestBody(data);
-        return {
-          url: ADMIN_ENDPOINTS.LOYALTY_POINTS(userId),
-          method: 'POST',
-          body: data,
-        };
-      },
-      invalidatesTags: (result, error, { userId }) => [
-        { type: TAGS.LOYALTY, id: userId },
-        TAGS.LOYALTY,
-      ],
-    }),
-
-    // Get user points history
-    getUserPointsHistory: builder.query<
-      ApiResponse<Page<PointsTransactionResponse>>,
-      { userId: number } & PageableRequest
-    >({
-      query: ({ userId, pageNumber, pageSize, sort }) => ({
-        url: ADMIN_ENDPOINTS.LOYALTY_HISTORY(userId),
-        params: { page: pageNumber, size: pageSize, sort },
+      query: ({ userId, data }) => ({
+        url: ADMIN_ENDPOINTS.LOYALTY_USER_ADJUST_POINTS(userId),
+        method: "POST",
+        body: data,
       }),
-      providesTags: (result, error, { userId }) => [
-        { type: TAGS.LOYALTY, id: `${userId}-history` },
+      invalidatesTags: (_, __, { userId }) => [
+        { type: TAG, id: userId },
+        TAG,
       ],
     }),
 
-    // Get loyalty statistics
-    getLoyaltyStatistics: builder.query<ApiResponse<LoyaltyStatisticsResponse>, void>({
-      query: () => ADMIN_ENDPOINTS.LOYALTY_STATISTICS,
-      providesTags: [TAGS.LOYALTY],
+    // GET /api/admin/loyalty/users/{userId}/history
+    getUserLoyaltyHistory: builder.query<
+      ApiResponse<Page<PointsHistoryItemDTO>>,
+      { userId: number; page?: number; size?: number }
+    >({
+      query: ({ userId, page = 0, size = 10 }) => ({
+        url: ADMIN_ENDPOINTS.LOYALTY_USER_HISTORY(userId),
+        params: { page, size, sort: "transactionDate,desc" },
+      }),
+      providesTags: (_, __, { userId }) => [{ type: TAG, id: userId }],
     }),
   }),
 });
 
 export const {
+  useGetLoyaltyStatisticsQuery,
   useGetUserLoyaltySummaryQuery,
   useAdjustUserPointsMutation,
-  useGetUserPointsHistoryQuery,
-  useGetLoyaltyStatisticsQuery,
+  useGetUserLoyaltyHistoryQuery,
 } = loyaltyManagementApi;

@@ -1,7 +1,11 @@
 import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { mockServices, MockService } from "~/mockdata/services.mock";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
+import {
+  useGetAllServicesQuery,
+  useDeleteServiceMutation,
+  useUpdateServiceStatusMutation,
+} from "@/stores/apis/admin/services";
+import type { AdminServiceResponse } from "~/types/admin/service";
 
 export type ServiceStatus = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -12,19 +16,24 @@ export function useServices() {
   const [pageSize, setPageSize] = useState(10);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<MockService | null>(null);
-  const [isLoading, setIsLoading] = useState(isMockEnabled);
+  const [selectedService, setSelectedService] =
+    useState<AdminServiceResponse | null>(null);
 
-  if (isMockEnabled && isLoading) {
-    setTimeout(() => setIsLoading(false), mockDelay);
-  }
+  const { data, isLoading, refetch } = useGetAllServicesQuery({
+    pageNumber: page,
+    pageSize,
+  });
+  const [deleteService] = useDeleteServiceMutation();
+  const [updateServiceStatus] = useUpdateServiceStatusMutation();
+
+  const allServices: AdminServiceResponse[] = data?.data?.content ?? [];
 
   const filteredServices = useMemo(() => {
-    let result = [...mockServices];
+    let result = [...allServices];
 
     if (status !== "ALL") {
       result = result.filter((service) =>
-        status === "ACTIVE" ? service.isActive : !service.isActive
+        status === "ACTIVE" ? service.active : !service.active,
       );
     }
 
@@ -33,73 +42,83 @@ export function useServices() {
       result = result.filter(
         (service) =>
           service.name?.toLowerCase().includes(query) ||
-          service.description?.toLowerCase().includes(query)
+          service.description?.toLowerCase().includes(query),
       );
     }
 
-    const start = page * pageSize;
-    return result.slice(start, start + pageSize);
-  }, [status, searchQuery, page, pageSize]);
+    return result;
+  }, [allServices, status, searchQuery]);
 
-  const statusCounts = useMemo(() => ({
-    ALL: mockServices.length,
-    ACTIVE: mockServices.filter((s) => s.isActive).length,
-    INACTIVE: mockServices.filter((s) => !s.isActive).length,
-  }), []);
+  const statusCounts = useMemo(
+    () => ({
+      ALL: allServices.length,
+      ACTIVE: allServices.filter((s) => s.active).length,
+      INACTIVE: allServices.filter((s) => !s.active).length,
+    }),
+    [allServices],
+  );
 
   const handleCreate = useCallback(() => {
     setIsCreateModalOpen(true);
   }, []);
 
-  const handleEdit = useCallback((service: MockService) => {
+  const handleEdit = useCallback((service: AdminServiceResponse) => {
     setSelectedService(service);
     setIsEditModalOpen(true);
   }, []);
 
-  const handleDelete = useCallback((serviceId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang xóa dịch vụ...",
-        success: "Đã xóa dịch vụ thành công!",
-        error: "Không thể xóa dịch vụ",
+  const handleDelete = useCallback(
+    async (serviceId: number) => {
+      try {
+        await toast.promise(deleteService(serviceId).unwrap(), {
+          loading: "Đang xóa dịch vụ...",
+          success: "Đã xóa dịch vụ thành công!",
+          error: "Không thể xóa dịch vụ",
+        });
+      } catch {
+        // error handled by toast
       }
-    );
-  }, []);
+    },
+    [deleteService],
+  );
 
-  const handleToggleStatus = useCallback((serviceId: number, currentStatus: boolean) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 800)),
-      {
-        loading: currentStatus ? "Đang vô hiệu hóa..." : "Đang kích hoạt...",
-        success: currentStatus ? "Đã vô hiệu hóa dịch vụ" : "Đã kích hoạt dịch vụ",
-        error: "Không thể cập nhật trạng thái",
+  const handleToggleStatus = useCallback(
+    async (serviceId: number, currentActive: boolean) => {
+      try {
+        await toast.promise(
+          updateServiceStatus({
+            id: serviceId,
+            data: { enabled: !currentActive },
+          }).unwrap(),
+          {
+            loading: currentActive
+              ? "Đang vô hiệu hóa..."
+              : "Đang kích hoạt...",
+            success: currentActive
+              ? "Đã vô hiệu hóa dịch vụ"
+              : "Đã kích hoạt dịch vụ",
+            error: "Không thể cập nhật trạng thái",
+          },
+        );
+      } catch {
+        // error handled by toast
       }
-    );
-  }, []);
+    },
+    [updateServiceStatus],
+  );
 
-  // Refetch function
-  const refetch = () => {
-    if (isMockEnabled) {
-      setIsLoading(true);
-      setTimeout(() => setIsLoading(false), mockDelay);
-    }
-  };
-
-  // Clear all filters
   const clearFilters = () => {
     setStatus("ALL");
     setSearchQuery("");
     setPage(0);
   };
 
-  // Check if any filter is active
   const hasActiveFilters = status !== "ALL" || searchQuery !== "";
 
   return {
     services: filteredServices,
-    totalElements: mockServices.length,
-    totalPages: Math.ceil(mockServices.length / pageSize),
+    totalElements: data?.data?.totalElements ?? 0,
+    totalPages: data?.data?.totalPages ?? 0,
     isLoading,
     status,
     setStatus,
@@ -122,6 +141,5 @@ export function useServices() {
     handleEdit,
     handleDelete,
     handleToggleStatus,
-    isMock: isMockEnabled,
   };
 }

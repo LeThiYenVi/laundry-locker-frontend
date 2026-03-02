@@ -11,7 +11,6 @@ import {
   RotateCcw,
   Box,
   XCircle,
-  ChevronRight,
 } from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
@@ -29,34 +28,51 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { OrderStatus } from "~/types/admin/enums";
-import type { Order } from "~/types/orders";
+import type { OrderResponse } from "~/types/admin/order";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 interface OrderTableProps {
-  orders: Order[];
+  orders: OrderResponse[];
   isLoading: boolean;
 }
 
-const columnHelper = createColumnHelper<Order>();
+const columnHelper = createColumnHelper<OrderResponse>();
 
 // Unified icon wrapper
-const IconWrapper = ({ children, color = "blue" }: { children: React.ReactNode; color?: "blue" | "gray" }) => {
+const IconWrapper = ({
+  children,
+  color = "blue",
+}: {
+  children: React.ReactNode;
+  color?: "blue" | "gray";
+}) => {
   const colorClasses = {
     blue: "bg-blue-50 text-blue-600",
     gray: "bg-gray-100 text-gray-600",
   };
   return (
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}>
+    <div
+      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}
+    >
       {children}
     </div>
   );
 };
 
 // Truncated text with tooltip
-const TruncatedText = ({ text, maxLength = 18, className = "" }: { text: string; maxLength?: number; className?: string }) => {
-  if (!text || text.length <= maxLength) return <span className={className}>{text || "-"}</span>;
-  
+const TruncatedText = ({
+  text,
+  maxLength = 18,
+  className = "",
+}: {
+  text: string;
+  maxLength?: number;
+  className?: string;
+}) => {
+  if (!text || text.length <= maxLength)
+    return <span className={className}>{text || "-"}</span>;
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -76,7 +92,13 @@ const TruncatedText = ({ text, maxLength = 18, className = "" }: { text: string;
 const getStatusBadge = (status: OrderStatus) => {
   const variants: Record<
     OrderStatus,
-    { bg: string; text: string; border: string; label: string; icon: React.ElementType }
+    {
+      bg: string;
+      text: string;
+      border: string;
+      label: string;
+      icon: React.ElementType;
+    }
   > = {
     [OrderStatus.INITIALIZED]: {
       bg: "bg-gray-50",
@@ -147,7 +169,10 @@ const getStatusBadge = (status: OrderStatus) => {
   const Icon = variant.icon;
 
   return (
-    <Badge className={`${variant.bg} ${variant.text} ${variant.border} font-medium`} variant="outline">
+    <Badge
+      className={`${variant.bg} ${variant.text} ${variant.border} font-medium`}
+      variant="outline"
+    >
       <Icon className="mr-1 h-3.5 w-3.5" />
       {variant.label}
     </Badge>
@@ -173,60 +198,63 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
             <Package size={18} />
           </IconWrapper>
           <div className="min-w-0">
-            <TruncatedText 
-              text={String(row.original.id)}
-              maxLength={12}
-              className="font-semibold text-gray-900 font-mono"
-            />
+            <span className="font-semibold text-gray-900 font-mono text-sm">
+              #{row.original.id}
+            </span>
             <p className="text-xs text-gray-500">
-              {row.original.items?.length || 0} sản phẩm
+              {row.original.orderDetails?.length || 0} dịch vụ
             </p>
           </div>
         </div>
       ),
     }),
 
-    columnHelper.accessor("customerName", {
+    columnHelper.accessor("senderName", {
       header: t("admin.orders.columns.customer"),
       cell: ({ row }) => (
         <div className="min-w-0">
-          <TruncatedText 
-            text={row.original.customerName || "N/A"}
+          <TruncatedText
+            text={row.original.senderName || "N/A"}
             maxLength={18}
             className="font-medium text-gray-900"
           />
-          <p className="text-xs text-gray-500">ID: {row.original.customerId}</p>
+          <p className="text-xs text-gray-500">
+            {row.original.senderPhone || ""}
+          </p>
         </div>
       ),
     }),
 
-    columnHelper.accessor("items", {
+    columnHelper.accessor("orderDetails", {
       header: t("admin.orders.columns.service"),
       cell: ({ row }) => (
         <div className="flex flex-col gap-1">
-          {row.original.items?.slice(0, 2).map((item) => (
+          {row.original.orderDetails?.slice(0, 2).map((item) => (
             <Badge
               key={item.id}
               variant="outline"
               className="bg-gray-50 text-gray-700 font-normal w-fit text-xs"
             >
-              {item.name} × {item.qty}
+              {item.serviceName} × {item.quantity}
             </Badge>
           ))}
-          {row.original.items && row.original.items.length > 2 && (
-            <span className="text-xs text-gray-500">
-              +{row.original.items.length - 2} sản phẩm khác
-            </span>
-          )}
+          {row.original.orderDetails &&
+            row.original.orderDetails.length > 2 && (
+              <span className="text-xs text-gray-500">
+                +{row.original.orderDetails.length - 2} dịch vụ khác
+              </span>
+            )}
         </div>
       ),
     }),
 
-    columnHelper.accessor("total", {
+    columnHelper.accessor("totalPrice", {
       header: t("admin.orders.columns.total"),
       cell: ({ row }) => (
         <span className="font-semibold text-blue-600">
-          {row.original.total ? formatCurrency(row.original.total) : "N/A"}
+          {row.original.totalPrice
+            ? formatCurrency(row.original.totalPrice)
+            : "N/A"}
         </span>
       ),
     }),
@@ -258,22 +286,12 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
       header: t("common.actions"),
       cell: ({ row }) => {
         const order = row.original;
-        const canCancel = ([OrderStatus.INITIALIZED, OrderStatus.WAITING] as OrderStatus[]).includes(
-          order.status
-        );
+        const canCancel = (
+          [OrderStatus.INITIALIZED, OrderStatus.WAITING] as OrderStatus[]
+        ).includes(order.status);
 
         return (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              onClick={() => navigate(`/admin/orders/${order.id}`)}
-            >
-              Chi tiết
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -284,7 +302,10 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
                   <MoreHorizontal size={16} className="text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200">
+              <DropdownMenuContent
+                align="end"
+                className="w-48 bg-white border border-gray-200"
+              >
                 <DropdownMenuItem
                   onClick={() => navigate(`/admin/orders/${order.id}`)}
                   className="cursor-pointer"

@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
 import { TableToolbar } from "~/components/shared/data-table";
 import { PaymentTable } from "./components/PaymentTable";
 import { PaymentFilters } from "./components/PaymentFilters";
 import { PaymentStats } from "./components/PaymentStats";
+import { PaymentDetailModal } from "./components/PaymentDetailModal";
 import { usePayments } from "./hooks/usePayments";
 
 export default function PaymentsPage() {
@@ -20,6 +22,10 @@ export default function PaymentsPage() {
     clearFilters,
     hasActiveFilters,
   } = usePayments();
+
+  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(
+    null,
+  );
 
   return (
     <div className="space-y-6">
@@ -41,7 +47,7 @@ export default function PaymentsPage() {
               onSearchChange={setSearchQuery}
               statusCounts={statusCounts}
             />
-            
+
             <TableToolbar
               onRefresh={refetch}
               onClearFilters={clearFilters}
@@ -52,9 +58,15 @@ export default function PaymentsPage() {
           <PaymentTable
             payments={payments}
             isLoading={isLoading}
+            onViewDetail={setSelectedPaymentId}
           />
         </CardContent>
       </Card>
+
+      <PaymentDetailModal
+        paymentId={selectedPaymentId}
+        onClose={() => setSelectedPaymentId(null)}
+      />
     </div>
   );
 }

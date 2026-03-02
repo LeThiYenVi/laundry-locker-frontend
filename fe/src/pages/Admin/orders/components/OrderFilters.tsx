@@ -22,12 +22,37 @@ export function OrderFilters({
   const { t } = useTranslation();
 
   const options = [
-    { value: "ALL", label: t("common.all"), color: "blue" as const, count: statusCounts.ALL },
-    { value: OrderStatus.INITIALIZED, label: t("admin.orders.status.initialized"), color: "gray" as const, count: statusCounts[OrderStatus.INITIALIZED] },
-    { value: OrderStatus.PROCESSING, label: t("admin.orders.status.processing"), color: "purple" as const, count: statusCounts[OrderStatus.PROCESSING] },
-    { value: OrderStatus.READY, label: t("admin.orders.status.ready"), color: "blue" as const, count: statusCounts[OrderStatus.READY] },
-    { value: OrderStatus.COMPLETED, label: t("admin.orders.status.completed"), color: "green" as const, count: statusCounts[OrderStatus.COMPLETED] },
-    { value: OrderStatus.CANCELED, label: t("admin.orders.status.canceled"), color: "red" as const, count: statusCounts[OrderStatus.CANCELED] },
+    { value: "ALL", label: t("common.all"), count: statusCounts.ALL },
+    {
+      value: OrderStatus.INITIALIZED,
+      label: t("admin.orders.status.initialized"),
+      color: "gray" as const,
+      count: statusCounts[OrderStatus.INITIALIZED],
+    },
+    {
+      value: OrderStatus.PROCESSING,
+      label: t("admin.orders.status.processing"),
+      color: "purple" as const,
+      count: statusCounts[OrderStatus.PROCESSING],
+    },
+    {
+      value: OrderStatus.READY,
+      label: t("admin.orders.status.ready"),
+      color: "blue" as const,
+      count: statusCounts[OrderStatus.READY],
+    },
+    {
+      value: OrderStatus.COMPLETED,
+      label: t("admin.orders.status.completed"),
+      color: "green" as const,
+      count: statusCounts[OrderStatus.COMPLETED],
+    },
+    {
+      value: OrderStatus.CANCELED,
+      label: t("admin.orders.status.canceled"),
+      color: "red" as const,
+      count: statusCounts[OrderStatus.CANCELED],
+    },
   ];
 
   return (

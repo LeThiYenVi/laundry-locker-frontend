@@ -1,5 +1,16 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal, MapPin, Phone, Clock, Store as StoreIcon, CheckCircle2, XCircle, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  MoreHorizontal,
+  MapPin,
+  Phone,
+  Clock,
+  Store as StoreIcon,
+  CheckCircle2,
+  XCircle,
+  User,
+  Eye,
+} from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -16,19 +27,25 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
-import type { MockStore } from "~/mockdata/stores.mock";
+import type { AdminStoreResponse } from "~/types/admin/store";
 
 interface StoreTableProps {
-  stores: MockStore[];
+  stores: AdminStoreResponse[];
   isLoading: boolean;
-  onEdit: (store: MockStore) => void;
+  onEdit: (store: AdminStoreResponse) => void;
   onDelete: (storeId: number) => void;
 }
 
-const columnHelper = createColumnHelper<MockStore>();
+const columnHelper = createColumnHelper<AdminStoreResponse>();
 
 // Unified icon wrapper
-const IconWrapper = ({ children, color = "blue" }: { children: React.ReactNode; color?: "blue" | "green" | "red" | "amber" }) => {
+const IconWrapper = ({
+  children,
+  color = "blue",
+}: {
+  children: React.ReactNode;
+  color?: "blue" | "green" | "red" | "amber";
+}) => {
   const colorClasses = {
     blue: "bg-blue-50 text-blue-600",
     green: "bg-green-50 text-green-600",
@@ -36,16 +53,27 @@ const IconWrapper = ({ children, color = "blue" }: { children: React.ReactNode; 
     amber: "bg-amber-50 text-amber-500",
   };
   return (
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}>
+    <div
+      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}
+    >
       {children}
     </div>
   );
 };
 
 // Truncated text with tooltip
-const TruncatedText = ({ text, maxLength = 30, className = "" }: { text: string; maxLength?: number; className?: string }) => {
-  if (text.length <= maxLength) return <span className={className}>{text}</span>;
-  
+const TruncatedText = ({
+  text,
+  maxLength = 30,
+  className = "",
+}: {
+  text: string;
+  maxLength?: number;
+  className?: string;
+}) => {
+  if (text.length <= maxLength)
+    return <span className={className}>{text}</span>;
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -62,8 +90,14 @@ const TruncatedText = ({ text, maxLength = 30, className = "" }: { text: string;
   );
 };
 
-export function StoreTable({ stores, isLoading, onEdit, onDelete }: StoreTableProps) {
+export function StoreTable({
+  stores,
+  isLoading,
+  onEdit,
+  onDelete,
+}: StoreTableProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const columns = [
     columnHelper.accessor("name", {
       header: t("admin.stores.columns.store"),
@@ -86,8 +120,10 @@ export function StoreTable({ stores, isLoading, onEdit, onDelete }: StoreTablePr
               </Tooltip>
             </TooltipProvider>
             <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
-              <User size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="truncate max-w-[150px]">{row.original.managerName}</span>
+              <MapPin size={14} className="text-gray-400 flex-shrink-0" />
+              <span className="truncate max-w-[150px]">
+                {row.original.description || "—"}
+              </span>
             </p>
           </div>
         </div>
@@ -103,7 +139,6 @@ export function StoreTable({ stores, isLoading, onEdit, onDelete }: StoreTablePr
           </IconWrapper>
           <div className="min-w-0">
             <p className="font-medium text-gray-700">{row.original.phone}</p>
-            <p className="text-xs text-gray-400 truncate max-w-[140px]">{row.original.email}</p>
           </div>
         </div>
       ),
@@ -117,8 +152,8 @@ export function StoreTable({ stores, isLoading, onEdit, onDelete }: StoreTablePr
             <MapPin size={16} />
           </IconWrapper>
           <div className="min-w-0 pt-1">
-            <TruncatedText 
-              text={row.original.address} 
+            <TruncatedText
+              text={row.original.address}
               maxLength={35}
               className="text-sm text-gray-600"
             />
@@ -127,57 +162,46 @@ export function StoreTable({ stores, isLoading, onEdit, onDelete }: StoreTablePr
       ),
     }),
 
-    columnHelper.accessor("openingHours", {
+    columnHelper.accessor("openTime", {
       header: t("admin.stores.columns.hours"),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <IconWrapper color="amber">
             <Clock size={16} />
           </IconWrapper>
-          <span className="font-medium text-gray-700">{row.original.openingHours}</span>
+          <span className="font-medium text-gray-700">
+            {row.original.openTime && row.original.closeTime
+              ? `${row.original.openTime} - ${row.original.closeTime}`
+              : "—"}
+          </span>
         </div>
       ),
     }),
 
-    columnHelper.accessor("totalLockers", {
+    columnHelper.accessor("lockerCount", {
       header: t("admin.stores.columns.lockers"),
-      cell: ({ row }) => {
-        const percent = (row.original.availableLockers / row.original.totalLockers) * 100;
-        return (
-          <div className="flex flex-col gap-1.5 w-28">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-700">
-                {row.original.availableLockers}/{row.original.totalLockers}
-              </span>
-              <span className={`text-xs font-medium ${percent < 30 ? 'text-red-500' : percent < 70 ? 'text-amber-500' : 'text-green-500'}`}>
-                {Math.round(percent)}%
-              </span>
-            </div>
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  percent < 30 ? 'bg-red-500' : percent < 70 ? 'bg-amber-500' : 'bg-green-500'
-                }`}
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-semibold text-gray-700">
+            {row.original.lockerCount ?? 0}
+          </span>
+          <span className="text-xs text-gray-400">tủ</span>
+        </div>
+      ),
     }),
 
-    columnHelper.accessor("isActive", {
+    columnHelper.accessor("active", {
       header: t("admin.stores.columns.status"),
       cell: ({ row }) => (
         <Badge
           className={
-            row.original.isActive
+            row.original.active
               ? "bg-green-50 text-green-700 border-green-200 font-medium"
               : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
           }
           variant="outline"
         >
-          {row.original.isActive ? (
+          {row.original.active ? (
             <>
               <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
               {t("admin.stores.status.active")}
@@ -198,12 +222,29 @@ export function StoreTable({ stores, isLoading, onEdit, onDelete }: StoreTablePr
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-gray-100"
+            >
               <MoreHorizontal size={16} className="text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-200">
-            <DropdownMenuItem onClick={() => onEdit(row.original)} className="cursor-pointer">
+          <DropdownMenuContent
+            align="end"
+            className="w-40 bg-white border border-gray-200"
+          >
+            <DropdownMenuItem
+              onClick={() => navigate(`/admin/stores/${row.original.id}`)}
+              className="cursor-pointer"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              {t("dropdown.viewDetail")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onEdit(row.original)}
+              className="cursor-pointer"
+            >
               <span className="mr-2">✏️</span> {t("dropdown.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem

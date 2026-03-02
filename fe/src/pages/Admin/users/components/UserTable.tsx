@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { createColumnHelper } from "@tanstack/react-table";
+import { useNavigate } from "react-router-dom";
 import {
   MoreHorizontal,
   Mail,
@@ -9,11 +11,13 @@ import {
   Smartphone,
   Search,
   Facebook,
+  Loader2,
 } from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Switch } from "~/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
+import { useUpdateUserStatusMutation } from "~/stores/apis/admin";
 import type { AdminUserResponse } from "~/types";
 
 interface UserTableProps {
@@ -94,30 +99,6 @@ const ProviderIcon = ({ provider }: { provider: string }) => {
   );
 };
 
-const getStatusBadge = (enabled: boolean, t: (key: string) => string) => {
-  if (enabled) {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-        </span>
-        <span className="text-sm font-medium text-green-700">
-          {t("admin.users.status.active")}
-        </span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-2">
-      <span className="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
-      <span className="text-sm font-medium text-gray-600">
-        {t("admin.users.status.inactive")}
-      </span>
-    </div>
-  );
-};
-
 const getRoleBadge = (role: string) => {
   const styles: Record<string, string> = {
     ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
@@ -140,6 +121,26 @@ const getRoleBadge = (role: string) => {
 
 export function UserTable({ users, isLoading }: UserTableProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [updateStatus] = useUpdateUserStatusMutation();
+  const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
+
+  const handleToggleStatus = async (user: AdminUserResponse) => {
+    if (pendingIds.has(user.id)) return;
+    setPendingIds((prev) => new Set(prev).add(user.id));
+    try {
+      await updateStatus({
+        id: user.id,
+        data: { enabled: !user.enabled },
+      }).unwrap();
+    } finally {
+      setPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(user.id);
+        return next;
+      });
+    }
+  };
   const columns = [
     columnHelper.accessor("name", {
       header: t("admin.users.columns.user"),
@@ -191,11 +192,6 @@ export function UserTable({ users, isLoading }: UserTableProps) {
       ),
     }),
 
-    columnHelper.accessor("enabled", {
-      header: t("admin.users.columns.status"),
-      cell: ({ row }) => getStatusBadge(row.original.enabled, t),
-    }),
-
     columnHelper.accessor("provider", {
       header: t("admin.users.columns.provider"),
       cell: ({ row }) => {
@@ -241,10 +237,41 @@ export function UserTable({ users, isLoading }: UserTableProps) {
       ),
     }),
 
+    columnHelper.accessor("enabled", {
+      header: t("admin.users.columns.status"),
+      cell: ({ row }) => {
+        const user = row.original;
+        const isPending = pendingIds.has(user.id);
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={user.enabled}
+              disabled={isPending}
+              onCheckedChange={() => handleToggleStatus(user)}
+              className="data-[state=checked]:bg-green-500"
+            />
+            {isPending ? (
+              <Loader2 size={12} className="animate-spin text-gray-400" />
+            ) : (
+              <span
+                className={`text-xs font-medium ${
+                  user.enabled ? "text-green-600" : "text-gray-400"
+                }`}
+              >
+                {user.enabled
+                  ? t("admin.users.status.active")
+                  : t("admin.users.status.inactive")}
+              </span>
+            )}
+          </div>
+        );
+      },
+    }),
+
     columnHelper.display({
       id: "actions",
       header: t("common.actions"),
-      cell: () => (
+      cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -259,12 +286,12 @@ export function UserTable({ users, isLoading }: UserTableProps) {
             align="end"
             className="w-40 bg-white border border-gray-200"
           >
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => navigate(`/admin/users/${row.original.id}`)}
+            >
               <Eye className="mr-2 h-4 w-4" />
               {t("dropdown.viewDetail")}
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <span className="mr-2">✏️</span> {t("button.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
               <span className="mr-2">🗑️</span> {t("button.delete")}

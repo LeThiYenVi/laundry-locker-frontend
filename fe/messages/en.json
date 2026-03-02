@@ -88,6 +88,8 @@
       "partners": "Partners",
       "feedback": "Feedback",
       "scheduler": "Scheduler",
+      "notifications": "Notifications",
+      "promotions": "Promotions",
       "settings": "Settings"
     },
     "dashboard": {
@@ -210,6 +212,171 @@
     "settings": {
       "title": "Settings",
       "subtitle": "Manage application preferences"
+    },
+    "notifications": {
+      "title": "Notification Management",
+      "description": "Manage and send notifications to users",
+      "createBtn": "Create Notification",
+      "broadcastBtn": "Broadcast",
+      "searchPlaceholder": "Search by title, recipient...",
+      "emptyMessage": "No notifications found",
+      "filter": {
+        "status": "Status",
+        "type": "Type",
+        "channel": "Channel",
+        "allStatus": "All",
+        "allTypes": "All Types",
+        "allChannels": "All Channels"
+      },
+      "status": {
+        "unread": "Unread",
+        "read": "Read",
+        "archived": "Archived"
+      },
+      "channel": {
+        "inApp": "In-App",
+        "email": "Email",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "type": {
+        "orderCreated": "Order Created",
+        "orderConfirmed": "Order Confirmed",
+        "orderReady": "Order Ready",
+        "orderCompleted": "Completed",
+        "orderCancelled": "Cancelled",
+        "paymentSuccessful": "Payment OK",
+        "paymentFailed": "Payment Failed",
+        "promotion": "Promotion",
+        "systemAlert": "System",
+        "loyaltyPointsEarned": "Points Earned",
+        "loyaltyRewardUnlocked": "Reward Unlocked"
+      },
+      "stats": {
+        "total": "Total Notifications",
+        "unread": "Unread",
+        "read": "Read",
+        "archived": "Archived",
+        "deliveryRate": "Delivery Rate",
+        "avgReadTime": "Avg. Read Time",
+        "minutes": "min"
+      },
+      "columns": {
+        "recipient": "Recipient",
+        "title": "Title",
+        "type": "Type",
+        "channel": "Channel",
+        "status": "Status",
+        "createdAt": "Created At"
+      },
+      "actions": {
+        "markRead": "Mark as Read",
+        "archive": "Archive",
+        "resend": "Resend",
+        "delete": "Delete"
+      },
+      "broadcast": {
+        "title": "Broadcast Notification",
+        "notifType": "Notification Type",
+        "channel": "Channel",
+        "subject": "Title",
+        "subjectPlaceholder": "Enter notification title",
+        "content": "Content",
+        "contentPlaceholder": "Enter notification content...",
+        "target": "Target Audience",
+        "allUsers": "All Users",
+        "specific": "Specific",
+        "recipientIdsPlaceholder": "Enter user IDs separated by commas (e.g. 1, 2, 3)",
+        "scheduledFor": "Scheduled Time (optional)",
+        "scheduledHint": "Leave empty to send immediately",
+        "sendBtn": "Send Broadcast",
+        "sending": "Sending...",
+        "successMsg": "Broadcast sent to {count} users",
+        "errorMsg": "Failed to send broadcast, please try again",
+        "requiredFields": "Please enter title and content"
+      },
+      "create": {
+        "title": "Create Notification",
+        "recipient": "Recipient ID",
+        "recipientPlaceholder": "Enter user ID",
+        "notifType": "Notification Type",
+        "channel": "Channel",
+        "subject": "Title",
+        "subjectPlaceholder": "Enter notification title",
+        "content": "Content",
+        "contentPlaceholder": "Enter notification content...",
+        "relatedOrder": "Related Order ID",
+        "relatedOrderPlaceholder": "Enter order ID (optional)",
+        "sendBtn": "Send Notification",
+        "sending": "Sending...",
+        "successMsg": "Notification sent successfully",
+        "errorMsg": "Failed to send notification",
+        "invalidRecipient": "Invalid recipient ID",
+        "requiredFields": "Please enter title and content"
+      }
+    },
+    "promotions": {
+      "title": "Promotion Management",
+      "description": "Create and manage voucher codes and discount campaigns",
+      "createBtn": "Create Promotion",
+      "searchPlaceholder": "Search by code or campaign name...",
+      "emptyMessage": "No promotions found",
+      "status": {
+        "all": "All",
+        "active": "Active",
+        "upcoming": "Upcoming",
+        "expired": "Expired",
+        "depleted": "Depleted",
+        "inactive": "Inactive"
+      },
+      "columns": {
+        "code": "Code",
+        "title": "Campaign Name",
+        "discount": "Discount",
+        "minOrder": "Min Order",
+        "period": "Period",
+        "usage": "Usage",
+        "status": "Status"
+      },
+      "discount": {
+        "noLimit": "No limit",
+        "freeService": "Free Service"
+      },
+      "modal": {
+        "createTitle": "Create New Promotion",
+        "editTitle": "Edit Promotion",
+        "code": "Promotion Code",
+        "codeHint": "3–20 chars, only A-Z, 0-9, _",
+        "codePlaceholder": "e.g. SAVE20, SUMMER26",
+        "titleField": "Campaign Name",
+        "titlePlaceholder": "e.g. 20% Off Summer Sale",
+        "description": "Description",
+        "descriptionPlaceholder": "Short description of the promotion...",
+        "discountType": "Discount Type",
+        "discountTypePercent": "Percentage (%)",
+        "discountTypeFixed": "Fixed Amount (VND)",
+        "discountTypeFree": "Free Service",
+        "discountValue": "Discount Value",
+        "discountValueHint": "Enter value (0–100 for %, amount for VND)",
+        "maxDiscount": "Max Discount (VND)",
+        "maxDiscountPlaceholder": "Empty = no limit",
+        "minOrder": "Min Order Amount (VND)",
+        "minOrderPlaceholder": "Empty = no limit",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "totalLimit": "Total Usage Limit",
+        "totalLimitPlaceholder": "Empty = unlimited",
+        "perUserLimit": "Per User Limit",
+        "isActive": "Activate Immediately",
+        "stackable": "Allow combining with other promotions",
+        "createSuccess": "Promotion created successfully",
+        "editSuccess": "Promotion updated successfully",
+        "createFailed": "Failed to create promotion",
+        "editFailed": "Failed to update promotion",
+        "requiredCode": "Please enter code and campaign name",
+        "requiredDates": "Please select start and end dates",
+        "invalidDates": "End date must be after start date"
+      }
     }
   },
   "partner": {

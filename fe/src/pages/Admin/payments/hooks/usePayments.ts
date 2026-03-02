@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { mockPayments, paymentStatistics, MockPayment } from "~/mockdata/payments.mock";
 import { PaymentStatus } from "~/types/admin/enums";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
+import { useGetAllPaymentsQuery } from "@/stores/apis/admin/payments";
+import type { PaymentResponse } from "~/types/admin/payment";
 
 export type PaymentStatusFilter = "ALL" | PaymentStatus;
 
@@ -10,65 +10,82 @@ export function usePayments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [isLoading, setIsLoading] = useState(isMockEnabled);
 
-  if (isMockEnabled && isLoading) {
-    setTimeout(() => setIsLoading(false), mockDelay);
-  }
+  const { data, isLoading, refetch } = useGetAllPaymentsQuery({
+    pageNumber: page,
+    pageSize,
+    ...(status !== "ALL" ? { status } : {}),
+  });
+
+  const allPayments: PaymentResponse[] = data?.data?.content ?? [];
 
   const filteredPayments = useMemo(() => {
-    let result = [...mockPayments];
+    if (!searchQuery) return allPayments;
+    const query = searchQuery.toLowerCase();
+    return allPayments.filter(
+      (p) =>
+        String(p.id).includes(query) ||
+        String(p.orderId).includes(query) ||
+        p.customerName?.toLowerCase().includes(query),
+    );
+  }, [allPayments, searchQuery]);
 
-    if (status !== "ALL") {
-      result = result.filter((p) => p.status === status);
-    }
+  const statusCounts = useMemo(
+    () => ({
+      ALL: data?.data?.totalElements ?? 0,
+      [PaymentStatus.COMPLETED]: allPayments.filter(
+        (p) => p.status === PaymentStatus.COMPLETED,
+      ).length,
+      [PaymentStatus.PENDING]: allPayments.filter(
+        (p) => p.status === PaymentStatus.PENDING,
+      ).length,
+      [PaymentStatus.PROCESSING]: allPayments.filter(
+        (p) => p.status === PaymentStatus.PROCESSING,
+      ).length,
+      [PaymentStatus.FAILED]: allPayments.filter(
+        (p) => p.status === PaymentStatus.FAILED,
+      ).length,
+      [PaymentStatus.REFUNDED]: allPayments.filter(
+        (p) => p.status === PaymentStatus.REFUNDED,
+      ).length,
+    }),
+    [allPayments, data],
+  );
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.id?.toLowerCase().includes(query) ||
-          p.orderCode?.toLowerCase().includes(query) ||
-          p.customerName?.toLowerCase().includes(query)
-      );
-    }
+  const statistics = useMemo(
+    () => ({
+      total: data?.data?.totalElements ?? 0,
+      completed: allPayments.filter((p) => p.status === PaymentStatus.COMPLETED)
+        .length,
+      pending: allPayments.filter((p) => p.status === PaymentStatus.PENDING)
+        .length,
+      processing: allPayments.filter(
+        (p) => p.status === PaymentStatus.PROCESSING,
+      ).length,
+      failed: allPayments.filter((p) => p.status === PaymentStatus.FAILED)
+        .length,
+      refunded: allPayments.filter((p) => p.status === PaymentStatus.REFUNDED)
+        .length,
+      totalAmount: allPayments
+        .filter((p) => p.status === PaymentStatus.COMPLETED)
+        .reduce((sum, p) => sum + (p.amount ?? 0), 0),
+    }),
+    [allPayments, data],
+  );
 
-    const start = page * pageSize;
-    return result.slice(start, start + pageSize);
-  }, [status, searchQuery, page, pageSize]);
-
-  const statusCounts = useMemo(() => ({
-    ALL: mockPayments.length,
-    [PaymentStatus.COMPLETED]: mockPayments.filter((p) => p.status === PaymentStatus.COMPLETED).length,
-    [PaymentStatus.PENDING]: mockPayments.filter((p) => p.status === PaymentStatus.PENDING).length,
-    [PaymentStatus.PROCESSING]: mockPayments.filter((p) => p.status === PaymentStatus.PROCESSING).length,
-    [PaymentStatus.FAILED]: mockPayments.filter((p) => p.status === PaymentStatus.FAILED).length,
-    [PaymentStatus.REFUNDED]: mockPayments.filter((p) => p.status === PaymentStatus.REFUNDED).length,
-  }), []);
-
-  // Refetch function
-  const refetch = () => {
-    if (isMockEnabled) {
-      setIsLoading(true);
-      setTimeout(() => setIsLoading(false), mockDelay);
-    }
-  };
-
-  // Clear all filters
   const clearFilters = () => {
     setStatus("ALL");
     setSearchQuery("");
     setPage(0);
   };
 
-  // Check if any filter is active
   const hasActiveFilters = status !== "ALL" || searchQuery !== "";
 
   return {
     payments: filteredPayments,
-    totalElements: mockPayments.length,
-    totalPages: Math.ceil(mockPayments.length / pageSize),
-    statistics: paymentStatistics,
+    totalElements: data?.data?.totalElements ?? 0,
+    totalPages: data?.data?.totalPages ?? 0,
+    statistics,
     isLoading,
     status,
     setStatus,
@@ -82,6 +99,5 @@ export function usePayments() {
     refetch,
     clearFilters,
     hasActiveFilters,
-    isMock: isMockEnabled,
   };
 }
