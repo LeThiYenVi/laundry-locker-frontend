@@ -262,7 +262,7 @@ export default function LockersScreen() {
           )}
           <View style={styles.headerTextContainer}>
             <ThemedText style={styles.headerTitle}>
-              {viewMode === 'stores' ? 'Tủ Giặt Thông Minh' : selectedStore?.name}
+              {viewMode === 'stores' ? 'Lock.R Locker' : selectedStore?.name}
             </ThemedText>
             <ThemedText style={styles.headerSubtitle}>
               {viewMode === 'stores' ? 'Chọn cửa hàng để xem tủ' : 'Chọn tủ để xem ngăn'}
