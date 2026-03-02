@@ -116,10 +116,10 @@ export default function RegisterScreen() {
 
       // Add optional fields based on login method
       if (showEmailField && email.trim()) {
-        // Note: email might not be needed in new request, but keeping for compatibility
+        requestData.email = email.trim();
       }
       if (showPhoneField && phoneNumber.trim()) {
-        // Note: phoneNumber might not be needed in new request, but keeping for compatibility
+        requestData.phoneNumber = phoneNumber.trim();
       }
 
       // Call appropriate registration endpoint
