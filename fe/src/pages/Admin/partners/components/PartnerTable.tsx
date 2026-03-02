@@ -1,5 +1,16 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal, Building2, Phone, User, CheckCircle, XCircle, AlertCircle, Clock, Eye, MapPin } from "lucide-react";
+import {
+  MoreHorizontal,
+  Building2,
+  Phone,
+  User,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Clock,
+  Eye,
+  MapPin,
+} from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -37,6 +48,7 @@ interface PartnerRowData {
 interface PartnerTableProps {
   partners: PartnerRowData[];
   isLoading: boolean;
+  onViewDetail: (id: number) => void;
   onEdit: (partner: PartnerRowData) => void;
   onApprove: (partnerId: number) => void;
   onReject: (partnerId: number) => void;
@@ -46,7 +58,13 @@ interface PartnerTableProps {
 const columnHelper = createColumnHelper<PartnerRowData>();
 
 // Unified icon wrapper
-const IconWrapper = ({ children, color = "blue" }: { children: React.ReactNode; color?: "blue" | "green" | "purple" | "indigo" }) => {
+const IconWrapper = ({
+  children,
+  color = "blue",
+}: {
+  children: React.ReactNode;
+  color?: "blue" | "green" | "purple" | "indigo";
+}) => {
   const colorClasses = {
     blue: "bg-blue-50 text-blue-600",
     green: "bg-green-50 text-green-600",
@@ -54,16 +72,27 @@ const IconWrapper = ({ children, color = "blue" }: { children: React.ReactNode; 
     indigo: "bg-indigo-50 text-indigo-600",
   };
   return (
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}>
+    <div
+      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses[color]}`}
+    >
       {children}
     </div>
   );
 };
 
 // Truncated text with tooltip
-const TruncatedText = ({ text, maxLength = 25, className = "" }: { text: string; maxLength?: number; className?: string }) => {
-  if (!text || text.length <= maxLength) return <span className={className}>{text || "Chưa cập nhật"}</span>;
-  
+const TruncatedText = ({
+  text,
+  maxLength = 25,
+  className = "",
+}: {
+  text: string;
+  maxLength?: number;
+  className?: string;
+}) => {
+  if (!text || text.length <= maxLength)
+    return <span className={className}>{text || "Chưa cập nhật"}</span>;
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -81,7 +110,10 @@ const TruncatedText = ({ text, maxLength = 25, className = "" }: { text: string;
 };
 
 const getStatusBadge = (status: PartnerStatus, t: (key: string) => string) => {
-  const variants: Record<PartnerStatus, { className: string; icon: React.ReactNode; labelKey: string }> = {
+  const variants: Record<
+    PartnerStatus,
+    { className: string; icon: React.ReactNode; labelKey: string }
+  > = {
     [PartnerStatus.APPROVED]: {
       className: "bg-green-50 text-green-700 border-green-200",
       icon: <CheckCircle size={14} className="text-green-600" />,
@@ -116,6 +148,7 @@ const getStatusBadge = (status: PartnerStatus, t: (key: string) => string) => {
 export function PartnerTable({
   partners,
   isLoading,
+  onViewDetail,
   onEdit,
   onApprove,
   onReject,
@@ -131,12 +164,14 @@ export function PartnerTable({
             <Building2 size={18} />
           </IconWrapper>
           <div className="min-w-0">
-            <TruncatedText 
+            <TruncatedText
               text={row.original.name}
               maxLength={22}
               className="font-semibold text-gray-900"
             />
-            <p className="text-sm text-gray-500 truncate max-w-[180px]">{row.original.email}</p>
+            <p className="text-sm text-gray-500 truncate max-w-[180px]">
+              {row.original.email}
+            </p>
           </div>
         </div>
       ),
@@ -152,7 +187,7 @@ export function PartnerTable({
             </IconWrapper>
           </div>
           <div className="min-w-0">
-            <TruncatedText 
+            <TruncatedText
               text={row.original.representativeName}
               maxLength={18}
               className="font-medium text-gray-700"
@@ -171,7 +206,7 @@ export function PartnerTable({
       cell: ({ row }) => (
         <div className="flex items-start gap-2">
           <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
-          <TruncatedText 
+          <TruncatedText
             text={row.original.address || "Chưa cập nhật"}
             maxLength={30}
             className="text-sm text-gray-600"
@@ -207,12 +242,22 @@ export function PartnerTable({
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:bg-gray-100"
+              >
                 <MoreHorizontal size={16} className="text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 bg-white border border-gray-200">
-              <DropdownMenuItem onClick={() => onEdit(partner)} className="cursor-pointer">
+            <DropdownMenuContent
+              align="end"
+              className="w-44 bg-white border border-gray-200"
+            >
+              <DropdownMenuItem
+                onClick={() => onViewDetail(partner.id)}
+                className="cursor-pointer"
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 Xem chi tiết
               </DropdownMenuItem>

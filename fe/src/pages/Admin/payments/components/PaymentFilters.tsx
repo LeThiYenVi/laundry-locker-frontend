@@ -13,10 +13,22 @@ interface PaymentFiltersProps {
 }
 
 const options = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
-  { value: PaymentStatus.COMPLETED, label: "Thành công", color: "green" as const },
-  { value: PaymentStatus.PENDING, label: "Chờ xử lý", color: "yellow" as const },
-  { value: PaymentStatus.PROCESSING, label: "Đang xử lý", color: "purple" as const },
+  { value: "ALL", label: "Tất cả" },
+  {
+    value: PaymentStatus.COMPLETED,
+    label: "Thành công",
+    color: "green" as const,
+  },
+  {
+    value: PaymentStatus.PENDING,
+    label: "Chờ xử lý",
+    color: "yellow" as const,
+  },
+  {
+    value: PaymentStatus.PROCESSING,
+    label: "Đang xử lý",
+    color: "purple" as const,
+  },
   { value: PaymentStatus.FAILED, label: "Thất bại", color: "red" as const },
 ];
 

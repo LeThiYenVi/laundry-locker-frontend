@@ -4,17 +4,10 @@ import { useScheduler } from "./hooks/useScheduler";
 import { SchedulerStatus } from "./components/SchedulerStatus";
 import { JobCard } from "./components/JobCard";
 import { JobResults } from "./components/JobResults";
-import { PageLoading, ErrorState } from "~/components/ui";
 import { Timer, Package, Bell } from "lucide-react";
 
 export default function SchedulerPage() {
   const {
-    isEnabled,
-    activeJobs,
-    schedulerStatus,
-    isLoadingStatus,
-    statusError,
-    refetchStatus,
     handleTriggerAutoCancel,
     handleTriggerBoxRelease,
     handleTriggerPickupReminders,
@@ -24,21 +17,6 @@ export default function SchedulerPage() {
     isLoading,
     jobResults,
   } = useScheduler();
-
-  if (isLoadingStatus && !schedulerStatus) {
-    return <PageLoading message="Đang tải trạng thái scheduler..." />;
-  }
-
-  if (statusError) {
-    return (
-      <ErrorState
-        variant="server"
-        title="Không thể tải trạng thái scheduler"
-        error={statusError}
-        onRetry={refetchStatus}
-      />
-    );
-  }
 
   const jobs = [
     {
@@ -62,7 +40,7 @@ export default function SchedulerPage() {
     {
       title: "Pickup Reminders",
       description:
-        'Gửi notification nhắc nhở khách đến lấy đồ cho các đơn hàng RETURNED quá 24 giờ.',
+        "Gửi notification nhắc nhở khách đến lấy đồ cho các đơn hàng RETURNED quá 24 giờ.",
       frequency: "Mỗi 1 giờ",
       icon: <Bell size={20} className="text-purple-600" />,
       onTrigger: handleTriggerPickupReminders,
@@ -78,12 +56,7 @@ export default function SchedulerPage() {
       />
 
       {/* Status Card */}
-      <SchedulerStatus
-        isEnabled={isEnabled}
-        activeJobs={activeJobs}
-        isLoading={isLoadingStatus}
-        onRefresh={refetchStatus}
-      />
+      <SchedulerStatus />
 
       {/* Jobs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -108,15 +81,9 @@ export default function SchedulerPage() {
         <CardContent className="p-6">
           <h3 className="font-semibold text-blue-900 mb-2">Thông tin</h3>
           <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>
-              Các scheduler job chạy tự động theo tần suất đã cấu hình
-            </li>
-            <li>
-              Admin có thể trigger thủ công để test hoặc xử lý gấp
-            </li>
-            <li>
-              Kết quả chạy job được lưu lại 10 lần gần nhất
-            </li>
+            <li>Các scheduler job chạy tự động theo tần suất đã cấu hình</li>
+            <li>Admin có thể trigger thủ công để test hoặc xử lý gấp</li>
+            <li>Kết quả chạy job được lưu lại 10 lần gần nhất</li>
           </ul>
         </CardContent>
       </Card>

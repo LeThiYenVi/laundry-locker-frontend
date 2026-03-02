@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
 import { useGetAllUsersQuery } from "~/stores/apis/adminApi";
-import { allMockUsers } from "~/mockdata/users.mock";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
 import type { AdminUserResponse } from "~/types";
 
 export type UserStatus = "ALL" | "ACTIVE" | "INACTIVE" | "PENDING";
@@ -12,47 +10,20 @@ export function useUsers() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  // Real API query
   const {
     data: apiData,
-    isLoading: apiLoading,
-    error: apiError,
+    isLoading,
+    error,
     refetch,
-  } = useGetAllUsersQuery(
-    { pageNumber: page, pageSize },
-    { skip: isMockEnabled } // Skip API call if mock is enabled
-  );
+  } = useGetAllUsersQuery({ pageNumber: page, pageSize });
 
-  // Mock data state
-  const [mockLoading, setMockLoading] = useState(isMockEnabled);
-  
-  // Simulate loading delay for mock data
-  if (isMockEnabled && mockLoading) {
-    setTimeout(() => setMockLoading(false), mockDelay);
-  }
-
-  // Get users from appropriate source
-  const users = useMemo(() => {
-    if (isMockEnabled) {
-      return allMockUsers;
-    }
-    return apiData?.data?.content || [];
-  }, [apiData]);
-
-  const totalElements = isMockEnabled
-    ? allMockUsers.length
-    : apiData?.data?.totalElements || 0;
-  const totalPages = isMockEnabled
-    ? Math.ceil(allMockUsers.length / pageSize)
-    : apiData?.data?.totalPages || 0;
-
-  const isLoading = isMockEnabled ? mockLoading : apiLoading;
-  const error = isMockEnabled ? null : apiError;
+  const users: AdminUserResponse[] = apiData?.data?.content ?? [];
+  const totalElements = apiData?.data?.totalElements ?? 0;
+  const totalPages = apiData?.data?.totalPages ?? 0;
 
   const filteredUsers = useMemo(() => {
     let result = [...users];
 
-    // Filter by status
     if (status !== "ALL") {
       result = result.filter((user) => {
         switch (status) {
@@ -68,45 +39,35 @@ export function useUsers() {
       });
     }
 
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (user) =>
           user.email?.toLowerCase().includes(query) ||
           user.name?.toLowerCase().includes(query) ||
-          user.roles?.some((role) => role.toLowerCase().includes(query))
+          user.roles?.some((role) => role.toLowerCase().includes(query)),
       );
     }
 
-    // Pagination for mock data
-    if (isMockEnabled) {
-      const start = page * pageSize;
-      result = result.slice(start, start + pageSize);
-    }
-
     return result;
-  }, [users, status, searchQuery, page, pageSize]);
+  }, [users, status, searchQuery]);
 
-  // Status counts
-  const statusCounts = useMemo(() => {
-    const baseUsers = isMockEnabled ? allMockUsers : users;
-    return {
-      ALL: baseUsers.length,
-      ACTIVE: baseUsers.filter((u) => u.enabled).length,
-      INACTIVE: baseUsers.filter((u) => !u.enabled).length,
-      PENDING: baseUsers.filter((u) => !u.emailVerified).length,
-    };
-  }, [users]);
+  const statusCounts = useMemo(
+    () => ({
+      ALL: users.length,
+      ACTIVE: users.filter((u) => u.enabled).length,
+      INACTIVE: users.filter((u) => !u.enabled).length,
+      PENDING: users.filter((u) => !u.emailVerified).length,
+    }),
+    [users],
+  );
 
-  // Clear all filters
   const clearFilters = () => {
     setStatus("ALL");
     setSearchQuery("");
     setPage(0);
   };
 
-  // Check if any filter is active
   const hasActiveFilters = status !== "ALL" || searchQuery !== "";
 
   return {
@@ -115,23 +76,17 @@ export function useUsers() {
     totalPages,
     isLoading,
     error,
-    // Filters
     status,
     setStatus,
     searchQuery,
     setSearchQuery,
-    // Pagination
     page,
     setPage,
     pageSize,
     setPageSize,
-    // Actions
     refetch,
     clearFilters,
     hasActiveFilters,
-    // Stats
     statusCounts,
-    // Source indicator
-    isMock: isMockEnabled,
   };
 }

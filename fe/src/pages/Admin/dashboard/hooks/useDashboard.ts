@@ -1,51 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useGetDashboardOverviewQuery } from "~/stores/apis/admin/dashboard";
 import {
-  mockDashboardOverview,
-  chartData,
-  recommendations,
-} from "~/mockdata/dashboard.mock";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
+  monthlyChartData,
+  dashboardRecommendations,
+} from "~/constants/dashboard.constants";
 
 export function useDashboard() {
-  const [activeTab, setActiveTab] = useState("Tổng quan");
   const [selectedYear, setSelectedYear] = useState("2025");
-  const [isLoading, setIsLoading] = useState(isMockEnabled);
 
-  if (isMockEnabled && isLoading) {
-    setTimeout(() => setIsLoading(false), mockDelay);
-  }
+  const { data, isLoading } = useGetDashboardOverviewQuery();
 
-  const tabs = useMemo(
-    () => [
-      "Tổng quan",
-      "Đội nhóm",
-      "Ngườii dùng",
-      "Đăng ký",
-      "Thanh toán",
-      "Ứng dụng",
-      "Biến số",
-    ],
-    []
-  );
-
-  const handleCreateScenario = () => {
-    toast.info("Tính năng đang phát triển", {
-      description: "Chức năng tạo kịch bản sẽ sớm ra mắt!",
-    });
-  };
-
-  const handleSettings = () => {
-    toast.info("Cài đặt dashboard", {
-      description: "Mở modal cài đặt...",
-    });
-  };
-
-  const handleViewDetails = () => {
-    toast.info("Xem chi tiết", {
-      description: "Chuyển đến trang chi tiết hệ thống",
-    });
-  };
+  const overview = data?.data;
 
   const handleRecommendationClick = (id: string) => {
     toast.info(`Mở ${id}`, {
@@ -54,19 +20,12 @@ export function useDashboard() {
   };
 
   return {
-    overview: mockDashboardOverview,
-    chartData,
-    recommendations,
-    tabs,
-    activeTab,
-    setActiveTab,
+    overview,
+    chartData: monthlyChartData,
+    recommendations: dashboardRecommendations,
     selectedYear,
     setSelectedYear,
     isLoading,
-    handleCreateScenario,
-    handleSettings,
-    handleViewDetails,
     handleRecommendationClick,
-    isMock: isMockEnabled,
   };
 }

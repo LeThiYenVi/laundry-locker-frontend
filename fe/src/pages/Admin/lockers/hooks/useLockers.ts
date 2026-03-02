@@ -1,8 +1,6 @@
-import { useMemo, useState, useCallback } from "react";
-import { toast } from "sonner";
-import { mockLockers, lockerStatistics, MockLocker } from "~/mockdata/lockers.mock";
+import { useMemo, useState } from "react";
 import { LockerStatus } from "~/types/admin/enums";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
+import { useGetAllLockersQuery } from "~/stores/apis/admin";
 
 export type LockerStatusFilter = "ALL" | LockerStatus;
 
@@ -11,14 +9,16 @@ export function useLockers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [isLoading, setIsLoading] = useState(isMockEnabled);
 
-  if (isMockEnabled && isLoading) {
-    setTimeout(() => setIsLoading(false), mockDelay);
-  }
+  const { data, isLoading, refetch } = useGetAllLockersQuery({
+    page: 0,
+    size: 200,
+  });
+
+  const allLockers = data?.data?.content ?? [];
 
   const filteredLockers = useMemo(() => {
-    let result = [...mockLockers];
+    let result = [...allLockers];
 
     if (status !== "ALL") {
       result = result.filter((locker) => locker.status === status);
@@ -31,73 +31,49 @@ export function useLockers() {
           locker.name?.toLowerCase().includes(query) ||
           locker.code?.toLowerCase().includes(query) ||
           locker.storeName?.toLowerCase().includes(query) ||
-          locker.address?.toLowerCase().includes(query)
+          locker.address?.toLowerCase().includes(query),
       );
     }
 
+    return result;
+  }, [allLockers, status, searchQuery]);
+
+  const paginatedLockers = useMemo(() => {
     const start = page * pageSize;
-    return result.slice(start, start + pageSize);
-  }, [status, searchQuery, page, pageSize]);
+    return filteredLockers.slice(start, start + pageSize);
+  }, [filteredLockers, page, pageSize]);
 
-  const statusCounts = useMemo(() => ({
-    ALL: mockLockers.length,
-    [LockerStatus.ACTIVE]: mockLockers.filter((l) => l.status === LockerStatus.ACTIVE).length,
-    [LockerStatus.INACTIVE]: mockLockers.filter((l) => l.status === LockerStatus.INACTIVE).length,
-    [LockerStatus.MAINTENANCE]: mockLockers.filter((l) => l.status === LockerStatus.MAINTENANCE).length,
-    [LockerStatus.DISCONNECTED]: mockLockers.filter((l) => l.status === LockerStatus.DISCONNECTED).length,
-  }), []);
+  const statusCounts = useMemo(
+    () => ({
+      ALL: allLockers.length,
+      [LockerStatus.ACTIVE]: allLockers.filter(
+        (l) => l.status === LockerStatus.ACTIVE,
+      ).length,
+      [LockerStatus.INACTIVE]: allLockers.filter(
+        (l) => l.status === LockerStatus.INACTIVE,
+      ).length,
+      [LockerStatus.MAINTENANCE]: allLockers.filter(
+        (l) => l.status === LockerStatus.MAINTENANCE,
+      ).length,
+      [LockerStatus.DISCONNECTED]: allLockers.filter(
+        (l) => l.status === LockerStatus.DISCONNECTED,
+      ).length,
+    }),
+    [allLockers],
+  );
 
-  const handleViewDetails = useCallback((locker: MockLocker) => {
-    toast.info(`Xem chi tiết tủ ${locker.name}`, {
-      description: `Mã: ${locker.code}`,
-    });
-  }, []);
-
-  const handleMaintenance = useCallback((lockerId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang chuyển sang chế độ bảo trì...",
-        success: "Đã chuyển tủ sang chế độ bảo trì!",
-        error: "Không thể cập nhật",
-      }
-    );
-  }, []);
-
-  const handleActivate = useCallback((lockerId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: "Đang kích hoạt tủ...",
-        success: "Đã kích hoạt tủ thành công!",
-        error: "Không thể kích hoạt",
-      }
-    );
-  }, []);
-
-  // Refetch function
-  const refetch = () => {
-    if (isMockEnabled) {
-      setIsLoading(true);
-      setTimeout(() => setIsLoading(false), mockDelay);
-    }
-  };
-
-  // Clear all filters
   const clearFilters = () => {
     setStatus("ALL");
     setSearchQuery("");
     setPage(0);
   };
 
-  // Check if any filter is active
   const hasActiveFilters = status !== "ALL" || searchQuery !== "";
 
   return {
-    lockers: filteredLockers,
-    totalElements: mockLockers.length,
-    totalPages: Math.ceil(mockLockers.length / pageSize),
-    statistics: lockerStatistics,
+    lockers: paginatedLockers,
+    totalElements: filteredLockers.length,
+    totalPages: Math.ceil(filteredLockers.length / pageSize),
     isLoading,
     status,
     setStatus,
@@ -111,9 +87,5 @@ export function useLockers() {
     refetch,
     clearFilters,
     hasActiveFilters,
-    handleViewDetails,
-    handleMaintenance,
-    handleActivate,
-    isMock: isMockEnabled,
   };
 }

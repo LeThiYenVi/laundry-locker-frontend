@@ -13,8 +13,12 @@ interface PartnerFiltersProps {
 }
 
 const options = [
-  { value: "ALL", label: "Tất cả", color: "blue" as const },
-  { value: PartnerStatus.PENDING, label: "Chờ duyệt", color: "yellow" as const },
+  { value: "ALL", label: "Tất cả" },
+  {
+    value: PartnerStatus.PENDING,
+    label: "Chờ duyệt",
+    color: "yellow" as const,
+  },
   { value: PartnerStatus.APPROVED, label: "Đã duyệt", color: "green" as const },
   { value: PartnerStatus.REJECTED, label: "Từ chối", color: "red" as const },
   { value: PartnerStatus.SUSPENDED, label: "Đình chỉ", color: "gray" as const },

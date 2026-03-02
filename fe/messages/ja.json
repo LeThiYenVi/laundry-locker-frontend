@@ -88,6 +88,8 @@
       "partners": "パートナー",
       "feedback": "フィードバック",
       "scheduler": "スケジューラ",
+      "notifications": "通知",
+      "promotions": "プロモーション",
       "settings": "設定"
     },
     "dashboard": {
@@ -213,6 +215,171 @@
     "settings": {
       "title": "設定",
       "subtitle": "アプリ設定の管理"
+    },
+    "notifications": {
+      "title": "通知管理",
+      "description": "ユーザーへの通知を管理・送信",
+      "createBtn": "通知を作成",
+      "broadcastBtn": "ブロードキャスト",
+      "searchPlaceholder": "タイトル、受信者で検索...",
+      "emptyMessage": "通知はありません",
+      "filter": {
+        "status": "ステータス",
+        "type": "種類",
+        "channel": "チャンネル",
+        "allStatus": "すべて",
+        "allTypes": "すべての種類",
+        "allChannels": "すべてのチャンネル"
+      },
+      "status": {
+        "unread": "未読",
+        "read": "既読",
+        "archived": "アーカイブ済"
+      },
+      "channel": {
+        "inApp": "アプリ内",
+        "email": "メール",
+        "sms": "SMS",
+        "push": "プッシュ"
+      },
+      "type": {
+        "orderCreated": "注文作成",
+        "orderConfirmed": "注文確認",
+        "orderReady": "注文満備",
+        "orderCompleted": "完了",
+        "orderCancelled": "キャンセル",
+        "paymentSuccessful": "決済成功",
+        "paymentFailed": "決済失敗",
+        "promotion": "プロモーション",
+        "systemAlert": "システム",
+        "loyaltyPointsEarned": "ポイント獲得",
+        "loyaltyRewardUnlocked": "報酬解除"
+      },
+      "stats": {
+        "total": "通知合計",
+        "unread": "未読",
+        "read": "既読",
+        "archived": "アーカイブ",
+        "deliveryRate": "配信成功率",
+        "avgReadTime": "平均閲覧時間",
+        "minutes": "分"
+      },
+      "columns": {
+        "recipient": "受信者",
+        "title": "タイトル",
+        "type": "種類",
+        "channel": "チャンネル",
+        "status": "ステータス",
+        "createdAt": "作成日"
+      },
+      "actions": {
+        "markRead": "既読にマーク",
+        "archive": "アーカイブ",
+        "resend": "再送信",
+        "delete": "削除"
+      },
+      "broadcast": {
+        "title": "ブロードキャスト通知",
+        "notifType": "通知種類",
+        "channel": "送信チャンネル",
+        "subject": "タイトル",
+        "subjectPlaceholder": "通知タイトルを入力",
+        "content": "内容",
+        "contentPlaceholder": "通知内容を入力...",
+        "target": "送信対象",
+        "allUsers": "全ユーザー",
+        "specific": "特定ユーザー",
+        "recipientIdsPlaceholder": "ユーザーIDをカンマ区切りで入力（例: 1, 2, 3）",
+        "scheduledFor": "送信時刻（任意）",
+        "scheduledHint": "空白の場合は即時送信",
+        "sendBtn": "ブロードキャスト送信",
+        "sending": "送信中...",
+        "successMsg": "{count}人のユーザーに送信しました",
+        "errorMsg": "ブロードキャストの送信に失敗しました",
+        "requiredFields": "タイトルと内容を入力してください"
+      },
+      "create": {
+        "title": "通知を作成",
+        "recipient": "受信者ID",
+        "recipientPlaceholder": "ユーザーIDを入力",
+        "notifType": "通知種類",
+        "channel": "チャンネル",
+        "subject": "タイトル",
+        "subjectPlaceholder": "通知タイトルを入力",
+        "content": "内容",
+        "contentPlaceholder": "通知内容を入力...",
+        "relatedOrder": "関連注文ID",
+        "relatedOrderPlaceholder": "注文IDを入力（任意）",
+        "sendBtn": "送信",
+        "sending": "送信中...",
+        "successMsg": "通知を送信しました",
+        "errorMsg": "通知の送信に失敗しました",
+        "invalidRecipient": "無効な受信者ID",
+        "requiredFields": "タイトルと内容を入力してください"
+      }
+    },
+    "promotions": {
+      "title": "プロモーション管理",
+      "description": "バウチャーコードや割引キャンペーンを作成・管理",
+      "createBtn": "プロモーションを作成",
+      "searchPlaceholder": "コードやキャンペーン名で検索...",
+      "emptyMessage": "プロモーションはありません",
+      "status": {
+        "all": "すべて",
+        "active": "アクティブ",
+        "upcoming": "間もなく開始",
+        "expired": "期限切れ",
+        "depleted": "上限到達",
+        "inactive": "無効"
+      },
+      "columns": {
+        "code": "コード",
+        "title": "キャンペーン名",
+        "discount": "割引",
+        "minOrder": "最小注文",
+        "period": "期間",
+        "usage": "使用回数",
+        "status": "ステータス"
+      },
+      "discount": {
+        "noLimit": "制限なし",
+        "freeService": "無料サービス"
+      },
+      "modal": {
+        "createTitle": "新規プロモーションを作成",
+        "editTitle": "プロモーションを編集",
+        "code": "プロモーションコード",
+        "codeHint": "3～20文字、A-Z・0-9・_のみ",
+        "codePlaceholder": "例: SAVE20, SUMMER26",
+        "titleField": "キャンペーン名",
+        "titlePlaceholder": "例: 夏の20%割引",
+        "description": "説明",
+        "descriptionPlaceholder": "プロモーションの簡単な説明...",
+        "discountType": "割引種類",
+        "discountTypePercent": "パーセント (%)",
+        "discountTypeFixed": "定額 (VND)",
+        "discountTypeFree": "サービス無料",
+        "discountValue": "割引値",
+        "discountValueHint": "値を入力（0～100%、VND金額）",
+        "maxDiscount": "最大割引額 (VND)",
+        "maxDiscountPlaceholder": "空白 = 制限なし",
+        "minOrder": "最小注文金額 (VND)",
+        "minOrderPlaceholder": "空白 = 制限なし",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "totalLimit": "総使用回数上限",
+        "totalLimitPlaceholder": "空白 = 無制限",
+        "perUserLimit": "ユーザーごとの上限",
+        "isActive": "即座に有効化",
+        "stackable": "他のプロモーションと組み合わせ可",
+        "createSuccess": "プロモーションを作成しました",
+        "editSuccess": "プロモーションを更新しました",
+        "createFailed": "作成に失敗しました",
+        "editFailed": "更新に失敗しました",
+        "requiredCode": "コードとキャンペーン名を入力してください",
+        "requiredDates": "開始日と終了日を選択してください",
+        "invalidDates": "終了日は開始日より後でなければなりません"
+      }
     }
   },
   "partner": {

@@ -1,5 +1,19 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal, CreditCard, Wallet, Banknote, Smartphone, RefreshCcw, CheckCircle2, Clock, RotateCcw, XCircle, Undo2, Ban, Eye } from "lucide-react";
+import {
+  MoreHorizontal,
+  CreditCard,
+  Wallet,
+  Banknote,
+  Smartphone,
+  RefreshCcw,
+  CheckCircle2,
+  Clock,
+  RotateCcw,
+  XCircle,
+  Undo2,
+  Ban,
+  Eye,
+} from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -10,17 +24,21 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { PaymentStatus, PaymentMethod } from "~/types/admin/enums";
-import type { MockPayment } from "~/mockdata/payments.mock";
+import type { PaymentResponse } from "~/types/admin/payment";
 
 interface PaymentTableProps {
-  payments: MockPayment[];
+  payments: PaymentResponse[];
   isLoading: boolean;
+  onViewDetail: (id: number) => void;
 }
 
-const columnHelper = createColumnHelper<MockPayment>();
+const columnHelper = createColumnHelper<PaymentResponse>();
 
 const getStatusBadge = (status: PaymentStatus) => {
-  const variants: Record<PaymentStatus, { bg: string; text: string; icon: React.ElementType; label: string }> = {
+  const variants: Record<
+    PaymentStatus,
+    { bg: string; text: string; icon: React.ElementType; label: string }
+  > = {
     [PaymentStatus.COMPLETED]: {
       bg: "bg-green-50",
       text: "text-green-700",
@@ -104,18 +122,24 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export function PaymentTable({ payments, isLoading }: PaymentTableProps) {
+export function PaymentTable({
+  payments,
+  isLoading,
+  onViewDetail,
+}: PaymentTableProps) {
   const columns = [
     columnHelper.accessor("id", {
       header: "Mã thanh toán",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-green-50 to-emerald-50 flex items-center justify-center shadow-sm">
             <CreditCard size={20} className="text-green-600" />
           </div>
           <div>
-            <p className="font-mono font-semibold text-gray-900 text-sm">{row.original.id}</p>
-            <p className="text-xs text-gray-500">{row.original.orderCode}</p>
+            <p className="font-mono font-semibold text-gray-900 text-sm">
+              #{row.original.id}
+            </p>
+            <p className="text-xs text-gray-500">#{row.original.orderId}</p>
           </div>
         </div>
       ),
@@ -124,7 +148,9 @@ export function PaymentTable({ payments, isLoading }: PaymentTableProps) {
     columnHelper.accessor("customerName", {
       header: "Khách hàng",
       cell: ({ row }) => (
-        <span className="font-medium text-gray-900">{row.original.customerName}</span>
+        <span className="font-medium text-gray-900">
+          {row.original.customerName}
+        </span>
       ),
     }),
 
@@ -154,12 +180,12 @@ export function PaymentTable({ payments, isLoading }: PaymentTableProps) {
       cell: ({ row }) => getStatusBadge(row.original.status),
     }),
 
-    columnHelper.accessor("paidAt", {
-      header: "Thờii gian",
+    columnHelper.accessor("createdAt", {
+      header: "Thời gian",
       cell: ({ row }) => (
         <span className="text-sm text-gray-600">
-          {row.original.paidAt
-            ? new Date(row.original.paidAt).toLocaleString("vi-VN", {
+          {row.original.createdAt
+            ? new Date(row.original.createdAt).toLocaleString("vi-VN", {
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",
@@ -174,15 +200,22 @@ export function PaymentTable({ payments, isLoading }: PaymentTableProps) {
     columnHelper.display({
       id: "actions",
       header: "",
-      cell: () => (
+      cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-gray-100"
+            >
               <MoreHorizontal size={16} className="text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => onViewDetail(row.original.id)}
+            >
               <Eye className="mr-2 h-4 w-4" />
               Xem chi tiết
             </DropdownMenuItem>

@@ -250,7 +250,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsWaitingForOTP(true);
   };
 
-  const partnerVerifyOTP = async (otpCode: string) => {
+  const partnerVerifyOTP = async (email: string, otpCode: string) => {
     if (isMockEnabled) {
       // Mock OTP verify - accept any OTP
       setTimeout(() => {
@@ -278,7 +278,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         imageUrl?: string | null;
       };
     }>(AUTH_ENDPOINTS.EMAIL_VERIFY_OTP, {
-      email: partnerContactInfo,
+      email,
       otp: otpCode,
     });
 

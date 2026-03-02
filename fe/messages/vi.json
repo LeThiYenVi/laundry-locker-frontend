@@ -88,6 +88,8 @@
       "partners": "Đối tác",
       "feedback": "Phản hồi",
       "scheduler": "Lập lịch",
+      "notifications": "Thông báo",
+      "promotions": "Khuyến mãi",
       "settings": "Cài đặt"
     },
     "dashboard": {
@@ -210,6 +212,171 @@
     "settings": {
       "title": "Cài đặt",
       "subtitle": "Quản lý tùy chọn ứng dụng"
+    },
+    "notifications": {
+      "title": "Quản lý thông báo",
+      "description": "Quản lý và gửi thông báo đến người dùng",
+      "createBtn": "Tạo thông báo",
+      "broadcastBtn": "Broadcast",
+      "searchPlaceholder": "Tìm theo tiêu đề, người nhận...",
+      "emptyMessage": "Không có thông báo nào",
+      "filter": {
+        "status": "Trạng thái",
+        "type": "Loại thông báo",
+        "channel": "Kênh",
+        "allStatus": "Tất cả",
+        "allTypes": "Tất cả loại",
+        "allChannels": "Tất cả kênh"
+      },
+      "status": {
+        "unread": "Chưa đọc",
+        "read": "Đã đọc",
+        "archived": "Đã lưu trữ"
+      },
+      "channel": {
+        "inApp": "In-App",
+        "email": "Email",
+        "sms": "SMS",
+        "push": "Push"
+      },
+      "type": {
+        "orderCreated": "Tạo đơn",
+        "orderConfirmed": "Xác nhận đơn",
+        "orderReady": "Đơn sẵn sàng",
+        "orderCompleted": "Hoàn thành",
+        "orderCancelled": "Hủy đơn",
+        "paymentSuccessful": "TT thành công",
+        "paymentFailed": "TT thất bại",
+        "promotion": "Khuyến mãi",
+        "systemAlert": "Hệ thống",
+        "loyaltyPointsEarned": "Tích điểm",
+        "loyaltyRewardUnlocked": "Phần thưởng"
+      },
+      "stats": {
+        "total": "Tổng thông báo",
+        "unread": "Chưa đọc",
+        "read": "Đã đọc",
+        "archived": "Đã lưu trữ",
+        "deliveryRate": "Tỷ lệ gửi thành công",
+        "avgReadTime": "Thời gian đọc TB",
+        "minutes": "phút"
+      },
+      "columns": {
+        "recipient": "Người nhận",
+        "title": "Tiêu đề",
+        "type": "Loại",
+        "channel": "Kênh",
+        "status": "Trạng thái",
+        "createdAt": "Ngày tạo"
+      },
+      "actions": {
+        "markRead": "Đánh dấu đã đọc",
+        "archive": "Lưu trữ",
+        "resend": "Gửi lại",
+        "delete": "Xóa"
+      },
+      "broadcast": {
+        "title": "Gửi broadcast thông báo",
+        "notifType": "Loại thông báo",
+        "channel": "Kênh gửi",
+        "subject": "Tiêu đề",
+        "subjectPlaceholder": "Nhập tiêu đề thông báo",
+        "content": "Nội dung",
+        "contentPlaceholder": "Nhập nội dung thông báo...",
+        "target": "Đối tượng nhận",
+        "allUsers": "Tất cả người dùng",
+        "specific": "Cụ thể",
+        "recipientIdsPlaceholder": "Nhập ID người dùng, cách nhau bởi dấu phẩy (VD: 1, 2, 3)",
+        "scheduledFor": "Thời gian gửi (tuỳ chọn)",
+        "scheduledHint": "Để trống để gửi ngay lập tức",
+        "sendBtn": "Gửi broadcast",
+        "sending": "Đang gửi...",
+        "successMsg": "Đã gửi broadcast đến {count} người dùng",
+        "errorMsg": "Gửi broadcast thất bại, vui lòng thử lại",
+        "requiredFields": "Vui lòng nhập tiêu đề và nội dung"
+      },
+      "create": {
+        "title": "Tạo thông báo mới",
+        "recipient": "ID Người nhận",
+        "recipientPlaceholder": "Nhập ID người dùng",
+        "notifType": "Loại thông báo",
+        "channel": "Kênh gửi",
+        "subject": "Tiêu đề",
+        "subjectPlaceholder": "Nhập tiêu đề thông báo",
+        "content": "Nội dung",
+        "contentPlaceholder": "Nhập nội dung thông báo...",
+        "relatedOrder": "ID Đơn hàng liên quan",
+        "relatedOrderPlaceholder": "Nhập ID đơn hàng (nếu có)",
+        "sendBtn": "Gửi thông báo",
+        "sending": "Đang gửi...",
+        "successMsg": "Thông báo đã được gửi thành công",
+        "errorMsg": "Gửi thông báo thất bại",
+        "invalidRecipient": "ID người nhận không hợp lệ",
+        "requiredFields": "Vui lòng nhập tiêu đề và nội dung"
+      }
+    },
+    "promotions": {
+      "title": "Quản lý khuyến mãi",
+      "description": "Tạo và quản lý mã voucher, chương trình giảm giá",
+      "createBtn": "Tạo khuyến mãi",
+      "searchPlaceholder": "Tìm theo mã, tên chương trình...",
+      "emptyMessage": "Không có khuyến mãi nào",
+      "status": {
+        "all": "Tất cả",
+        "active": "Đang hoạt động",
+        "upcoming": "Sắp diễn ra",
+        "expired": "Hết hạn",
+        "depleted": "Hết lượt",
+        "inactive": "Vô hiệu"
+      },
+      "columns": {
+        "code": "Mã",
+        "title": "Tên chương trình",
+        "discount": "Giảm giá",
+        "minOrder": "Đơn tối thiểu",
+        "period": "Thời hạn",
+        "usage": "Lượt dùng",
+        "status": "Trạng thái"
+      },
+      "discount": {
+        "noLimit": "Không giới hạn",
+        "freeService": "Miễn phí DV"
+      },
+      "modal": {
+        "createTitle": "Tạo khuyến mãi mới",
+        "editTitle": "Chỉnh sửa khuyến mãi",
+        "code": "Mã khuyến mãi",
+        "codeHint": "3–20 ký tự, chỉ A-Z, 0-9, _",
+        "codePlaceholder": "VD: GIAM20, SUMMER26",
+        "titleField": "Tên chương trình",
+        "titlePlaceholder": "VD: Giảm 20% mùa hè",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Mô tả ngắn về chương trình...",
+        "discountType": "Loại giảm giá",
+        "discountTypePercent": "Phần trăm (%)",
+        "discountTypeFixed": "Số tiền cố định (VND)",
+        "discountTypeFree": "Miễn phí dịch vụ",
+        "discountValue": "Giá trị giảm",
+        "discountValueHint": "Nhập giá trị (0–100 cho %, số tiền cho VND)",
+        "maxDiscount": "Giảm tối đa (VND)",
+        "maxDiscountPlaceholder": "Để trống = không giới hạn",
+        "minOrder": "Đơn tối thiểu (VND)",
+        "minOrderPlaceholder": "Để trống = không giới hạn",
+        "startDate": "Ngày bắt đầu",
+        "endDate": "Ngày kết thúc",
+        "totalLimit": "Tổng lượt dùng",
+        "totalLimitPlaceholder": "Để trống = không giới hạn",
+        "perUserLimit": "Mỗi người dùng",
+        "isActive": "Kích hoạt ngay",
+        "stackable": "Cho phép kết hợp với KM khác",
+        "createSuccess": "Tạo khuyến mãi thành công",
+        "editSuccess": "Cập nhật thành công",
+        "createFailed": "Tạo thất bại",
+        "editFailed": "Cập nhật thất bại",
+        "requiredCode": "Vui lòng nhập mã và tên chương trình",
+        "requiredDates": "Vui lòng chọn ngày bắt đầu và kết thúc",
+        "invalidDates": "Ngày kết thúc phải sau ngày bắt đầu"
+      }
     }
   },
   "partner": {

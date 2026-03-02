@@ -1,5 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal, Clock, Sparkles, CheckCircle2, XCircle } from "lucide-react";
+import { MoreHorizontal, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -10,17 +10,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import type { MockService } from "~/mockdata/services.mock";
+import type { AdminServiceResponse } from "~/types/admin/service";
 
 interface ServiceTableProps {
-  services: MockService[];
+  services: AdminServiceResponse[];
   isLoading: boolean;
-  onEdit: (service: MockService) => void;
+  onEdit: (service: AdminServiceResponse) => void;
   onDelete: (serviceId: number) => void;
-  onToggleStatus: (serviceId: number, currentStatus: boolean) => void;
+  onToggleStatus: (serviceId: number, currentActive: boolean) => void;
 }
 
-const columnHelper = createColumnHelper<MockService>();
+const columnHelper = createColumnHelper<AdminServiceResponse>();
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -54,18 +54,20 @@ export function ServiceTable({
           </div>
           <div>
             <p className="font-semibold text-gray-900">{row.original.name}</p>
-            <p className="text-sm text-gray-500 line-clamp-1">{row.original.description}</p>
+            <p className="text-sm text-gray-500 line-clamp-1">
+              {row.original.description}
+            </p>
           </div>
         </div>
       ),
     }),
 
-    columnHelper.accessor("basePrice", {
+    columnHelper.accessor("price", {
       header: "Giá",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-blue-600">
-            {formatCurrency(row.original.basePrice)}
+            {formatCurrency(row.original.price)}
           </span>
         </div>
       ),
@@ -74,43 +76,50 @@ export function ServiceTable({
     columnHelper.accessor("unit", {
       header: "Đơn vị",
       cell: ({ row }) => (
-        <Badge variant="outline" className="bg-gray-50 text-gray-700 font-medium px-3">
+        <Badge
+          variant="outline"
+          className="bg-gray-50 text-gray-700 font-medium px-3"
+        >
           /{row.original.unit}
         </Badge>
       ),
     }),
 
-    columnHelper.accessor("estimatedTime", {
-      header: "Thờii gian",
+    columnHelper.accessor("estimatedMinutes", {
+      header: "Thời gian",
       cell: ({ row }) => (
         <div className="flex items-center gap-2 text-gray-600">
           <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
             <Clock size={16} className="text-orange-500" />
           </div>
-          <span className="font-medium">{row.original.estimatedTime} giờ</span>
+          <span className="font-medium">
+            {row.original.estimatedMinutes >= 60
+              ? `${Math.round(row.original.estimatedMinutes / 60)} giờ`
+              : `${row.original.estimatedMinutes} phút`}
+          </span>
         </div>
       ),
     }),
 
-    columnHelper.accessor("isActive", {
+    columnHelper.accessor("active", {
       header: "Trạng thái",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <Switch
-            checked={row.original.isActive}
+            checked={row.original.active}
             onCheckedChange={() =>
-              onToggleStatus(row.original.id, row.original.isActive)
+              onToggleStatus(row.original.id, row.original.active)
             }
           />
           <Badge
             className={
-              row.original.isActive
+              row.original.active
                 ? "bg-green-50 text-green-700 border-green-200 font-medium"
                 : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
             }
             variant="outline"
           >
-            {row.original.isActive ? (
+            {row.original.active ? (
               <>
                 <CheckCircle2 className="mr-1 h-3 w-3" />
                 Hoạt động
@@ -132,12 +141,19 @@ export function ServiceTable({
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-gray-100"
+            >
               <MoreHorizontal size={16} className="text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onEdit(row.original)} className="cursor-pointer">
+            <DropdownMenuItem
+              onClick={() => onEdit(row.original)}
+              className="cursor-pointer"
+            >
               ✏️ Chỉnh sửa
             </DropdownMenuItem>
             <DropdownMenuItem

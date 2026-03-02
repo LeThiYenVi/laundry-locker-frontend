@@ -1,5 +1,4 @@
 import {
-  useGetSchedulerStatusQuery,
   useTriggerAutoCancelMutation,
   useTriggerBoxReleaseMutation,
   useTriggerPickupRemindersMutation,
@@ -10,24 +9,22 @@ export interface JobResult {
   jobName: string;
   success: boolean;
   message: string;
+  canceledCount?: number;
   timestamp: Date;
 }
 
 export function useScheduler() {
-  const {
-    data: statusData,
-    isLoading: isLoadingStatus,
-    error: statusError,
-    refetch: refetchStatus,
-  } = useGetSchedulerStatusQuery();
-
-  const [triggerAutoCancel, { isLoading: isTriggeringCancel }] = useTriggerAutoCancelMutation();
-  const [triggerBoxRelease, { isLoading: isTriggeringRelease }] = useTriggerBoxReleaseMutation();
-  const [triggerPickupReminders, { isLoading: isTriggeringReminders }] = useTriggerPickupRemindersMutation();
+  const [triggerAutoCancel, { isLoading: isTriggeringCancel }] =
+    useTriggerAutoCancelMutation();
+  const [triggerBoxRelease, { isLoading: isTriggeringRelease }] =
+    useTriggerBoxReleaseMutation();
+  const [triggerPickupReminders, { isLoading: isTriggeringReminders }] =
+    useTriggerPickupRemindersMutation();
 
   const [jobResults, setJobResults] = useState<JobResult[]>([]);
 
-  const isLoading = isLoadingStatus || isTriggeringCancel || isTriggeringRelease || isTriggeringReminders;
+  const isLoading =
+    isTriggeringCancel || isTriggeringRelease || isTriggeringReminders;
 
   const addJobResult = (jobName: string, success: boolean, message: string) => {
     setJobResults((prev) => [
@@ -44,85 +41,87 @@ export function useScheduler() {
   const handleTriggerAutoCancel = async () => {
     try {
       const result = await triggerAutoCancel().unwrap();
-      addJobResult(
-        "Auto-Cancel Orders",
-        true,
-        result.data?.message || "Job triggered successfully"
-      );
-      return true;
+      setJobResults((prev) => [
+        {
+          jobName: "Auto-Cancel Orders",
+          success: true,
+          message: result.data?.message || "Job completed",
+          canceledCount: (result.data as any)?.canceledCount,
+          timestamp: new Date(),
+        },
+        ...prev.slice(0, 9),
+      ]);
     } catch (error: any) {
-      addJobResult(
-        "Auto-Cancel Orders",
-        false,
-        error?.data?.message || "Failed to trigger job"
-      );
-      return false;
+      setJobResults((prev) => [
+        {
+          jobName: "Auto-Cancel Orders",
+          success: false,
+          message: error?.data?.message || "Failed to trigger job",
+          timestamp: new Date(),
+        },
+        ...prev.slice(0, 9),
+      ]);
     }
   };
 
   const handleTriggerBoxRelease = async () => {
     try {
       const result = await triggerBoxRelease().unwrap();
-      addJobResult(
-        "Release Boxes",
-        true,
-        result.data?.message || "Job triggered successfully"
-      );
-      return true;
+      setJobResults((prev) => [
+        {
+          jobName: "Release Boxes",
+          success: true,
+          message: result.data?.message || "Job completed",
+          timestamp: new Date(),
+        },
+        ...prev.slice(0, 9),
+      ]);
     } catch (error: any) {
-      addJobResult(
-        "Release Boxes",
-        false,
-        error?.data?.message || "Failed to trigger job"
-      );
-      return false;
+      setJobResults((prev) => [
+        {
+          jobName: "Release Boxes",
+          success: false,
+          message: error?.data?.message || "Failed to trigger job",
+          timestamp: new Date(),
+        },
+        ...prev.slice(0, 9),
+      ]);
     }
   };
 
   const handleTriggerPickupReminders = async () => {
     try {
       const result = await triggerPickupReminders().unwrap();
-      addJobResult(
-        "Pickup Reminders",
-        true,
-        result.data?.message || "Job triggered successfully"
-      );
-      return true;
+      setJobResults((prev) => [
+        {
+          jobName: "Pickup Reminders",
+          success: true,
+          message: result.data?.message || "Job completed",
+          timestamp: new Date(),
+        },
+        ...prev.slice(0, 9),
+      ]);
     } catch (error: any) {
-      addJobResult(
-        "Pickup Reminders",
-        false,
-        error?.data?.message || "Failed to trigger job"
-      );
-      return false;
+      setJobResults((prev) => [
+        {
+          jobName: "Pickup Reminders",
+          success: false,
+          message: error?.data?.message || "Failed to trigger job",
+          timestamp: new Date(),
+        },
+        ...prev.slice(0, 9),
+      ]);
     }
   };
 
-  const schedulerStatus = statusData?.data;
-  const isEnabled = schedulerStatus?.schedulerEnabled ?? false;
-  const activeJobs = schedulerStatus?.jobs ?? [];
-
   return {
-    // Status
-    isEnabled,
-    activeJobs,
-    schedulerStatus,
-    isLoadingStatus,
-    statusError,
-    refetchStatus,
-    
-    // Trigger functions
     handleTriggerAutoCancel,
     handleTriggerBoxRelease,
     handleTriggerPickupReminders,
-    
-    // Loading states
     isTriggeringCancel,
     isTriggeringRelease,
     isTriggeringReminders,
     isLoading,
-    
-    // Results
     jobResults,
   };
 }

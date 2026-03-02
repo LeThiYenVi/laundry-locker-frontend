@@ -4,7 +4,6 @@ import { Card, CardContent } from "~/components/ui/card";
 import { TableToolbar } from "~/components/shared/data-table";
 import { LockerTable } from "./components/LockerTable";
 import { LockerFilters } from "./components/LockerFilters";
-import { LockerStats } from "./components/LockerStats";
 import { useLockers } from "./hooks/useLockers";
 
 export default function LockersPage() {
@@ -12,13 +11,11 @@ export default function LockersPage() {
   const {
     lockers,
     isLoading,
-    statistics,
     status,
     setStatus,
     searchQuery,
     setSearchQuery,
     statusCounts,
-    handleViewDetails,
     handleMaintenance,
     handleActivate,
     refetch,
@@ -33,8 +30,6 @@ export default function LockersPage() {
         description={t("admin.lockers.description")}
       />
 
-      <LockerStats statistics={statistics} />
-
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
           {/* Toolbar - 1 hàng */}
@@ -46,7 +41,7 @@ export default function LockersPage() {
               onSearchChange={setSearchQuery}
               statusCounts={statusCounts}
             />
-            
+
             <TableToolbar
               onRefresh={refetch}
               onClearFilters={clearFilters}
@@ -57,7 +52,6 @@ export default function LockersPage() {
           <LockerTable
             lockers={lockers}
             isLoading={isLoading}
-            onViewDetails={handleViewDetails}
             onMaintenance={handleMaintenance}
             onActivate={handleActivate}
           />

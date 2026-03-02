@@ -1,7 +1,10 @@
 import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { mockStores, MockStore } from "~/mockdata/stores.mock";
-import { isMockEnabled, mockDelay } from "~/hooks/useMockData";
+import {
+  useGetAllStoresQuery,
+  useDeleteStoreMutation,
+} from "@/stores/apis/admin/stores";
+import type { AdminStoreResponse } from "~/types/admin/store";
 
 export type StoreStatus = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -12,19 +15,24 @@ export function useStores() {
   const [pageSize, setPageSize] = useState(10);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<MockStore | null>(null);
-  const [isLoading, setIsLoading] = useState(isMockEnabled);
+  const [selectedStore, setSelectedStore] = useState<AdminStoreResponse | null>(
+    null,
+  );
 
-  if (isMockEnabled && isLoading) {
-    setTimeout(() => setIsLoading(false), mockDelay);
-  }
+  const { data, isLoading, refetch } = useGetAllStoresQuery({
+    pageNumber: page,
+    pageSize,
+  });
+  const [deleteStore] = useDeleteStoreMutation();
+
+  const allStores: AdminStoreResponse[] = data?.data?.content ?? [];
 
   const filteredStores = useMemo(() => {
-    let result = [...mockStores];
+    let result = [...allStores];
 
     if (status !== "ALL") {
       result = result.filter((store) =>
-        status === "ACTIVE" ? store.isActive : !store.isActive
+        status === "ACTIVE" ? store.active : !store.active,
       );
     }
 
@@ -33,63 +41,54 @@ export function useStores() {
       result = result.filter(
         (store) =>
           store.name?.toLowerCase().includes(query) ||
-          store.address?.toLowerCase().includes(query) ||
-          store.managerName?.toLowerCase().includes(query)
+          store.address?.toLowerCase().includes(query),
       );
     }
 
-    const start = page * pageSize;
-    return result.slice(start, start + pageSize);
-  }, [status, searchQuery, page, pageSize]);
+    return result;
+  }, [allStores, status, searchQuery]);
 
-  const statusCounts = useMemo(() => ({
-    ALL: mockStores.length,
-    ACTIVE: mockStores.filter((s) => s.isActive).length,
-    INACTIVE: mockStores.filter((s) => !s.isActive).length,
-  }), []);
+  const statusCounts = useMemo(
+    () => ({
+      ALL: allStores.length,
+      ACTIVE: allStores.filter((s) => s.active).length,
+      INACTIVE: allStores.filter((s) => !s.active).length,
+    }),
+    [allStores],
+  );
 
   const handleCreate = useCallback(() => {
     setIsCreateModalOpen(true);
   }, []);
 
-  const handleEdit = useCallback((store: MockStore) => {
+  const handleEdit = useCallback((store: AdminStoreResponse) => {
     setSelectedStore(store);
     setIsEditModalOpen(true);
   }, []);
 
-  const handleDelete = useCallback((storeId: number) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
+  const handleDelete = useCallback(
+    async (storeId: number) => {
+      toast.promise(deleteStore(storeId).unwrap(), {
         loading: "Đang xóa cửa hàng...",
         success: "Đã xóa cửa hàng thành công!",
         error: "Không thể xóa cửa hàng",
-      }
-    );
-  }, []);
+      });
+    },
+    [deleteStore],
+  );
 
-  // Refetch function
-  const refetch = () => {
-    if (isMockEnabled) {
-      setIsLoading(true);
-      setTimeout(() => setIsLoading(false), mockDelay);
-    }
-  };
-
-  // Clear all filters
   const clearFilters = () => {
     setStatus("ALL");
     setSearchQuery("");
     setPage(0);
   };
 
-  // Check if any filter is active
   const hasActiveFilters = status !== "ALL" || searchQuery !== "";
 
   return {
     stores: filteredStores,
-    totalElements: mockStores.length,
-    totalPages: Math.ceil(mockStores.length / pageSize),
+    totalElements: data?.data?.totalElements ?? 0,
+    totalPages: data?.data?.totalPages ?? 0,
     isLoading,
     status,
     setStatus,
@@ -111,6 +110,6 @@ export function useStores() {
     handleCreate,
     handleEdit,
     handleDelete,
-    isMock: isMockEnabled,
+    isMock: false,
   };
 }

@@ -22,10 +22,25 @@ export function UserFilters({
   const { t } = useTranslation();
 
   const options = [
-    { value: "ALL", label: t("common.all"), color: "blue" as const, count: statusCounts.ALL },
-    { value: "ACTIVE", label: t("admin.users.status.active"), color: "green" as const, count: statusCounts.ACTIVE },
-    { value: "INACTIVE", label: t("admin.users.status.inactive"), color: "red" as const, count: statusCounts.INACTIVE },
-    { value: "PENDING", label: t("admin.users.status.pending"), color: "yellow" as const, count: statusCounts.PENDING },
+    { value: "ALL", label: t("common.all"), count: statusCounts.ALL },
+    {
+      value: "ACTIVE",
+      label: t("admin.users.status.active"),
+      color: "green" as const,
+      count: statusCounts.ACTIVE,
+    },
+    {
+      value: "INACTIVE",
+      label: t("admin.users.status.inactive"),
+      color: "red" as const,
+      count: statusCounts.INACTIVE,
+    },
+    {
+      value: "PENDING",
+      label: t("admin.users.status.pending"),
+      color: "yellow" as const,
+      count: statusCounts.PENDING,
+    },
   ];
 
   return (

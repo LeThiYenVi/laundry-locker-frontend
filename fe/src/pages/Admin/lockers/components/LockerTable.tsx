@@ -10,7 +10,6 @@ import {
   WifiOff,
   Eye,
   Power,
-  ChevronRight,
 } from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Badge } from "~/components/ui/badge";
@@ -28,19 +27,18 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { LockerStatus } from "~/types/admin/enums";
-import type { MockLocker } from "~/mockdata/lockers.mock";
+import type { AdminLockerResponse } from "~/types/admin/locker";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 interface LockerTableProps {
-  lockers: MockLocker[];
+  lockers: AdminLockerResponse[];
   isLoading: boolean;
-  onViewDetails: (locker: MockLocker) => void;
   onMaintenance: (lockerId: number) => void;
   onActivate: (lockerId: number) => void;
 }
 
-const columnHelper = createColumnHelper<MockLocker>();
+const columnHelper = createColumnHelper<AdminLockerResponse>();
 
 // Unified icon wrapper
 const IconWrapper = ({
@@ -153,7 +151,6 @@ const getStatusBadge = (status: LockerStatus, t: (key: string) => string) => {
 export function LockerTable({
   lockers,
   isLoading,
-  onViewDetails,
   onMaintenance,
   onActivate,
 }: LockerTableProps) {
@@ -222,7 +219,8 @@ export function LockerTable({
     columnHelper.accessor("totalBoxes", {
       header: t("admin.lockers.columns.boxes"),
       cell: ({ row }) => {
-        const { availableBoxes, totalBoxes, occupiedBoxes } = row.original;
+        const { availableBoxes, totalBoxes } = row.original;
+        const occupiedBoxes = totalBoxes - availableBoxes;
         const availablePercent = (availableBoxes / totalBoxes) * 100;
 
         return (
@@ -258,7 +256,7 @@ export function LockerTable({
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-orange-400"></span>
-                {occupiedBoxes} đang dùng
+                {totalBoxes - availableBoxes} đang dùng
               </span>
             </div>
           </div>
@@ -273,16 +271,6 @@ export function LockerTable({
         const locker = row.original;
         return (
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              onClick={() => navigate(`/admin/lockers/${locker.id}`)}
-            >
-              Chi tiết
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

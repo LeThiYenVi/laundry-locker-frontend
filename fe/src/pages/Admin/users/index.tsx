@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
@@ -5,10 +6,12 @@ import { Card, CardContent } from "~/components/ui/card";
 import { TableToolbar } from "~/components/shared/data-table";
 import { UserTable } from "./components/UserTable";
 import { UserFilters } from "./components/UserFilters";
+import { CreateUserModal } from "./components/CreateUserModal";
 import { useUsers } from "./hooks/useUsers";
 
 export default function UsersPage() {
   const { t } = useTranslation();
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const {
     users,
     isLoading,
@@ -40,11 +43,11 @@ export default function UsersPage() {
               onSearchChange={setSearchQuery}
               statusCounts={statusCounts}
             />
-            
+
             <TableToolbar
               createButton={{
                 label: t("admin.users.addUser"),
-                onClick: () => console.log("Add user"),
+                onClick: () => setShowCreateModal(true),
                 icon: UserPlus,
               }}
               onRefresh={refetch}
@@ -56,6 +59,11 @@ export default function UsersPage() {
           <UserTable users={users} isLoading={isLoading} />
         </CardContent>
       </Card>
+
+      <CreateUserModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </div>
   );
 }

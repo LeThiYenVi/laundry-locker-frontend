@@ -216,7 +216,9 @@ export default function LoginPage(): React.JSX.Element {
             className="grid gap-4 w-full max-w-md"
           >
             <label className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Mã OTP</span>
+              <span className="text-sm font-medium text-foreground">
+                Mã OTP
+              </span>
               <Input
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
@@ -340,7 +342,9 @@ export default function LoginPage(): React.JSX.Element {
             className="grid gap-4 w-full max-w-md"
           >
             <label className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Mã OTP</span>
+              <span className="text-sm font-medium text-foreground">
+                Mã OTP
+              </span>
               <Input
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
