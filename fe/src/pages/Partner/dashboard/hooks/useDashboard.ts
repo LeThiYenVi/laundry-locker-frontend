@@ -1,16 +1,30 @@
-import { useGetPartnerDashboardQuery, useGetPendingOrdersQuery, POLLING_INTERVAL } from "@/stores/apis/partnerApi";
+import {
+  useGetPartnerDashboardQuery,
+  useGetPendingOrdersQuery,
+  POLLING_INTERVAL,
+} from "@/stores/apis/partnerApi";
 
 export interface DashboardStats {
-  todayOrders: number;
+  // Orders
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  canceledOrders: number;
   processingOrders: number;
-  monthlyRevenue: number;
-  activeLockers: number;
-  pendingCollections: number;
-  overdueOrders: number;
-  avgProcessingTime: string;
-  completionRate: string | number;
+  // Revenue
+  totalRevenue: number;
   partnerRevenue: number;
   platformFee: number;
+  todayRevenue: number | null;
+  monthRevenue: number | null;
+  // Business
+  totalStores: number;
+  activeStores: number;
+  totalStaff: number;
+  businessName: string;
+  // Computed
+  completionRate: string | number;
+  revenueSharePercent: number;
 }
 
 export function useDashboard() {
@@ -30,28 +44,46 @@ export function useDashboard() {
     {
       pollingInterval: POLLING_INTERVAL,
       refetchOnFocus: true,
-    }
+    },
   );
 
   const pendingOrders = pendingOrdersData?.content || [];
 
   const stats: DashboardStats = {
-    todayOrders: dashboardData?.totalOrders || 0,
+    // Orders
+    totalOrders: dashboardData?.totalOrders || 0,
+    pendingOrders: dashboardData?.pendingOrders || 0,
+    completedOrders: dashboardData?.completedOrders || 0,
+    canceledOrders: dashboardData?.canceledOrders || 0,
     processingOrders:
       (dashboardData?.totalOrders || 0) -
       (dashboardData?.completedOrders || 0) -
       (dashboardData?.canceledOrders || 0),
-    monthlyRevenue: dashboardData?.monthRevenue || 0,
-    activeLockers: dashboardData?.totalStores || 0,
-    pendingCollections: dashboardData?.pendingOrders || 0,
-    overdueOrders: 0,
-    avgProcessingTime: "24h",
-    completionRate:
-      dashboardData && dashboardData.totalOrders > 0
-        ? ((dashboardData.completedOrders / dashboardData.totalOrders) * 100).toFixed(1)
-        : 0,
+    // Revenue
+    totalRevenue: dashboardData?.totalRevenue || 0,
     partnerRevenue: dashboardData?.partnerRevenue || 0,
     platformFee: dashboardData?.platformFee || 0,
+    todayRevenue: dashboardData?.todayRevenue ?? null,
+    monthRevenue: dashboardData?.monthRevenue ?? null,
+    // Business
+    totalStores: dashboardData?.totalStores || 0,
+    activeStores: dashboardData?.activeStores || 0,
+    totalStaff: dashboardData?.totalStaff || 0,
+    businessName: dashboardData?.businessName || "",
+    // Computed
+    completionRate:
+      dashboardData && dashboardData.totalOrders > 0
+        ? (
+            (dashboardData.completedOrders / dashboardData.totalOrders) *
+            100
+          ).toFixed(1)
+        : 0,
+    revenueSharePercent:
+      dashboardData && dashboardData.totalRevenue > 0
+        ? Math.round(
+            (dashboardData.partnerRevenue / dashboardData.totalRevenue) * 100,
+          )
+        : 0,
   };
 
   return {
@@ -61,5 +93,6 @@ export function useDashboard() {
     error,
     refetch,
     hasData: !!dashboardData,
+    rawData: dashboardData,
   };
 }

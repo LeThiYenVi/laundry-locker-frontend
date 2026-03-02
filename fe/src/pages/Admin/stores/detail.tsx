@@ -241,7 +241,7 @@ export default function StoreDetailPage() {
               className="w-full h-full object-cover absolute inset-0"
               onError={(e) => {
                 e.currentTarget.src =
-                  "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600"\;
+                  "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600";
               }}
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
@@ -282,9 +282,7 @@ export default function StoreDetailPage() {
                 </label>
                 <Input
                   value={formData.address}
-                  onChange={(e) =>
-                    handleInputChange("address", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                   placeholder="Nhập địa chỉ"
                 />
               </div>
@@ -361,9 +359,7 @@ export default function StoreDetailPage() {
               <User className="h-3.5 w-3.5" /> Quản lý cửa hàng
             </p>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
-                Họ tên
-              </label>
+              <label className="text-xs text-gray-500 mb-1 block">Họ tên</label>
               <Input
                 value={formData.manager}
                 onChange={(e) => handleInputChange("manager", e.target.value)}

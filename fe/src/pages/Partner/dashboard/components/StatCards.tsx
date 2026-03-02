@@ -1,92 +1,81 @@
-import { Package, TrendingUp, DollarSign, Boxes } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { Card, Badge } from "~/components/ui";
+import { Package, DollarSign, Boxes, Clock } from "lucide-react";
+import { Card } from "~/components/ui";
 import type { DashboardStats } from "../hooks/useDashboard";
 
 interface StatCardsProps {
   stats: DashboardStats;
 }
 
-export function StatCards({ stats }: StatCardsProps) {
-  const { t } = useTranslation();
+function fmt(v: number | null) {
+  if (v == null) return "—";
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+  return v.toLocaleString("vi-VN");
+}
 
-  const statsConfig = [
+export function StatCards({ stats }: StatCardsProps) {
+  const cards = [
     {
-      key: "todayOrders" as const,
-      label: t("partner.dashboard.stats.todayOrders"),
-      subLabel: t("partner.dashboard.stats.total"),
       icon: Package,
-      color: "blue",
-      gradient: "from-blue-100 to-blue-50",
-      borderColor: "border-blue-200",
+      iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
-      format: (v: number) => v.toString(),
+      label: "Tổng đơn hàng",
+      value: stats.totalOrders.toString(),
+      sub: `${stats.completedOrders} hoàn thành · ${stats.canceledOrders} huỷ`,
+      border: "border-blue-200",
+      gradient: "from-blue-50 to-white",
     },
     {
-      key: "processingOrders" as const,
-      label: t("partner.dashboard.stats.processing"),
-      subLabel: t("partner.dashboard.stats.processingShort"),
-      icon: TrendingUp,
-      color: "orange",
-      gradient: "from-orange-100 to-orange-50",
-      borderColor: "border-orange-200",
+      icon: Clock,
+      iconBg: "bg-orange-100",
       iconColor: "text-orange-600",
-      format: (v: number) => v.toString(),
+      label: "Đơn đang xử lý",
+      value: stats.pendingOrders.toString(),
+      sub: `${stats.processingOrders} đang giặt`,
+      border: "border-orange-200",
+      gradient: "from-orange-50 to-white",
     },
     {
-      key: "monthlyRevenue" as const,
-      label: t("partner.dashboard.stats.revenue"),
-      subLabel: t("partner.dashboard.stats.thisMonth"),
       icon: DollarSign,
-      color: "green",
-      gradient: "from-green-100 to-green-50",
-      borderColor: "border-green-200",
+      iconBg: "bg-green-100",
       iconColor: "text-green-600",
-      format: (v: number) => `${(v / 1000000).toFixed(1)}M`,
-      extra: (stats: DashboardStats) =>
-        `${t("partner.dashboard.stats.earnings")}: ${(stats.partnerRevenue / 1000000).toFixed(1)}M`,
+      label: "Doanh thu của bạn",
+      value: fmt(stats.partnerRevenue),
+      sub: `Tổng GTV: ${fmt(stats.totalRevenue)}`,
+      border: "border-green-200",
+      gradient: "from-green-50 to-white",
     },
     {
-      key: "activeLockers" as const,
-      label: t("partner.dashboard.stats.stores"),
-      subLabel: t("partner.dashboard.stats.active"),
       icon: Boxes,
-      color: "purple",
-      gradient: "from-purple-100 to-purple-50",
-      borderColor: "border-purple-200",
+      iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
-      format: (v: number) => v.toString(),
+      label: "Cửa hàng",
+      value: `${stats.activeStores}/${stats.totalStores}`,
+      sub: `${stats.totalStaff} nhân viên`,
+      border: "border-purple-200",
+      gradient: "from-purple-50 to-white",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {statsConfig.map((config) => {
-        const Icon = config.icon;
-        const value = stats[config.key];
-
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+      {cards.map((c) => {
+        const Icon = c.icon;
         return (
           <Card
-            key={config.key}
-            className={`bg-gradient-to-br ${config.gradient} rounded-3xl p-6 border ${config.borderColor}`}
+            key={c.label}
+            className={`bg-gradient-to-br ${c.gradient} border ${c.border} rounded-2xl p-5`}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-white rounded-xl">
-                <Icon className={config.iconColor} size={24} />
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`p-2.5 rounded-xl ${c.iconBg}`}>
+                <Icon className={c.iconColor} size={20} />
               </div>
-              <Badge className={`bg-${config.color}-600 text-white`}>
-                {config.subLabel}
-              </Badge>
+              <span className="text-sm font-medium text-gray-600">
+                {c.label}
+              </span>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {config.label}
-            </h3>
-            <p className={`text-3xl font-bold text-${config.color}-600`}>
-              {config.format(value as number)}
-            </p>
-            {config.extra && (
-              <p className="text-sm text-gray-600 mt-1">{config.extra(stats)}</p>
-            )}
+            <p className="text-3xl font-bold text-gray-900 mb-1">{c.value}</p>
+            <p className="text-xs text-gray-500">{c.sub}</p>
           </Card>
         );
       })}

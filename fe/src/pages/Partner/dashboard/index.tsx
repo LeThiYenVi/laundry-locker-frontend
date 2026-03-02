@@ -9,7 +9,8 @@ import { RecentOrdersTable } from "./components/RecentOrdersTable";
 
 export default function PartnerDashboard() {
   const { t } = useTranslation();
-  const { stats, pendingOrders, isLoading, error, refetch, hasData } = useDashboard();
+  const { stats, pendingOrders, isLoading, error, refetch, hasData } =
+    useDashboard();
 
   if (isLoading) {
     return <PageLoading message={t("common.loading")} />;
@@ -30,7 +31,9 @@ export default function PartnerDashboard() {
     <div className="min-h-screen bg-background p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground">{t("partner.dashboard.title")}</h1>
+        <h1 className="text-4xl font-bold text-foreground">
+          {t("partner.dashboard.title")}
+        </h1>
         <p className="text-muted-foreground mt-2">
           {t("partner.dashboard.subtitle")}
         </p>
@@ -38,8 +41,8 @@ export default function PartnerDashboard() {
 
       {/* Alert Section */}
       <AlertSection
-        pendingCollections={stats.pendingCollections}
-        overdueOrders={stats.overdueOrders}
+        pendingCollections={stats.pendingOrders}
+        overdueOrders={0}
       />
 
       {/* Overview Cards */}
@@ -48,8 +51,8 @@ export default function PartnerDashboard() {
       {/* Stats Grid */}
       <StatsGrid stats={stats} />
 
-      {/* Charts Placeholder */}
-      <ChartsSection />
+      {/* Revenue Breakdown */}
+      <ChartsSection stats={stats} />
 
       {/* Pending Orders Table */}
       <RecentOrdersTable orders={pendingOrders} />

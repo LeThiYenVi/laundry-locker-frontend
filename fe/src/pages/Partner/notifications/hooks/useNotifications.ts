@@ -1,5 +1,9 @@
 import { useState, useMemo } from "react";
-import { useGetNotificationsQuery } from "@/stores/apis/notificationApi";
+import {
+  useGetNotificationsQuery,
+  useMarkNotificationAsReadMutation,
+  useMarkAllNotificationsAsReadMutation,
+} from "@/stores/apis/notificationApi";
 
 export interface Notification {
   id: number;
@@ -19,11 +23,14 @@ export function useNotifications() {
 
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
+  const [markAsReadMutation] = useMarkNotificationAsReadMutation();
+  const [markAllAsReadMutation] = useMarkAllNotificationsAsReadMutation();
+
   // Extract notifications from paginated response
   const notifications: Notification[] = useMemo(() => {
     if (!response) return [];
     // Handle both array and paginated response
-    const list = Array.isArray(response) ? response : (response.content || []);
+    const list = Array.isArray(response) ? response : response.content || [];
     return list.map((n: any) => ({
       id: n.id,
       title: n.title || "Thông báo",
@@ -34,18 +41,26 @@ export function useNotifications() {
   }, [response]);
 
   const filteredNotifications =
-    filter === "unread" ? notifications.filter((n) => !n.isRead) : notifications;
+    filter === "unread"
+      ? notifications.filter((n) => !n.isRead)
+      : notifications;
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleMarkAsRead = async (_id: number) => {
-    // Mock implementation
-    console.log("Mark as read:", _id);
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await markAsReadMutation(id).unwrap();
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
   };
 
   const handleMarkAllAsRead = async () => {
-    // Mock implementation
-    console.log("Mark all as read");
+    try {
+      await markAllAsReadMutation().unwrap();
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
   };
 
   return {

@@ -7,7 +7,10 @@ import {
   useMarkOrderReadyMutation,
   POLLING_INTERVAL,
 } from "@/stores/apis/partnerApi";
-import { usePartnerWebSocket, OrderUpdateNotification } from "@/hooks/useWebSocket";
+import {
+  usePartnerWebSocket,
+  OrderUpdateNotification,
+} from "@/hooks/useWebSocket";
 import type { PartnerOrder, StaffAccessCode } from "@/types/partner.type";
 import type { OrderStatus } from "@/types/partner.enum";
 import { getErrorMessage } from "../utils/order-helpers";
@@ -52,17 +55,20 @@ export function useOrders() {
       search: debouncedSearch || undefined,
     },
     {
-      pollingInterval: POLLING_INTERVAL,
-      refetchOnFocus: true,
+      // WebSocket handles real-time updates — only use polling as a fallback
+      pollingInterval: POLLING_INTERVAL * 6, // 60s fallback
+      refetchOnFocus: false,
       refetchOnReconnect: true,
-    }
+    },
   );
 
   // Mutations
   const [acceptOrder, { isLoading: isAccepting }] = useAcceptOrderMutation();
-  const [updateWeight, { isLoading: isUpdatingWeight }] = useUpdateOrderWeightMutation();
+  const [updateWeight, { isLoading: isUpdatingWeight }] =
+    useUpdateOrderWeightMutation();
   const [processOrder, { isLoading: isProcessing }] = useProcessOrderMutation();
-  const [markReady, { isLoading: isMarkingReady }] = useMarkOrderReadyMutation();
+  const [markReady, { isLoading: isMarkingReady }] =
+    useMarkOrderReadyMutation();
 
   // WebSocket
   const handleOrderUpdate = useCallback(
@@ -70,10 +76,14 @@ export function useOrders() {
       console.log("[Orders] Real-time update:", update);
       refetch();
     },
-    [refetch]
+    [refetch],
   );
 
-  const { connected: wsConnected, connect: wsConnect, error: wsError } = usePartnerWebSocket({
+  const {
+    connected: wsConnected,
+    connect: wsConnect,
+    error: wsError,
+  } = usePartnerWebSocket({
     onOrderUpdate: handleOrderUpdate,
     debug: import.meta.env.DEV,
   });
@@ -113,7 +123,9 @@ export function useOrders() {
     setPage(0);
   };
 
-  const handleAcceptOrder = async (order: PartnerOrder): Promise<StaffAccessCode | null> => {
+  const handleAcceptOrder = async (
+    order: PartnerOrder,
+  ): Promise<StaffAccessCode | null> => {
     try {
       const result = await acceptOrder(order.id).unwrap();
       return result.staffAccessCode;
@@ -123,7 +135,10 @@ export function useOrders() {
     }
   };
 
-  const handleUpdateWeight = async (orderId: number, weight: number): Promise<boolean> => {
+  const handleUpdateWeight = async (
+    orderId: number,
+    weight: number,
+  ): Promise<boolean> => {
     try {
       await updateWeight({
         orderId,
@@ -147,7 +162,9 @@ export function useOrders() {
     }
   };
 
-  const handleMarkReady = async (orderId: number): Promise<StaffAccessCode | null> => {
+  const handleMarkReady = async (
+    orderId: number,
+  ): Promise<StaffAccessCode | null> => {
     try {
       const result = await markReady(orderId).unwrap();
       return result.staffAccessCode;
@@ -168,7 +185,7 @@ export function useOrders() {
     setErrorToast,
     handleTabChange,
     setPage,
-    
+
     // Data
     orders,
     totalPages,
@@ -179,7 +196,7 @@ export function useOrders() {
     error,
     refetch,
     getPageNumbers,
-    
+
     // Mutations
     handleAcceptOrder,
     handleUpdateWeight,
@@ -189,7 +206,7 @@ export function useOrders() {
     isUpdatingWeight,
     isProcessing,
     isMarkingReady,
-    
+
     // WebSocket
     wsConnected,
     wsError,

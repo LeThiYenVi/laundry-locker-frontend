@@ -10,6 +10,7 @@ interface OrderActionsProps {
   onOpenWeightModal: (order: PartnerOrder) => void;
   onProcessOrder: (order: PartnerOrder) => void;
   onMarkReady: (order: PartnerOrder) => void;
+  onViewDetail: (order: PartnerOrder) => void;
   isAccepting: boolean;
   isProcessing: boolean;
   isMarkingReady: boolean;
@@ -21,30 +22,49 @@ export function OrderActions({
   onOpenWeightModal,
   onProcessOrder,
   onMarkReady,
+  onViewDetail,
   isAccepting,
   isProcessing,
   isMarkingReady,
 }: OrderActionsProps) {
   const { t } = useTranslation();
 
+  const viewDetailBtn = (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-gray-500 hover:text-blue-600"
+      onClick={() => onViewDetail(order)}
+    >
+      <Eye size={14} />
+    </Button>
+  );
+
   switch (order.status) {
     case OrderStatus.WAITING:
       return (
-        <Button
-          size="sm"
-          onClick={() => onAcceptOrder(order)}
-          disabled={isAccepting}
-          className="bg-green-600 hover:bg-green-700"
-        >
-          <Check size={14} className="mr-1" />
-          {t("partner.orders.actions.accept")}
-        </Button>
+        <div className="flex items-center gap-1 justify-end">
+          <Button
+            size="sm"
+            onClick={() => onAcceptOrder(order)}
+            disabled={isAccepting}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Check size={14} className="mr-1" />
+            {t("partner.orders.actions.accept")}
+          </Button>
+          {viewDetailBtn}
+        </div>
       );
 
     case OrderStatus.COLLECTED:
       return (
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => onOpenWeightModal(order)}>
+        <div className="flex items-center gap-1 justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onOpenWeightModal(order)}
+          >
             <Scale size={14} className="mr-1" />
             {t("partner.orders.actions.enterWeight")}
           </Button>
@@ -57,46 +77,59 @@ export function OrderActions({
             <Play size={14} className="mr-1" />
             {t("partner.orders.actions.process")}
           </Button>
+          {viewDetailBtn}
         </div>
       );
 
     case OrderStatus.PROCESSING:
     case OrderStatus.PROCESSED:
       return (
-        <Button
-          size="sm"
-          onClick={() => onMarkReady(order)}
-          disabled={isMarkingReady}
-          className="bg-orange-500 hover:bg-orange-600"
-        >
-          <CheckCircle size={14} className="mr-1" />
-          {t("partner.orders.actions.markReady")}
-        </Button>
+        <div className="flex items-center gap-1 justify-end">
+          <Button
+            size="sm"
+            onClick={() => onMarkReady(order)}
+            disabled={isMarkingReady}
+            className="bg-orange-500 hover:bg-orange-600"
+          >
+            <CheckCircle size={14} className="mr-1" />
+            {t("partner.orders.actions.markReady")}
+          </Button>
+          {viewDetailBtn}
+        </div>
       );
 
     case OrderStatus.READY:
       return (
-        <Badge variant="outline" className="text-purple-600 border-purple-600">
-          {t("partner.orders.status.waitingReturn")}
-        </Badge>
+        <div className="flex items-center gap-1 justify-end">
+          <Badge
+            variant="outline"
+            className="text-purple-600 border-purple-600"
+          >
+            {t("partner.orders.status.waitingReturn")}
+          </Badge>
+          {viewDetailBtn}
+        </div>
       );
 
     case OrderStatus.RETURNED:
       return (
-        <Badge variant="outline" className="text-green-600 border-green-600">
-          {t("partner.orders.status.waitingPickup")}
-        </Badge>
+        <div className="flex items-center gap-1 justify-end">
+          <Badge variant="outline" className="text-green-600 border-green-600">
+            {t("partner.orders.status.waitingPickup")}
+          </Badge>
+          {viewDetailBtn}
+        </div>
       );
 
     case OrderStatus.COMPLETED:
       return (
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" onClick={() => onViewDetail(order)}>
           <Eye size={14} className="mr-1" />
           {t("button.detail")}
         </Button>
       );
 
     default:
-      return null;
+      return viewDetailBtn;
   }
 }

@@ -112,28 +112,37 @@ export const PARTNER_NAV_ITEMS: NavItem[] = [
   },
   {
     icon: Boxes,
-    path: "/partner/lockers",
-    label: "partner.sidebar.lockers",
+    path: "/partner/stores",
+    label: "partner.sidebar.stores",
     permission: "partner_access",
   },
-  {
-    icon: Briefcase,
-    path: "/partner/services",
-    label: "partner.sidebar.services",
-    permission: "partner_access",
-  },
+  // TODO: Uncomment when partner services API is ready
+  // {
+  //   icon: Briefcase,
+  //   path: "/partner/services",
+  //   label: "partner.sidebar.services",
+  //   permission: "partner_access",
+  // },
+  // TODO: Uncomment when partner revenue period API is ready (currently shown in dashboard)
+  // {
+  //   icon: DollarSign,
+  //   path: "/partner/revenue",
+  //   label: "partner.sidebar.revenue",
+  //   permission: "partner_access",
+  // },
   {
     icon: Users,
     path: "/partner/staff",
     label: "partner.sidebar.staff",
     permission: "partner_access",
   },
-  {
-    icon: DollarSign,
-    path: "/partner/revenue",
-    label: "partner.sidebar.revenue",
-    permission: "partner_access",
-  },
+  // TODO: Uncomment when revenue page is ready (data shown on dashboard for now)
+  // {
+  //   icon: DollarSign,
+  //   path: "/partner/revenue",
+  //   label: "partner.sidebar.revenue",
+  //   permission: "partner_access",
+  // },
   {
     icon: Bell,
     path: "/partner/notifications",
