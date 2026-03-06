@@ -1,82 +1,82 @@
-import React from 'react';
-import { CloseCircleOutlined } from '@ant-design/icons';
-import { Button, Result, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { withLocale } from '@/lib/i18n';
-
-const { Paragraph, Text } = Typography;
+import { XCircle, ArrowLeft, RotateCcw } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface ErrorResultProps {
   title?: string;
   subTitle?: string;
-  extra?: React.ReactNode[];
-  onGoConsole?: () => void;
-  onBuyAgain?: () => void;
+  onGoHome?: () => void;
+  onRetry?: () => void;
   errorDetails?: React.ReactNode;
 }
 
-const ErrorResult: React.FC<ErrorResultProps> = ({ 
+export function ErrorResult({
   title = "Gửi thông tin thất bại",
   subTitle = "Vui lòng kiểm tra và sửa đổi thông tin sau trước khi gửi lại.",
-  extra,
-  onGoConsole,
-  onBuyAgain,
-  errorDetails
-}) => {
+  onGoHome,
+  onRetry,
+  errorDetails,
+}: ErrorResultProps) {
   const navigate = useNavigate();
 
-  const defaultExtra = [
-    <Button 
-      type="primary" 
-      key="console"
-      onClick={onGoConsole || (() => navigate(withLocale('/admin/dashboard')))}
-      className="bg-red-600 hover:bg-red-700 border-red-600"
-    >
-      Quay lại trang chủ
-    </Button>,
-    <Button 
-      key="buy" 
-      onClick={onBuyAgain || (() => navigate(withLocale('/')))}
-    >
-      Thử lại
-    </Button>,
-  ];
-
   const defaultErrorDetails = (
-    <div className="desc">
-      <Paragraph>
-        <Text
-          strong
-          style={{
-            fontSize: 16,
-          }}
-        >
-          Thông tin bạn gửi có các lỗi sau:
-        </Text>
-      </Paragraph>
-      <Paragraph>
-        <CloseCircleOutlined className="site-result-demo-error-icon text-red-500 mr-2" /> 
-        Thông tin tài khoản chưa được xác thực. 
-        <a href="#" className="text-blue-600 hover:text-blue-800 ml-1">Xác thực ngay &gt;</a>
-      </Paragraph>
-      <Paragraph>
-        <CloseCircleOutlined className="site-result-demo-error-icon text-red-500 mr-2" /> 
-        Tài khoản chưa đủ điều kiện để thực hiện thao tác này. 
-        <a href="#" className="text-blue-600 hover:text-blue-800 ml-1">Nâng cấp tài khoản &gt;</a>
-      </Paragraph>
+    <div className="mt-4 text-left max-w-md mx-auto">
+      <p className="font-medium text-gray-900 mb-3">Thông tin bạn gửi có các lỗi sau:</p>
+      <div className="space-y-2">
+        <div className="flex items-start gap-2 text-red-600">
+          <XCircle size={18} className="mt-0.5 shrink-0" />
+          <span className="text-sm">
+            Thông tin tài khoản chưa được xác thực.{" "}
+            <a href="#" className="text-blue-600 hover:text-blue-800 underline">
+              Xác thực ngay →
+            </a>
+          </span>
+        </div>
+        <div className="flex items-start gap-2 text-red-600">
+          <XCircle size={18} className="mt-0.5 shrink-0" />
+          <span className="text-sm">
+            Tài khoản chưa đủ điều kiện để thực hiện thao tác này.{" "}
+            <a href="#" className="text-blue-600 hover:text-blue-800 underline">
+              Nâng cấp tài khoản →
+            </a>
+          </span>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <Result
-      status="error"
-      title={title}
-      subTitle={subTitle}
-      extra={extra || defaultExtra}
-    >
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
+      <div className="mb-6">
+        <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto">
+          <XCircle size={48} className="text-red-500" />
+        </div>
+      </div>
+      
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
+      <p className="text-gray-500 mb-6 max-w-md">{subTitle}</p>
+
       {errorDetails || defaultErrorDetails}
-    </Result>
+
+      <div className="flex gap-3 mt-8">
+        <Button
+          onClick={onGoHome || (() => navigate("/admin/dashboard"))}
+          className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          Quay lại trang chủ
+        </Button>
+        <Button
+          onClick={onRetry || (() => navigate("/"))}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <RotateCcw size={16} />
+          Thử lại
+        </Button>
+      </div>
+    </div>
   );
-};
+}
 
 export default ErrorResult;
