@@ -1,31 +1,48 @@
 export interface AuthContextType {
-    user: User | null;
-    isAuthenticated: boolean;
-    loading: boolean;
-    error: string | null;
-    login: (username: string, password: string) => Promise<void>;
-    logout: () => void;
-    hasPermission: (permission: string) => boolean;
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => void;
+  hasPermission: (permission: string) => boolean;
+
+  // Admin 2FA login
+  isWaitingFor2FA: boolean;
+  maskedEmail: string;
+  adminLoginStep1: (email: string, password: string) => Promise<void>;
+  adminLoginStep2: (otpCode: string) => Promise<void>;
+  cancelAdmin2FA: () => void;
+
+  // Partner OTP login
+  isWaitingForOTP: boolean;
+  partnerContactInfo: string;
+  partnerSendOTP: (
+    email: string,
+    contactType: "EMAIL" | "PHONE",
+  ) => Promise<void>;
+  partnerVerifyOTP: (email: string, otp: string) => Promise<void>;
+  cancelPartnerOTP: () => void;
 }
 
 export interface User {
-    id: string;
-    fullName: string;
-    email: string;
-    role: string[];
-    permissions: string[];
-    avatar?: string;
+  id: string;
+  fullName: string;
+  email: string;
+  role: string[];
+  permissions: string[];
+  avatar?: string;
 }
 
 export interface LoginCredentials {
-    username: string;
-    password: string;
+  username: string;
+  password: string;
 }
 
 export interface AuthResponse {
-    accessToken: string;
-    refreshToken: string;
-    user: User;
+  accessToken: string;
+  refreshToken: string;
+  user: User;
 }
 
 // ============================================
@@ -77,4 +94,3 @@ export interface Page<T> {
   first: boolean;
   empty: boolean;
 }
-

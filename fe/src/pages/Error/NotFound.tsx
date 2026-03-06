@@ -1,13 +1,78 @@
 import * as React from "react";
-import { Search, Home, ArrowLeft, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Home, ArrowLeft, MapPin, Sparkles } from "lucide-react";
 import { Button } from "~/components/ui";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { 
+  findClosestRoute, 
+  getRouteSuggestions, 
+  isValidRoute,
+  ROUTE_ALIASES 
+} from "~/lib/fuzzy-router";
+
+// Route display names cho UI
+const ROUTE_NAMES: Record<string, string> = {
+  "/": "Trang chủ",
+  "/auth/login": "Đăng nhập",
+  "/auth/register": "Đăng ký",
+  "/admin/dashboard": "Dashboard",
+  "/admin/users": "Ngườii dùng",
+  "/admin/orders": "Đơn hàng",
+  "/admin/stores": "Cửa hàng",
+  "/admin/lockers": "Tủ đồ",
+  "/admin/services": "Dịch vụ",
+  "/admin/payments": "Thanh toán",
+  "/admin/loyalty": "Khách hàng thân thiết",
+  "/admin/partners": "Đối tác",
+  "/admin/feedback": "Phản hồi",
+  "/admin/scheduler": "Lập lịch",
+  "/partner/dashboard": "Partner Dashboard",
+  "/partner/orders": "Đơn hàng",
+  "/partner/staff": "Nhân viên",
+  "/partner/revenue": "Doanh thu",
+  "/partner/lockers": "Tủ đồ",
+  "/partner/services": "Dịch vụ",
+  "/partner/settings": "Cài đặt",
+};
 
 export default function NotFoundPage(): React.JSX.Element {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isChecking, setIsChecking] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [didRedirect, setDidRedirect] = useState(false);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    
+    // Kiểm tra nếu là alias exact match thì redirect ngay
+    const normalizedPath = currentPath.toLowerCase().trim();
+    if (ROUTE_ALIASES[normalizedPath] && normalizedPath !== currentPath) {
+      navigate(ROUTE_ALIASES[normalizedPath], { replace: true });
+      return;
+    }
+
+    // Thử tìm route gần nhất
+    const closestRoute = findClosestRoute(currentPath);
+    
+    if (closestRoute && closestRoute !== currentPath && !isValidRoute(currentPath)) {
+      // Tự động redirect sau 2 giây cho user thấy thông báo
+      setDidRedirect(true);
+      const timer = setTimeout(() => {
+        navigate(closestRoute, { replace: true });
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else {
+      // Không tìm được route phù hợp, hiển thị gợi ý
+      setSuggestions(getRouteSuggestions(currentPath, 4));
+      setIsChecking(false);
+    }
+  }, [location.pathname, navigate]);
+
+  const currentPath = location.pathname;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-amber-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-muted to-background p-4">
       <div className="max-w-2xl w-full text-center space-y-8">
         {/* Illustration Area */}
         <div className="relative flex justify-center items-end gap-12 mb-8">
@@ -16,7 +81,7 @@ export default function NotFoundPage(): React.JSX.Element {
             {/* Fallen Signpost */}
             <div className="relative">
               <div className="w-32 h-12 bg-yellow-400 rounded-lg flex items-center justify-center transform -rotate-12 shadow-lg">
-                <span className="text-2xl font-bold text-gray-800">404</span>
+                <span className="text-2xl font-bold text-foreground">404</span>
               </div>
               <div className="w-4 h-20 bg-amber-900 rounded absolute top-6 left-1/2 -translate-x-1/2 transform rotate-45"></div>
             </div>
@@ -87,31 +152,79 @@ export default function NotFoundPage(): React.JSX.Element {
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-3">
             <Search className="h-12 w-12 text-amber-500" />
-            <h1 className="text-6xl font-bold text-gray-900">404</h1>
+            <h1 className="text-6xl font-bold text-foreground">404</h1>
           </div>
           
-          <h2 className="text-3xl font-semibold text-gray-800">
-            Không tìm thấy trang
-          </h2>
-          
-          <p className="text-lg text-gray-600 max-w-md mx-auto">
-            Rất tiếc, trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.
-            Có thể đường dẫn đã thay đổi hoặc bạn đã nhập sai địa chỉ.
-          </p>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-left">
-                <p className="font-medium text-amber-900 mb-1">Gợi ý:</p>
-                <ul className="text-amber-800 space-y-1">
-                  <li>• Kiểm tra lại đường dẫn URL</li>
-                  <li>• Quay về trang chủ và tìm kiếm lại</li>
-                  <li>• Sử dụng menu điều hướng</li>
-                </ul>
+          {didRedirect ? (
+            // Hiển thị khi đang redirect tự động
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 max-w-md mx-auto">
+              <div className="flex items-center justify-center gap-2 text-primary">
+                <Sparkles className="h-5 w-5" />
+                <span className="font-medium">Tự động chuyển hướng...</span>
+              </div>
+              <p className="text-sm text-primary mt-1">
+                Phát hiện URL gần đúng, đang chuyển đến trang phù hợp
+              </p>
+              <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+                <code className="bg-primary/20 px-2 py-1 rounded text-primary">{currentPath}</code>
+                <span>→</span>
+                <code className="bg-emerald-100 px-2 py-1 rounded text-emerald-700">
+                  {findClosestRoute(currentPath)}
+                </code>
               </div>
             </div>
-          </div>
+          ) : (
+            // Hiển thị khi không tìm được
+            <>
+              <h2 className="text-3xl font-semibold text-foreground">
+                Không tìm thấy trang
+              </h2>
+              
+              <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                Đường dẫn <code className="bg-gray-100 px-2 py-1 rounded text-foreground">{currentPath}</code> không tồn tại.
+              </p>
+
+              {/* Gợi ý các trang gần nhất */}
+              {suggestions.length > 0 && (
+                <div className="bg-secondary/20 border border-secondary/30 rounded-lg p-4 max-w-md mx-auto">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="h-5 w-5 text-secondary-foreground mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-left">
+                      <p className="font-medium text-foreground mb-2">Có thể bạn muốn tìm:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestions.map((route) => (
+                          <button
+                            key={route}
+                            onClick={() => navigate(route)}
+                            className="text-left px-3 py-1.5 bg-card border border-secondary/40 rounded-md 
+                                     text-foreground hover:bg-secondary/30 hover:border-amber-400 
+                                     transition-colors text-sm"
+                          >
+                            {ROUTE_NAMES[route] || route}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-background border border-border rounded-lg p-4 max-w-md mx-auto">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-left">
+                    <p className="font-medium text-foreground mb-1">Gợi ý:</p>
+                    <ul className="text-muted-foreground space-y-1">
+                      <li>• Kiểm tra lại đường dẫn URL</li>
+                      <li>• Gõ <code>/login</code> thay vì <code>/auth/login</code></li>
+                      <li>• Gõ <code>/order</code> thay vì <code>/admin/orders</code></li>
+                      <li>• Quay về trang chủ và tìm kiếm lại</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Actions */}
@@ -120,6 +233,7 @@ export default function NotFoundPage(): React.JSX.Element {
             variant="outline"
             onClick={() => navigate(-1)}
             className="flex items-center gap-2"
+            disabled={didRedirect}
           >
             <ArrowLeft className="h-4 w-4" />
             Quay lại
@@ -128,29 +242,36 @@ export default function NotFoundPage(): React.JSX.Element {
           <Button
             onClick={() => navigate("/")}
             className="flex items-center gap-2"
+            disabled={didRedirect}
           >
             <Home className="h-4 w-4" />
             Về trang chủ
           </Button>
         </div>
 
-        {/* Search Bar */}
-        <div className="max-w-md mx-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm trang..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  // Handle search
-                  console.log('Search:', e.currentTarget.value);
-                }
-              }}
-            />
+        {/* Quick Links */}
+        {!didRedirect && (
+          <div className="max-w-md mx-auto pt-4 border-t border-border">
+            <p className="text-sm text-muted-foreground mb-3">Truy cập nhanh:</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                { path: "/admin/dashboard", label: "Dashboard" },
+                { path: "/admin/orders", label: "Đơn hàng" },
+                { path: "/admin/users", label: "Users" },
+                { path: "/partner/dashboard", label: "Partner" },
+              ].map((link) => (
+                <button
+                  key={link.path}
+                  onClick={() => navigate(link.path)}
+                  className="px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-md 
+                           text-card-foreground text-sm transition-colors"
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

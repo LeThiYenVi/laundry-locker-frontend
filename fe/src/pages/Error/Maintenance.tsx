@@ -7,7 +7,7 @@ export default function MaintenancePage(): React.JSX.Element {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-muted to-background p-4">
       <div className="max-w-2xl w-full text-center space-y-8">
         {/* Illustration Area */}
         <div className="relative">
@@ -63,19 +63,19 @@ export default function MaintenancePage(): React.JSX.Element {
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-3">
             <Construction className="h-12 w-12 text-yellow-500" />
-            <h1 className="text-6xl font-bold text-gray-900">503</h1>
+            <h1 className="text-6xl font-bold text-foreground">503</h1>
           </div>
           
-          <h2 className="text-3xl font-semibold text-gray-800">
+          <h2 className="text-3xl font-semibold text-foreground">
             Đang bảo trì hệ thống
           </h2>
           
-          <p className="text-lg text-gray-600 max-w-md mx-auto">
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
             Chúng tôi đang nâng cấp hệ thống để mang đến trải nghiệm tốt hơn cho bạn.
             Vui lòng quay lại sau ít phút.
           </p>
 
-          <div className="text-sm text-gray-500 bg-gray-100 rounded-lg p-4 max-w-md mx-auto">
+          <div className="text-sm text-muted-foreground bg-muted rounded-lg p-4 max-w-md mx-auto">
             <p className="font-medium mb-2">Thời gian bảo trì dự kiến:</p>
             <p>🕐 Bắt đầu: 02:00 AM</p>
             <p>🕑 Kết thúc: 04:00 AM</p>
@@ -103,9 +103,9 @@ export default function MaintenancePage(): React.JSX.Element {
         </div>
 
         {/* Footer */}
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-muted-foreground">
           <p>Nếu có thắc mắc, vui lòng liên hệ:</p>
-          <a href="mailto:support@laundrylocker.com" className="text-blue-600 hover:underline">
+          <a href="mailto:support@laundrylocker.com" className="text-primary hover:underline">
             support@laundrylocker.com
           </a>
         </div>

@@ -15,3 +15,9 @@ export interface DashboardOverviewResponse {
   availableBoxes: number;
   occupiedBoxes: number;
 }
+
+export interface MonthlyDataPoint {
+  month: string;
+  orders: number;
+  revenue: number;
+}
