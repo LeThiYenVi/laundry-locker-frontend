@@ -2,8 +2,12 @@ import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { ScrollView, StatusBar, StyleSheet, TouchableOpacity, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Icon } from "@rneui/themed";
+import { useState, useCallback } from "react";
+import { Store } from "@/types";
 
 export default function StoreDetailScreen() {
   const router = useRouter();
@@ -11,15 +15,56 @@ export default function StoreDetailScreen() {
   const colorScheme = useColorScheme();
   const backgroundColor = Colors[colorScheme ?? "light"].background;
 
-  // Reconstruct store object from params
-  const store = {
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const store: Store = {
+    id: Number(params.id),
     name: params.name as string,
     address: params.address as string,
     phone: params.phone as string,
     openTime: params.openTime as string,
     closeTime: params.closeTime as string,
-    latitude: params.latitude,
-    longitude: params.longitude,
+    latitude: params.latitude ? Number(params.latitude) : undefined,
+    longitude: params.longitude ? Number(params.longitude) : undefined,
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const checkFavoriteStatus = async () => {
+        try {
+          const storedStr = await AsyncStorage.getItem("favorite_stores");
+          if (storedStr) {
+            const favorites = JSON.parse(storedStr);
+            setIsFavorite(!!favorites[store.id]);
+          }
+        } catch (error) {
+          console.error("Failed to load favorite status", error);
+        }
+      };
+      
+      if (store.id) {
+        checkFavoriteStatus();
+      }
+    }, [store.id])
+  );
+
+  const toggleFavorite = async () => {
+    try {
+      const storedStr = await AsyncStorage.getItem("favorite_stores");
+      let favorites: { [key: string]: Store } = storedStr ? JSON.parse(storedStr) : {};
+      
+      if (favorites[store.id]) {
+        delete favorites[store.id];
+        setIsFavorite(false);
+      } else {
+        favorites[store.id] = store;
+        setIsFavorite(true);
+      }
+      
+      await AsyncStorage.setItem("favorite_stores", JSON.stringify(favorites));
+    } catch (error) {
+      console.error("Failed to toggle favorite status", error);
+    }
   };
 
   return (
@@ -34,7 +79,18 @@ export default function StoreDetailScreen() {
           <IconSymbol size={24} name="chevron.left" color="#003D5B" />
         </TouchableOpacity>
         <ThemedText style={styles.headerTitle}>Chi tiết cửa hàng</ThemedText>
-        <View style={styles.headerRight} />
+        <TouchableOpacity 
+          style={styles.headerRight}
+          onPress={toggleFavorite}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Icon 
+            name={isFavorite ? "favorite" : "favorite-border"} 
+            type="material" 
+            size={28} 
+            color={isFavorite ? "#E91E63" : "#D1D5DB"} 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
