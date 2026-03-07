@@ -154,11 +154,11 @@ export default function NotificationsScreen() {
         activeOpacity={0.7}
       >
         <View style={[styles.iconContainer, { backgroundColor: `${iconInfo.color}15` }]}>
-          <Icon name={iconInfo.name} type="material" size={24} color={iconInfo.color} />
+          <Icon name={iconInfo.name} type="material" size={26} color={iconInfo.color} />
         </View>
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
-            <ThemedText style={styles.title} numberOfLines={1}>
+            <ThemedText style={[styles.title, !item.isRead && styles.unreadTitle]} numberOfLines={1}>
               {item.title}
             </ThemedText>
             {!item.isRead && <View style={styles.unreadDot} />}
@@ -167,15 +167,22 @@ export default function NotificationsScreen() {
             {item.body}
           </ThemedText>
           <View style={styles.metaRow}>
-            <ThemedText style={styles.time}>{formatTimeAgo(item.createdAt || "")}</ThemedText>
-            <ThemedText style={styles.type}>{item.type.replace(/_/g, " ")}</ThemedText>
+            <View style={styles.timeContainer}>
+              <Icon name="schedule" type="material" size={12} color="#9CA3AF" />
+              <ThemedText style={styles.time}>{formatTimeAgo(item.createdAt || "")}</ThemedText>
+            </View>
+            <View style={[styles.typeBadge, { backgroundColor: `${iconInfo.color}15` }]}>
+              <ThemedText style={[styles.typeText, { color: iconInfo.color }]}>
+                {item.type.replace(/_/g, " ")}
+              </ThemedText>
+            </View>
           </View>
         </View>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleDelete(item)}
         >
-          <Icon name="close" type="material" size={18} color="#999" />
+          <Icon name="close" type="material" size={20} color="#D1D5DB" />
         </TouchableOpacity>
       </TouchableOpacity>
     );
@@ -301,27 +308,29 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 12,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
   },
   unreadCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#003D5B",
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 16,
   },
   contentContainer: {
     flex: 1,
@@ -330,48 +339,61 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   title: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#000",
+    color: "#4B5563",
     flex: 1,
+    letterSpacing: -0.3,
+  },
+  unreadTitle: {
+    color: "#111827",
+    fontWeight: "800",
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#003D5B",
+    backgroundColor: "#3B82F6",
   },
   body: {
-    fontSize: 13,
-    color: "#666",
-    lineHeight: 18,
-    marginBottom: 6,
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
+    marginBottom: 12,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "space-between",
+  },
+  timeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   time: {
-    fontSize: 11,
-    color: "#999",
-    fontWeight: "600",
+    fontSize: 12,
+    color: "#9CA3AF",
+    fontWeight: "500",
   },
-  type: {
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  typeText: {
     fontSize: 10,
-    color: "#999",
-    backgroundColor: "#F0F0F0",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    textTransform: "capitalize",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   deleteButton: {
     padding: 4,
     marginLeft: 8,
+    alignSelf: "flex-start",
   },
   emptyContainer: {
     alignItems: "center",

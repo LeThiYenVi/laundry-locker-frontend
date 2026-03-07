@@ -20,7 +20,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { partnerService } from "@/services/partner";
+import partnerService from "@/services/partner/partnerService";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -42,6 +42,7 @@ export default function ProfileScreen() {
     email: "",
     birthday: "",
   });
+  const [updatingProfile, setUpdatingProfile] = useState(false);
   // Change Password State
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -73,6 +74,9 @@ export default function ProfileScreen() {
 
   // Loyalty state
   const [loyalty, setLoyalty] = useState<LoyaltySummary | null>(null);
+
+  // Partner Profile state
+  const [partnerProfile, setPartnerProfile] = useState<any | null>(null);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -122,17 +126,31 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const fetchPartnerProfile = useCallback(async () => {
+    try {
+      const response = await partnerService.getProfile();
+      if (response.success) {
+        setPartnerProfile(response.data);
+      }
+    } catch (error: any) {
+      if (error?.response?.status !== 404) {
+        console.error("Failed to fetch partner profile:", error);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfile();
     fetchOrderStats();
     fetchLoyalty();
-  }, [fetchProfile, fetchOrderStats, fetchLoyalty]);
+    fetchPartnerProfile();
+  }, [fetchProfile, fetchOrderStats, fetchLoyalty, fetchPartnerProfile]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchProfile(), fetchOrderStats(), fetchLoyalty()]);
+    await Promise.all([fetchProfile(), fetchOrderStats(), fetchLoyalty(), fetchPartnerProfile()]);
     setRefreshing(false);
-  }, [fetchProfile, fetchOrderStats, fetchLoyalty]);
+  }, [fetchProfile, fetchOrderStats, fetchLoyalty, fetchPartnerProfile]);
 
   const openEditModal = () => {
     setEditForm({
@@ -227,6 +245,7 @@ export default function ProfileScreen() {
           businessRegistrationNumber: "",
           taxId: "",
         });
+        setPartnerProfile(result.data); // Update UI immediately
         if (refreshUser) refreshUser(); // refresh to hopefully fetch new PARTNER role
         Alert.alert("Thành công", "Đăng ký thông tin Đối tác thành công! Vui lòng chờ phê duyệt.");
       } else {
@@ -617,13 +636,30 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {displayUser?.role !== "PARTNER" && displayUser?.role !== "ADMIN" && (
-            <TouchableOpacity style={styles.settingsCard} onPress={() => setPartnerModalVisible(true)}>
-              <View style={[styles.settingsIconContainer, { backgroundColor: '#E8F5E9' }]}>
-                <Icon name="storefront" type="material" size={22} color="#4CAF50" />
+            partnerProfile?.status === 'PENDING' ? (
+              <View style={[styles.settingsCard, { backgroundColor: '#FFF8E1' }]}>
+                <View style={[styles.settingsIconContainer, { backgroundColor: '#FFE0B2' }]}>
+                  <Icon name="hourglass-empty" type="material" size={22} color="#FF9800" />
+                </View>
+                <ThemedText style={[styles.settingsText, { color: '#FF9800', fontWeight: 'bold' }]}>Hồ sơ Đang chờ duyệt</ThemedText>
               </View>
-              <ThemedText style={[styles.settingsText, { color: '#4CAF50', fontWeight: 'bold' }]}>Đăng ký Trở thành Đối tác</ThemedText>
-              <Icon name="chevron-right" type="material" size={24} color="#4CAF50" />
-            </TouchableOpacity>
+            ) : partnerProfile?.status === 'REJECTED' ? (
+              <TouchableOpacity style={styles.settingsCard} onPress={() => setPartnerModalVisible(true)}>
+                <View style={[styles.settingsIconContainer, { backgroundColor: '#FFEBEE' }]}>
+                  <Icon name="error" type="material" size={22} color="#F44336" />
+                </View>
+                <ThemedText style={[styles.settingsText, { color: '#F44336', fontWeight: 'bold' }]}>Đăng ký bị từ chối (Thử lại)</ThemedText>
+                <Icon name="chevron-right" type="material" size={24} color="#F44336" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.settingsCard} onPress={() => setPartnerModalVisible(true)}>
+                <View style={[styles.settingsIconContainer, { backgroundColor: '#E8F5E9' }]}>
+                  <Icon name="storefront" type="material" size={22} color="#4CAF50" />
+                </View>
+                <ThemedText style={[styles.settingsText, { color: '#4CAF50', fontWeight: 'bold' }]}>Đăng ký Trở thành Đối tác</ThemedText>
+                <Icon name="chevron-right" type="material" size={24} color="#4CAF50" />
+              </TouchableOpacity>
+            )
           )}
         </View>
 
