@@ -20,6 +20,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -32,6 +34,9 @@ export default function HomeScreen() {
   const [storeError, setStoreError] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<User | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Favorites state for Stores
+  const [favoriteStores, setFavoriteStores] = useState<{ [key: string]: Store }>({});
 
   // Filter chips for quick navigation
   const filterChips = [
@@ -103,6 +108,39 @@ export default function HomeScreen() {
     } finally {
       setIsLoadingStores(false);
       setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadFavorites = async () => {
+        try {
+          const storedStr = await AsyncStorage.getItem('favorite_stores');
+          if (storedStr) {
+            setFavoriteStores(JSON.parse(storedStr));
+          } else {
+            setFavoriteStores({});
+          }
+        } catch (e) {
+          console.error("Failed to load favorite stores", e);
+        }
+      };
+      loadFavorites();
+    }, [])
+  );
+
+  const toggleFavoriteStore = async (store: Store) => {
+    try {
+      const newFavs = { ...favoriteStores };
+      if (newFavs[store.id]) {
+        delete newFavs[store.id];
+      } else {
+        newFavs[store.id] = store;
+      }
+      setFavoriteStores(newFavs);
+      await AsyncStorage.setItem('favorite_stores', JSON.stringify(newFavs));
+    } catch (e) {
+      console.error("Failed to save favorite store", e);
     }
   };
 
@@ -282,12 +320,38 @@ export default function HomeScreen() {
                 <View style={styles.statusDot} />
                 <ThemedText style={styles.statusText}>Hoạt động</ThemedText>
               </View>
-              {firstStore.latitude && firstStore.longitude && (
-                 <View style={styles.distanceBadge}>
-                    <IconSymbol size={12} name="location.fill" color="#003D5B" />
-                    <ThemedText style={styles.distanceText}>1.2 km</ThemedText>
-                 </View>
-              )}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {firstStore.latitude && firstStore.longitude && (
+                   <View style={styles.distanceBadge}>
+                      <IconSymbol size={12} name="location.fill" color="#003D5B" />
+                      <ThemedText style={styles.distanceText}>1.2 km</ThemedText>
+                   </View>
+                )}
+                {/* Heart Icon for Store */}
+                <TouchableOpacity 
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    toggleFavoriteStore(firstStore);
+                  }}
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    padding: 6,
+                    borderRadius: 100,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Icon 
+                    name={favoriteStores[firstStore.id] ? "favorite" : "favorite-border"} 
+                    type="material" 
+                    size={20} 
+                    color={favoriteStores[firstStore.id] ? "#E91E63" : "#003D5B"} 
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Map Placeholder or Real Map or Store Image */}

@@ -557,7 +557,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionCard}
-              onPress={() => router.push("/user/(tabs)/notifications")}
+              onPress={() => router.push("/user/favorites")}
             >
               <View style={styles.quickActionIcon}>
                 <Icon name="favorite" type="material" size={28} color="#E91E63" />
