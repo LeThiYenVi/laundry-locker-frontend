@@ -15,7 +15,8 @@ import {
   StatusBar,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
+  TextInput
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
@@ -26,6 +27,8 @@ export default function LockersScreen() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>('stores');
   const [stores, setStores] = useState<Store[]>([]);
+  const [filteredStores, setFilteredStores] = useState<Store[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [lockers, setLockers] = useState<Locker[]>([]);
   const [selectedLocker, setSelectedLocker] = useState<Locker | null>(null);
@@ -52,6 +55,7 @@ export default function LockersScreen() {
       const response = await storeService.getAllStores();
       if (response.success && response.data) {
         setStores(response.data);
+        setFilteredStores(response.data);
       }
     } catch (err: any) {
       setError(err.message || "Không thể tải danh sách cửa hàng");
@@ -97,6 +101,22 @@ export default function LockersScreen() {
   useEffect(() => {
     fetchStores();
   }, [fetchStores]);
+
+  // Handle Search
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredStores(stores);
+    } else {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      setFilteredStores(
+        stores.filter(
+          (store) =>
+            store.name.toLowerCase().includes(lowerCaseQuery) ||
+            store.address.toLowerCase().includes(lowerCaseQuery)
+        )
+      );
+    }
+  }, [searchQuery, stores]);
 
   // Handle store selection - switch to lockers view
   const handleStoreSelect = (store: Store) => {
@@ -279,7 +299,18 @@ export default function LockersScreen() {
             <View style={styles.searchContainer}>
               <View style={styles.searchBar}>
                 <Icon name="search" type="material" size={20} color="#9CA3AF" />
-                <ThemedText style={styles.searchPlaceholder}>Tìm cửa hàng...</ThemedText>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Tìm cửa hàng..."
+                  placeholderTextColor="#9CA3AF"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    <Icon name="close" type="material" size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -302,7 +333,7 @@ export default function LockersScreen() {
                 snapToInterval={width - 60}
                 decelerationRate="fast"
               >
-                {stores.slice(0, 3).map((store) => (
+                {filteredStores.slice(0, 3).map((store) => (
                   <TouchableOpacity
                     key={store.id}
                     style={styles.popularCard}
@@ -355,7 +386,7 @@ export default function LockersScreen() {
               </View>
               
               <View style={styles.recommendedGrid}>
-                {stores.slice(0, 4).map((store) => (
+                {filteredStores.slice(0, 4).map((store) => (
                   <TouchableOpacity
                     key={`rec-${store.id}`}
                     style={styles.recommendedCard}
@@ -638,7 +669,7 @@ export default function LockersScreen() {
                   Tất cả cửa hàng
                 </ThemedText>
                 <ThemedText style={styles.modalSubtitle}>
-                  {stores.length} cửa hàng
+                  {filteredStores.length} cửa hàng
                 </ThemedText>
               </View>
               <TouchableOpacity onPress={closeAllStoresModal} style={styles.closeButton}>
@@ -651,7 +682,7 @@ export default function LockersScreen() {
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.allStoresGrid}>
-                {stores.map((store) => (
+                {filteredStores.map((store) => (
                   <TouchableOpacity
                     key={`all-${store.id}`}
                     style={styles.allStoreCard}
@@ -843,6 +874,12 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     fontSize: 15,
     color: "#9CA3AF",
+    fontWeight: "500",
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#1F2937",
     fontWeight: "500",
   },
   
