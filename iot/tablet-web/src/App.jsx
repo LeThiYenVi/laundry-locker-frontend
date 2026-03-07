@@ -7,6 +7,7 @@ import {
   Unlock, Home, Loader2, Delete, Circle, ClipboardList,
   Wifi, ChevronRight, ShieldCheck, X
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import './App.css';
 
 // ============================================
@@ -650,6 +651,15 @@ function OrderInfoScreen({ go, back, jwt, services, selectedSvcs, selectedBox, s
         setOrderPin(res.data.pinCode || '');
         setOrderCode(res.data.orderCode || '');
         setTotalPrice(res.data.totalPrice || 0);
+
+        // Confirm order immediately so it moves to WAITING status (eligible for payment)
+        try {
+          await api.confirmOrder(jwt, res.data.id);
+          console.log('%c[ORDER] ✅ Confirmed order:', 'color:#4ade80', res.data.id);
+        } catch (e) {
+          console.warn('[ORDER] ⚠️ Confirm failed (best-effort):', e);
+        }
+
         go('payment');
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi tạo đơn hàng');
@@ -726,6 +736,9 @@ function OrderInfoScreen({ go, back, jwt, services, selectedSvcs, selectedBox, s
 function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPrice, selectedBox, showSuccess }) {
   const [loading, setLoading] = useState('');
   const [payUrl, setPayUrl] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [deeplink, setDeeplink] = useState('');
+  const [payMethod, setPayMethod] = useState('');
   const [msg, setMsg] = useState('');
   const [polling, setPolling] = useState(false);
   const pollRef = useRef(null);
@@ -761,10 +774,14 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
 
   const payOnline = async (method) => {
     setLoading(method);
+    setPayUrl(''); setQrCodeUrl(''); setDeeplink(''); setPayMethod(''); setMsg('');
     try {
       const res = await api.createPayment(jwt, orderId, method);
       if (res.success && res.data?.paymentUrl) {
         setPayUrl(res.data.paymentUrl);
+        setQrCodeUrl(res.data.qrCodeUrl || '');
+        setDeeplink(res.data.deeplink || '');
+        setPayMethod(method);
         startPaymentPolling();
       } else {
         setMsg(res.data?.message || res.message || 'Lỗi tạo thanh toán');
@@ -812,26 +829,59 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
         <div className="order-row"><CreditCard size={16} /> Tổng: <strong>{fmt(totalPrice)}</strong></div>
         {selectedBox && <div className="order-row"><Package size={16} /> Ô tủ: <strong>#{selectedBox.boxNumber}</strong></div>}
       </div>
-      <Btn variant="secondary" onClick={skipPay} loading={loading === 'skip'} style={{ marginBottom: 12 }}>
-        <Unlock size={18} /> Mở tủ trước — Thanh toán sau
-      </Btn>
-      <div className="divider">Hoặc thanh toán ngay</div>
-      <div className="pay-row">
-        <Btn variant="secondary" onClick={() => payOnline('VNPAY')} loading={loading === 'VNPAY'}>
-          <CreditCard size={18} /> VNPay
-        </Btn>
-        <Btn variant="secondary" onClick={() => payOnline('MOMO')} loading={loading === 'MOMO'}>
-          <Smartphone size={18} /> MoMo
-        </Btn>
-      </div>
-      {payUrl && (
+      {!payUrl && (
+        <>
+          <Btn onClick={() => payOnline('MOMO')} loading={loading === 'MOMO'} style={{ marginBottom: 12 }}>
+            <Smartphone size={18} /> Thanh toán MoMo & Mở tủ
+          </Btn>
+          <div className="divider">Hoặc</div>
+          <Btn variant="secondary" onClick={skipPay} loading={loading === 'skip'} style={{ marginBottom: 10 }}>
+            <Unlock size={18} /> Mở tủ trước — Thanh toán sau
+          </Btn>
+          <Btn variant="outline" onClick={() => payOnline('VNPAY')} loading={loading === 'VNPAY'}>
+            <CreditCard size={18} /> Thanh toán VNPay
+          </Btn>
+        </>
+      )}
+
+      {/* MoMo QR Payment Section */}
+      {payUrl && payMethod === 'MOMO' && (
+        <div className="momo-pay-section">
+          <div className="momo-header">
+            <Smartphone size={20} color="#A50064" />
+            <span>Thanh toán MoMo</span>
+          </div>
+          {qrCodeUrl && (
+            <div className="momo-qr" style={{ padding: 16, background: '#fff', borderRadius: 12, margin: '16px auto', width: 'fit-content' }}>
+              <p className="momo-qr-label" style={{ marginBottom: 16 }}>Quét mã QR bằng ứng dụng MoMo</p>
+              <QRCodeSVG value={qrCodeUrl} size={160} />
+            </div>
+          )}
+          {deeplink && (
+            <a href={deeplink} target="_blank" rel="noreferrer" className="btn btn-momo" style={{ marginTop: 12 }}>
+              <Smartphone size={18} /> Mở ứng dụng MoMo
+            </a>
+          )}
+          {!qrCodeUrl && (
+            <div className="pay-link">
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}>Mở link để thanh toán MoMo:</p>
+              <a href={payUrl} target="_blank" rel="noreferrer">{payUrl}</a>
+            </div>
+          )}
+          {polling && <p className="polling-status"><Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} />Đang chờ xác nhận thanh toán...</p>}
+        </div>
+      )}
+
+      {/* VNPay / Generic Payment Section */}
+      {payUrl && payMethod === 'VNPAY' && (
         <div className="pay-link">
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}><Smartphone size={14} style={{ verticalAlign: -2, marginRight: 4 }} />Quét QR hoặc mở link để thanh toán:</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}><CreditCard size={14} style={{ verticalAlign: -2, marginRight: 4 }} />Mở link để thanh toán VNPay:</p>
           <a href={payUrl} target="_blank" rel="noreferrer">{payUrl}</a>
           {polling && <p className="polling-status"><Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} />Đang chờ xác nhận thanh toán...</p>}
           {!polling && <p>Sau khi thanh toán xong, nhấn nút bên dưới.</p>}
         </div>
       )}
+
       {payUrl && (
         <Btn onClick={openAfterPay} loading={loading === 'open'} style={{ marginTop: 12 }}>
           <Unlock size={18} /> Đã thanh toán — Mở tủ
@@ -943,43 +993,81 @@ function PinScreen({ goHome, showSuccess }) {
 // STAFF
 // ============================================
 function StaffScreen({ goHome, showSuccess }) {
-  const [oid, setOid] = useState('');
   const [code, setCode] = useState('');
-  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [codeState, setCodeState] = useState('');
   const [msg, setMsg] = useState('');
 
-  const handleUnlock = async () => {
-    if (!oid || !code) { setMsg('Vui lòng nhập Order ID và Access Code'); return; }
+  const pressKey = (char) => {
+    if (code.length >= 6) return;
+    const newCode = code + char;
+    setCode(newCode);
+    setCodeState('');
+    setMsg('');
+    if (newCode.length === 6) setTimeout(() => submitCode(newCode), 300);
+  };
+
+  const clearAll = () => { setCode(''); setCodeState(''); setMsg(''); };
+  const backspace = () => { setCode(c => c.slice(0, -1)); setCodeState(''); };
+
+  const submitCode = async (c) => {
+    const raw = c || code;
+    if (raw.length !== 6) return;
+    const accessCode = `STAFF-${raw}`;
     setLoading(true); setMsg('');
     try {
-      const res = await api.unlockWithCode(parseInt(oid), code, name || undefined);
+      console.log('%c[STAFF] Unlocking with access code:', 'color:#fbbf24', accessCode);
+      const res = await api.unlockWithCode(null, accessCode, undefined);
       if (res.success && res.data?.success) {
-        showSuccess('Đã mở khóa!', res.data.message || 'Mở khóa thành công cho nhân viên.');
+        setCodeState('success');
+        const boxInfo = res.data.boxes?.map(b => `#${b.boxNumber}`).join(', ') || '';
+        const purpose = res.data.action === 'COLLECT' ? 'Lấy đồ' : res.data.action === 'RETURN' ? 'Trả đồ' : '';
+        setTimeout(() => showSuccess(
+          'Đã mở khóa!',
+          res.data.message || 'Mở khóa thành công cho nhân viên.',
+          {
+            orderCode: res.data.orderId ? `Đơn #${res.data.orderId}` : '',
+            boxNumber: boxInfo,
+            purpose
+          }
+        ), 500);
       } else {
-        setMsg(res.data?.message || res.message || 'Mã không hợp lệ');
+        setCodeState('error');
+        setMsg(res.data?.message || res.message || 'Mã không hợp lệ hoặc đã hết hạn');
+        setTimeout(clearAll, 2000);
       }
-    } catch { setMsg('Lỗi kết nối server'); }
+    } catch {
+      setCodeState('error');
+      setMsg('Lỗi kết nối server');
+      setTimeout(clearAll, 2000);
+    }
     setLoading(false);
   };
 
   return (
     <div className="screen">
       <Header onBack={goHome} title="Mã nhân viên" />
-      <p className="subtitle">Nhập Order ID và mã truy cập nhân viên</p>
-      <div className="form-group">
-        <label>Order ID</label>
-        <input className="input" type="number" value={oid} onChange={e => setOid(e.target.value)} placeholder="Ví dụ: 123" inputMode="numeric" />
+      <p className="subtitle" style={{ textAlign: 'center' }}>
+        Nhập 6 ký tự mã truy cập (sau STAFF-)
+      </p>
+      <div className="staff-prefix">STAFF -</div>
+      <div className="pin-row">
+        {[0,1,2,3,4,5].map(i => (
+          <div key={i} className={`pin-box ${code.length > i ? 'filled' : ''} ${codeState}`}>
+            {code[i] || ''}
+          </div>
+        ))}
       </div>
-      <div className="form-group">
-        <label>Access Code</label>
-        <input className="input" value={code} onChange={e => setCode(e.target.value)} placeholder="Nhập mã truy cập" />
+      <div className="numpad staff-pad">
+        {['1','2','3','A','4','5','6','B','7','8','9','C','0','D','E','F'].map(k => (
+          <div key={k} className={`key ${/[A-F]/.test(k) ? 'key-alpha' : ''}`} onClick={() => pressKey(k)}>{k}</div>
+        ))}
+        <div className="key fn" onClick={clearAll}>Xóa</div>
+        <div className="key fn" onClick={backspace}><Delete size={20} /></div>
       </div>
-      <div className="form-group">
-        <label>Tên nhân viên (tùy chọn)</label>
-        <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Tên nhân viên" />
-      </div>
-      <Btn onClick={handleUnlock} loading={loading}><Unlock size={18} /> Mở khóa</Btn>
+      <Btn onClick={() => submitCode(code)} loading={loading} disabled={code.length < 6} style={{ marginTop: 16 }}>
+        <Unlock size={18} /> Mở khóa
+      </Btn>
       {msg && <Msg type="error" text={msg} />}
     </div>
   );
