@@ -20,6 +20,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { partnerService } from "@/services/partner";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -41,8 +42,6 @@ export default function ProfileScreen() {
     email: "",
     birthday: "",
   });
-  const [updatingProfile, setUpdatingProfile] = useState(false);
-
   // Change Password State
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -51,6 +50,17 @@ export default function ProfileScreen() {
     confirmPassword: "",
   });
   const [changingPassword, setChangingPassword] = useState(false);
+
+  // Partner Registration State
+  const [partnerModalVisible, setPartnerModalVisible] = useState(false);
+  const [partnerForm, setPartnerForm] = useState({
+    businessName: "",
+    businessAddress: "",
+    contactPhone: "",
+    businessRegistrationNumber: "",
+    taxId: "",
+  });
+  const [registeringPartner, setRegisteringPartner] = useState(false);
 
   // Refreshing state
   const [refreshing, setRefreshing] = useState(false);
@@ -191,6 +201,42 @@ export default function ProfileScreen() {
       Alert.alert("Lỗi", msg);
     } finally {
       setChangingPassword(false);
+    }
+  };
+
+  const handleRegisterPartner = async () => {
+    if (!partnerForm.businessName || !partnerForm.businessAddress || !partnerForm.contactPhone) {
+      Alert.alert("Lỗi", "Vui lòng điền các thông tin bắt buộc (*)");
+      return;
+    }
+    setRegisteringPartner(true);
+    try {
+      const result = await partnerService.registerPartner({
+        businessName: partnerForm.businessName,
+        businessAddress: partnerForm.businessAddress,
+        contactPhone: partnerForm.contactPhone,
+        businessRegistrationNumber: partnerForm.businessRegistrationNumber,
+        taxId: partnerForm.taxId,
+      });
+      if (result.success) {
+        setPartnerModalVisible(false);
+        setPartnerForm({
+          businessName: "",
+          businessAddress: "",
+          contactPhone: "",
+          businessRegistrationNumber: "",
+          taxId: "",
+        });
+        if (refreshUser) refreshUser(); // refresh to hopefully fetch new PARTNER role
+        Alert.alert("Thành công", "Đăng ký thông tin Đối tác thành công! Vui lòng chờ phê duyệt.");
+      } else {
+        Alert.alert("Lỗi", "Không thể đăng ký làm đối tác");
+      }
+    } catch (error: any) {
+      console.error("Register partner error:", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi trong quá trình đăng ký Đối tác.");
+    } finally {
+      setRegisteringPartner(false);
     }
   };
 
@@ -569,6 +615,16 @@ export default function ProfileScreen() {
             <ThemedText style={styles.settingsText}>Về chúng tôi</ThemedText>
             <Icon name="chevron-right" type="material" size={24} color="#999" />
           </TouchableOpacity>
+
+          {displayUser?.role !== "PARTNER" && displayUser?.role !== "ADMIN" && (
+            <TouchableOpacity style={styles.settingsCard} onPress={() => setPartnerModalVisible(true)}>
+              <View style={[styles.settingsIconContainer, { backgroundColor: '#E8F5E9' }]}>
+                <Icon name="storefront" type="material" size={22} color="#4CAF50" />
+              </View>
+              <ThemedText style={[styles.settingsText, { color: '#4CAF50', fontWeight: 'bold' }]}>Đăng ký Trở thành Đối tác</ThemedText>
+              <Icon name="chevron-right" type="material" size={24} color="#4CAF50" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* User ID for debugging */}
@@ -771,6 +827,91 @@ export default function ProfileScreen() {
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <ThemedText style={styles.textStyle}>Đổi</ThemedText>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Partner Registration Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={partnerModalVisible}
+        onRequestClose={() => setPartnerModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <ThemedText style={styles.modalText}>Đăng ký Đối tác</ThemedText>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Tên cửa hàng/Doanh nghiệp <ThemedText style={{color: 'red'}}>*</ThemedText></ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập tên doanh nghiệp"
+                value={partnerForm.businessName}
+                onChangeText={(text) => setPartnerForm(prev => ({ ...prev, businessName: text }))}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Địa chỉ kinh doanh <ThemedText style={{color: 'red'}}>*</ThemedText></ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập địa chỉ"
+                value={partnerForm.businessAddress}
+                onChangeText={(text) => setPartnerForm(prev => ({ ...prev, businessAddress: text }))}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Số điện thoại liên hệ <ThemedText style={{color: 'red'}}>*</ThemedText></ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập số điện thoại"
+                value={partnerForm.contactPhone}
+                onChangeText={(text) => setPartnerForm(prev => ({ ...prev, contactPhone: text }))}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Mã số kinh doanh (Tuỳ chọn)</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập mã số kinh doanh"
+                value={partnerForm.businessRegistrationNumber}
+                onChangeText={(text) => setPartnerForm(prev => ({ ...prev, businessRegistrationNumber: text }))}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <ThemedText style={styles.formLabel}>Mã số thuế (Tuỳ chọn)</ThemedText>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Nhập mã số thuế"
+                value={partnerForm.taxId}
+                onChangeText={(text) => setPartnerForm(prev => ({ ...prev, taxId: text }))}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setPartnerModalVisible(false)}
+              >
+                <ThemedText style={styles.textStyle}>Hủy</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: '#4CAF50' }]}
+                onPress={handleRegisterPartner}
+                disabled={registeringPartner}
+              >
+                {registeringPartner ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText style={styles.textStyle}>Gửi đăng ký</ThemedText>
                 )}
               </TouchableOpacity>
             </View>

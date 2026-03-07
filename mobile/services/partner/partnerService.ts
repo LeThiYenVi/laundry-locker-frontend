@@ -22,14 +22,16 @@ export interface PartnerDashboard {
 
 export interface PartnerProfile {
     id: number;
-    userId: number;
-    userName: string;
     businessName: string;
-    businessRegistrationNumber: string;
-    taxId: string;
+    businessRegistrationNumber?: string;
+    taxId?: string;
     businessAddress: string;
     contactPhone: string;
-    contactEmail: string;
+    contactEmail?: string;
+    user?: {
+        id: number;
+        fullName?: string;
+    };
     status: string;
     approvedAt: string;
     approvedBy: number;
@@ -40,6 +42,16 @@ export interface PartnerProfile {
     notes: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface PartnerRegistration {
+    businessName: string;
+    businessRegistrationNumber?: string;
+    taxId?: string;
+    businessAddress: string;
+    contactPhone: string;
+    contactEmail?: string;
+    notes?: string;
 }
 
 export interface PartnerOrderStatistics {
@@ -124,6 +136,14 @@ export const getStores = async (): Promise<ApiResponse<any[]>> => {
     return response.data;
 };
 
+/**
+ * Register current user as a business partner
+ */
+export const registerPartner = async (data: PartnerRegistration): Promise<ApiResponse<PartnerProfile>> => {
+    const response = await api.post<ApiResponse<PartnerProfile>>('/partner', data);
+    return response.data;
+};
+
 export const partnerService = {
     getDashboard,
     getProfile,
@@ -131,6 +151,7 @@ export const partnerService = {
     getOrders,
     getStaffOrderSummary,
     getStores,
+    registerPartner,
 };
 
 export default partnerService;

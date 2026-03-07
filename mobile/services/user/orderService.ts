@@ -111,6 +111,15 @@ export const completeOrder = async (orderId: number): Promise<ApiResponse<Order>
     return response.data;
 };
 
+/**
+ * Pickup Storage Order
+ * API: POST /api/v1/orders/{orderId}/pickup-storage
+ */
+export const pickupStorageOrder = async (orderId: number): Promise<ApiResponse<Order>> => {
+    const response = await api.post<ApiResponse<Order>>(`/orders/${orderId}/pickup-storage`);
+    return response.data;
+};
+
 export const orderService = {
     createOrder,
     getOrders,
@@ -123,6 +132,7 @@ export const orderService = {
     applyPromotion,
     removePromotion,
     completeOrder,
+    pickupStorageOrder,
 };
 
 export default orderService;
