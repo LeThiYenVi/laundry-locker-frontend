@@ -18,6 +18,8 @@ import {
   View,
   TextInput
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 
 const { width, height } = Dimensions.get("window");
 
@@ -38,6 +40,10 @@ export default function LockersScreen() {
   const [isLoadingLockers, setIsLoadingLockers] = useState(false);
   const [isLoadingBoxes, setIsLoadingBoxes] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Favorites state
+  const [favorites, setFavorites] = useState<{ [key: string]: Locker }>({});
+  const [favoriteStores, setFavoriteStores] = useState<{ [key: string]: Store }>({});
 
   // Box modal state
   const [showBoxesModal, setShowBoxesModal] = useState(false);
@@ -117,6 +123,63 @@ export default function LockersScreen() {
       );
     }
   }, [searchQuery, stores]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadFavorites = async () => {
+        try {
+          // Load Favorite Lockers
+          const storedLockersStr = await AsyncStorage.getItem('favorite_lockers');
+          if (storedLockersStr) {
+            setFavorites(JSON.parse(storedLockersStr));
+          } else {
+            setFavorites({});
+          }
+          
+          // Load Favorite Stores
+          const storedStoresStr = await AsyncStorage.getItem('favorite_stores');
+          if (storedStoresStr) {
+            setFavoriteStores(JSON.parse(storedStoresStr));
+          } else {
+            setFavoriteStores({});
+          }
+        } catch (e) {
+          console.error("Failed to load favorites", e);
+        }
+      };
+      loadFavorites();
+    }, [])
+  );
+
+  const toggleFavoriteStore = async (store: Store) => {
+    try {
+      const newFavs = { ...favoriteStores };
+      if (newFavs[store.id]) {
+        delete newFavs[store.id];
+      } else {
+        newFavs[store.id] = store;
+      }
+      setFavoriteStores(newFavs);
+      await AsyncStorage.setItem('favorite_stores', JSON.stringify(newFavs));
+    } catch (e) {
+      console.error("Failed to save favorite store", e);
+    }
+  };
+
+  const toggleFavorite = async (locker: Locker) => {
+    try {
+      const newFavs = { ...favorites };
+      if (newFavs[locker.id]) {
+        delete newFavs[locker.id];
+      } else {
+        newFavs[locker.id] = locker;
+      }
+      setFavorites(newFavs);
+      await AsyncStorage.setItem('favorite_lockers', JSON.stringify(newFavs));
+    } catch (e) {
+      console.error("Failed to save favorite", e);
+    }
+  };
 
   // Handle store selection - switch to lockers view
   const handleStoreSelect = (store: Store) => {
@@ -356,6 +419,34 @@ export default function LockersScreen() {
                         <View style={styles.badgeDot} />
                         <ThemedText style={styles.overlayBadgeText}>Mở cửa</ThemedText>
                       </View>
+                        
+                      {/* Heart Icon */}
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          toggleFavoriteStore(store);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 12,
+                          right: 12,
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          padding: 6,
+                          borderRadius: 100,
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4,
+                        }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Icon 
+                          name={favoriteStores[store.id] ? "favorite" : "favorite-border"} 
+                          type="material" 
+                          size={20} 
+                          color={favoriteStores[store.id] ? "#E91E63" : "#003D5B"} 
+                        />
+                      </TouchableOpacity>
                     </View>
 
                     {/* Store Info */}
@@ -405,9 +496,33 @@ export default function LockersScreen() {
                       </LinearGradient>
                       
                       {/* Small Badge */}
-                      <View style={styles.smallBadge}>
+                      <View style={[styles.smallBadge, { left: 8, right: undefined }]}>
                         <ThemedText style={styles.smallBadgeText}>NEW</ThemedText>
                       </View>
+                        
+                      {/* Heart Icon */}
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          toggleFavoriteStore(store);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          padding: 4,
+                          borderRadius: 100,
+                        }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Icon 
+                          name={favoriteStores[store.id] ? "favorite" : "favorite-border"} 
+                          type="material" 
+                          size={16} 
+                          color={favoriteStores[store.id] ? "#E91E63" : "#003D5B"} 
+                        />
+                      </TouchableOpacity>
                     </View>
 
                     {/* Store Info */}
@@ -460,23 +575,42 @@ export default function LockersScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.lockerCardHeader}>
-                      <View style={styles.lockerIconContainer}>
-                        <Icon name="door-front" type="material" size={28} color="#003D5B" />
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                        <View style={styles.lockerIconContainer}>
+                          <Icon name="door-front" type="material" size={28} color="#003D5B" />
+                        </View>
+                        <View
+                          style={[
+                            styles.lockerStatusBadge,
+                            locker.status === "ACTIVE" ? styles.statusActive : styles.statusMaintenance,
+                          ]}
+                        >
+                          <View style={[
+                            styles.statusDot,
+                            locker.status === "ACTIVE" ? styles.statusDotActive : styles.statusDotMaintenance
+                          ]} />
+                          <ThemedText style={styles.statusText}>
+                            {locker.status === "ACTIVE" ? "Hoạt động" : "Bảo trì"}
+                          </ThemedText>
+                        </View>
                       </View>
-                      <View
-                        style={[
-                          styles.lockerStatusBadge,
-                          locker.status === "ACTIVE" ? styles.statusActive : styles.statusMaintenance,
-                        ]}
+                      
+                      {/* Heart Icon Button */}
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation(); // Prevent locker selection
+                          toggleFavorite(locker);
+                        }}
+                        style={{ padding: 4 }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <View style={[
-                          styles.statusDot,
-                          locker.status === "ACTIVE" ? styles.statusDotActive : styles.statusDotMaintenance
-                        ]} />
-                        <ThemedText style={styles.statusText}>
-                          {locker.status === "ACTIVE" ? "Hoạt động" : "Bảo trì"}
-                        </ThemedText>
-                      </View>
+                        <Icon 
+                          name={favorites[locker.id] ? "favorite" : "favorite-border"} 
+                          type="material" 
+                          size={28} 
+                          color={favorites[locker.id] ? "#E91E63" : "#D1D5DB"} 
+                        />
+                      </TouchableOpacity>
                     </View>
 
                     <ThemedText style={styles.lockerCardName}>{locker.name}</ThemedText>

@@ -58,7 +58,7 @@ export default function TabLayout() {
                     top: 0,
                     width: 30,
                     height: 4,
-                    backgroundColor: "#FFFFFF", // White indicator
+                    backgroundColor: "#90d4eaff", // White indicator
                     borderBottomLeftRadius: 4,
                     borderBottomRightRadius: 4,
                   }}
@@ -82,7 +82,7 @@ export default function TabLayout() {
                     top: 0,
                     width: 30,
                     height: 4,
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#90d4eaff",
                     borderBottomLeftRadius: 4,
                     borderBottomRightRadius: 4,
                   }}
@@ -106,7 +106,7 @@ export default function TabLayout() {
                     top: 0,
                     width: 30,
                     height: 4,
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#90d4eaff",
                     borderBottomLeftRadius: 4,
                     borderBottomRightRadius: 4,
                   }}
@@ -130,7 +130,7 @@ export default function TabLayout() {
                     top: 0,
                     width: 30,
                     height: 4,
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#90d4eaff",
                     borderBottomLeftRadius: 4,
                     borderBottomRightRadius: 4,
                   }}
@@ -144,7 +144,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "Hồ sơ",
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
                  {focused && (
@@ -154,7 +154,7 @@ export default function TabLayout() {
                     top: 0,
                     width: 30,
                     height: 4,
-                    backgroundColor: "#FFFFFF", // Consistent color
+                    backgroundColor: "#90d4eaff", // Consistent color
                     borderBottomLeftRadius: 4,
                     borderBottomRightRadius: 4,
                   }}

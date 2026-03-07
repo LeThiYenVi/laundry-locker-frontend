@@ -18,6 +18,15 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="create-order" options={{ headerShown: false }} />
         <Stack.Screen name="vouchers" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="favorites" 
+          options={{ 
+            title: "Yêu thích",
+            headerStyle: { backgroundColor: '#003D5B' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' } 
+          }} 
+        />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
