@@ -726,7 +726,7 @@ export default function OrdersScreen() {
             {isLoadingDetail ? (
               <ActivityIndicator size="large" color="#003D5B" style={{marginVertical: 40}} />
             ) : selectedOrder ? (
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.detailScrollView} contentContainerStyle={{ paddingBottom: 40 }}>
+              <ScrollView showsVerticalScrollIndicator={false} style={styles.detailScrollView} contentContainerStyle={{ paddingBottom: 20 }}>
                 
                 {/* Prominent PIN Code Section */}
                 {(selectedOrder.pin || selectedOrder.pinCode) && (
@@ -743,7 +743,7 @@ export default function OrdersScreen() {
                     <ThemedText style={{ fontSize: 14, color: '#F57F17', fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
                       Mã PIN Mở Tủ
                     </ThemedText>
-                    <ThemedText style={{ fontSize: 36, fontWeight: '900', color: '#F57F17', letterSpacing: 4 }}>
+                    <ThemedText style={{ fontSize: 33, fontWeight: '900', color: '#253d25ff', letterSpacing: 4 }}>
                       {selectedOrder.pinCode || selectedOrder.pin}
                     </ThemedText>
                     <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 12, textAlign: 'center' }}>
