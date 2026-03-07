@@ -90,8 +90,12 @@ export const verifyPin = (pinCode, boxId) =>
 export const unlockBox = (pinCode, boxId, actionType) =>
   request('POST', '/api/iot/unlock', { pinCode, boxId, actionType });
 
-export const unlockWithCode = (orderId, accessCode, staffName) =>
-  request('POST', '/api/iot/unlock-with-code', { orderId, accessCode, staffName });
+export const unlockWithCode = (orderId, accessCode, staffName) => {
+  const body = { accessCode };
+  if (orderId != null) body.orderId = orderId;
+  if (staffName) body.staffName = staffName;
+  return request('POST', '/api/iot/unlock-with-code', body);
+};
 
 // ===== Order Lookup =====
 export const getOrderByPin = (pinCode, token) =>

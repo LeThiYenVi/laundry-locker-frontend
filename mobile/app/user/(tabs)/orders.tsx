@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { orderService } from "@/services/user";
+import { orderService, paymentService } from "@/services/user";
 import { Order } from "@/types";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   RefreshControl,
   ScrollView,
@@ -122,12 +123,12 @@ export default function OrdersScreen() {
     }
   };
 
-  const getStatusText = (status: string): string => {
+  const getStatusText = (status: string, type?: string): string => {
     switch (status) {
       case "INITIALIZED":
         return "Khởi tạo";
       case "WAITING":
-        return "Chờ thu gom";
+        return type === "STORAGE" ? "Đang lưu trữ" : "Chờ thu gom";
       case "COLLECTED":
         return "Đã thu gom";
       case "PROCESSING":
@@ -206,6 +207,64 @@ export default function OrdersScreen() {
     } catch (err: any) {
       console.error("Failed to cancel order:", err);
     }
+  };
+
+  const handlePickupStorage = async (orderId: number) => {
+    Alert.alert(
+      "Xác nhận lấy đồ",
+      "Tủ locker sẽ được mở để bạn lấy đồ. Bạn có chắc chắn?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Lấy đồ",
+          onPress: async () => {
+            try {
+              const response = await orderService.pickupStorageOrder(orderId);
+              if (response.success) {
+                Alert.alert(
+                  "Thành công",
+                  "Tủ locker đã được mở! Vui lòng lấy đồ của bạn.",
+                  [{ text: "OK" }]
+                );
+                fetchOrders(true);
+                setShowDetailModal(false);
+              }
+            } catch (err: any) {
+              console.error("Failed to pickup storage order:", err);
+              const errMsg = err?.response?.data?.message || err?.message || "Không thể mở tủ.";
+              const errCode = err?.response?.data?.code;
+
+              if (errCode === 'E_ORDER_OVERTIME' || errMsg.includes('lố giờ') || errMsg.includes('phụ phí')) {
+                Alert.alert(
+                  "Phát sinh phí trễ giờ",
+                  errMsg + "\n\nBạn có muốn thanh toán phần phí phát sinh bằng MoMo để có thể lấy đồ không?",
+                  [
+                    { text: "Để sau", style: "cancel" },
+                    {
+                      text: "Thanh toán MoMo",
+                      onPress: async () => {
+                        try {
+                           const payRes = await paymentService.createPayment(orderId, 'MOMO');
+                           if (payRes.success && (payRes.data as any)?.paymentUrl) {
+                             Linking.openURL((payRes.data as any).paymentUrl);
+                           } else {
+                             Alert.alert("Lỗi", "Không thể tạo phiên thanh toán.");
+                           }
+                        } catch (pErr: any) {
+                           Alert.alert("Lỗi", "Không phát khởi thanh toán được: " + (pErr?.response?.data?.message || pErr?.message || ""));
+                        }
+                      }
+                    }
+                  ]
+                );
+              } else {
+                Alert.alert("Lỗi", errMsg);
+              }
+            }
+          },
+        },
+      ]
+    );
   };
 
   // State for Tracking Modal
@@ -535,7 +594,7 @@ export default function OrdersScreen() {
                 <View style={styles.ticketRight}>
                   <View style={[styles.ticketStatus, { backgroundColor: getStatusColor(order.status) }]}>
                     <ThemedText style={styles.ticketStatusText}>
-                      {getStatusText(order.status)}
+                      {getStatusText(order.status, order.type)}
                     </ThemedText>
                   </View>
                   
@@ -546,8 +605,8 @@ export default function OrdersScreen() {
                     </View>
                   )}
 
-                  {/* Track Button (Always visible logic or specific states? Let's show for active) */}
-                  {order.status !== "CANCELED" && (
+                  {/* Track Button */}
+                  {order.status !== "CANCELED" && order.type !== "STORAGE" && (
                       <TouchableOpacity
                         style={[styles.ticketButton, { backgroundColor: '#2196F3' }]}
                         onPress={() => handleTrackOrder(order.id)}
@@ -564,8 +623,9 @@ export default function OrdersScreen() {
                       <ThemedText style={styles.ticketButtonText}>Xác nhận</ThemedText>
                     </TouchableOpacity>
                   )}
-                  
-                  {(order.status === "WAITING" || order.status === "COLLECTED") && (
+
+                  {/* Cancel button - hide for STORAGE orders in WAITING (items in locker) */}
+                  {(order.status === "WAITING" && order.type !== "STORAGE" || order.status === "COLLECTED") && (
                     <TouchableOpacity
                       style={[styles.ticketButton, styles.ticketButtonCancel]}
                       onPress={() => handleCancelOrder(order.id)}
@@ -638,164 +698,168 @@ export default function OrdersScreen() {
         </View>
       </Modal>
 
-      {/* Order Detail Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={showDetailModal}
         onRequestClose={() => setShowDetailModal(false)}
       >
-        <View style={styles.centeredView}>
+        <View style={styles.bottomSheetView}>
           <View style={styles.detailModalView}>
+            {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Chi tiết đơn hàng</ThemedText>
+              <View>
+                <ThemedText style={styles.detailOrderCode}>
+                  {selectedOrder?.orderCode || `Đơn #${selectedOrder?.id}`}
+                </ThemedText>
+                <ThemedText style={{ color: '#666', fontSize: 13, marginTop: 4 }}>
+                  {selectedOrder?.type === 'LAUNDRY' ? '🧺 Dịch vụ Giặt đồ' : '📦 Dịch vụ Lưu trữ'}
+                </ThemedText>
+              </View>
               <TouchableOpacity onPress={() => setShowDetailModal(false)}>
-                <Icon name="close" size={24} color="#000" />
+                <View style={{ backgroundColor: '#F0F0F0', padding: 8, borderRadius: 20 }}>
+                  <Icon name="close" size={20} color="#333" />
+                </View>
               </TouchableOpacity>
             </View>
             
             {isLoadingDetail ? (
               <ActivityIndicator size="large" color="#003D5B" style={{marginVertical: 40}} />
             ) : selectedOrder ? (
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.detailScrollView}>
-                {/* Order Code & Status */}
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailOrderCode}>
-                    {selectedOrder.orderCode || `Đơn #${selectedOrder.id}`}
-                  </ThemedText>
-                  <View style={[styles.detailStatusBadge, { backgroundColor: getStatusColor(selectedOrder.status) }]}>
-                    <ThemedText style={styles.detailStatusText}>{getStatusText(selectedOrder.status)}</ThemedText>
-                  </View>
-                </View>
-
-                {/* Type Badge */}
-                {selectedOrder.type && (
-                  <View style={styles.detailTypeBadge}>
-                    <ThemedText style={styles.detailTypeText}>
-                      {selectedOrder.type === 'LAUNDRY' ? '🧺 Giặt đồ' : '📦 Lưu trữ'}
+              <ScrollView showsVerticalScrollIndicator={false} style={styles.detailScrollView} contentContainerStyle={{ paddingBottom: 40 }}>
+                
+                {/* Prominent PIN Code Section */}
+                {(selectedOrder.pin || selectedOrder.pinCode) && (
+                  <View style={{
+                    backgroundColor: '#FFF9C4', 
+                    borderRadius: 16, 
+                    padding: 20, 
+                    alignItems: 'center', 
+                    marginBottom: 20,
+                    borderWidth: 2,
+                    borderColor: '#FBC02D',
+                    borderStyle: 'dashed'
+                  }}>
+                    <ThemedText style={{ fontSize: 14, color: '#F57F17', fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                      Mã PIN Mở Tủ
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 36, fontWeight: '900', color: '#F57F17', letterSpacing: 4 }}>
+                      {selectedOrder.pinCode || selectedOrder.pin}
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 12, textAlign: 'center' }}>
+                      Vui lòng đến {selectedOrder.locker?.name || selectedOrder.lockerName || 'Kiosk'} nhập mã PIN này để mở tủ
                     </ThemedText>
                   </View>
                 )}
 
-                {/* Customer Info */}
-                {selectedOrder.customer && (
-                  <View style={styles.detailInfoBox}>
-                    <ThemedText style={styles.detailInfoTitle}>Khách hàng</ThemedText>
-                    <ThemedText style={styles.detailInfoText}>{selectedOrder.customer.fullName}</ThemedText>
-                    <ThemedText style={styles.detailInfoSubtext}>{selectedOrder.customer.phoneNumber}</ThemedText>
-                  </View>
-                )}
-
-                {/* Sender Info */}
-                {selectedOrder.senderName && (
-                  <View style={styles.detailInfoBox}>
-                    <ThemedText style={styles.detailInfoTitle}>Người gửi</ThemedText>
-                    <ThemedText style={styles.detailInfoText}>{selectedOrder.senderName}</ThemedText>
-                    {selectedOrder.senderPhone && (
-                      <ThemedText style={styles.detailInfoSubtext}>{selectedOrder.senderPhone}</ThemedText>
-                    )}
-                  </View>
-                )}
-
-                {/* Receiver Info */}
-                {selectedOrder.receiverName && (
-                  <View style={styles.detailInfoBox}>
-                    <ThemedText style={styles.detailInfoTitle}>Người nhận</ThemedText>
-                    <ThemedText style={styles.detailInfoText}>{selectedOrder.receiverName}</ThemedText>
-                    {selectedOrder.receiverPhone && (
-                      <ThemedText style={styles.detailInfoSubtext}>{selectedOrder.receiverPhone}</ThemedText>
-                    )}
-                  </View>
-                )}
-
-                {/* Locker Info */}
-                <View style={styles.detailInfoBox}>
-                  <ThemedText style={styles.detailInfoTitle}>Vị trí</ThemedText>
-                  <ThemedText style={styles.detailInfoText}>
-                    {selectedOrder.locker?.name || selectedOrder.lockerName || 'N/A'}
-                  </ThemedText>
-                  <ThemedText style={styles.detailInfoSubtext}>
-                    Ô số: {selectedOrder.boxNumber || selectedOrder.sendBoxNumber || 'N/A'}
-                  </ThemedText>
-                </View>
-
-                {/* PIN Code */}
-                {(selectedOrder.pin || selectedOrder.pinCode) && (
-                  <View style={styles.detailPinBox}>
-                    <ThemedText style={styles.detailPinLabel}>Mã PIN</ThemedText>
-                    <ThemedText style={styles.detailPinValue}>{selectedOrder.pinCode || selectedOrder.pin}</ThemedText>
-                  </View>
-                )}
-
-                {/* Items/Services */}
-                {selectedOrder.items && selectedOrder.items.length > 0 && (
-                  <View style={styles.detailInfoBox}>
-                    <ThemedText style={styles.detailInfoTitle}>Dịch vụ</ThemedText>
-                    {selectedOrder.items.map((item, index) => (
-                      <View key={index} style={styles.detailItemRow}>
-                        <ThemedText style={styles.detailItemName}>{item.serviceName || 'Dịch vụ'}</ThemedText>
-                        <ThemedText style={styles.detailItemPrice}>{formatPrice(item.subtotal || item.price)}</ThemedText>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {/* Pricing */}
-                <View style={styles.detailPriceBox}>
-                  {selectedOrder.estimatedPrice && (
-                    <View style={styles.detailPriceRow}>
-                      <ThemedText style={styles.detailPriceLabel}>Giá ước tính</ThemedText>
-                      <ThemedText style={styles.detailPriceValue}>
-                        {formatPrice(typeof selectedOrder.estimatedPrice === 'number' ? selectedOrder.estimatedPrice : 0)}
+                {/* Status Box */}
+                <View style={[styles.detailInfoBox, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: getStatusColor(selectedOrder.status) + '30', justifyContent: 'center', alignItems: 'center' }}>
+                      <Icon name="info" type="material" size={20} color={getStatusColor(selectedOrder.status)} />
+                    </View>
+                    <View>
+                      <ThemedText style={{ fontSize: 13, color: '#666' }}>Trạng thái</ThemedText>
+                      <ThemedText style={{ fontSize: 16, fontWeight: '700', color: getStatusColor(selectedOrder.status) }}>
+                        {getStatusText(selectedOrder.status, selectedOrder.type)}
                       </ThemedText>
                     </View>
-                  )}
-                  {selectedOrder.actualPrice && (
-                    <View style={styles.detailPriceRow}>
-                      <ThemedText style={styles.detailPriceLabel}>Giá thực tế</ThemedText>
-                      <ThemedText style={styles.detailPriceValue}>{formatPrice(selectedOrder.actualPrice)}</ThemedText>
-                    </View>
-                  )}
-                  {selectedOrder.discountAmount && selectedOrder.discountAmount > 0 && (
-                    <View style={styles.detailPriceRow}>
-                      <ThemedText style={styles.detailPriceLabel}>Giảm giá</ThemedText>
-                      <ThemedText style={[styles.detailPriceValue, {color: '#4CAF50'}]}>-{formatPrice(selectedOrder.discountAmount)}</ThemedText>
-                    </View>
-                  )}
-                  <View style={[styles.detailPriceRow, styles.detailTotalRow]}>
-                    <ThemedText style={styles.detailTotalLabel}>Tổng cộng</ThemedText>
-                    <ThemedText style={styles.detailTotalValue}>
-                      {formatPrice(selectedOrder.totalAmount || selectedOrder.actualPrice || selectedOrder.totalPrice || 0)}
-                    </ThemedText>
                   </View>
                 </View>
 
-                {/* Payment Status */}
-                {selectedOrder.payment && (
-                  <View style={styles.detailInfoBox}>
-                    <ThemedText style={styles.detailInfoTitle}>Thanh toán</ThemedText>
-                    <ThemedText style={styles.detailInfoText}>
-                      {selectedOrder.payment.status === 'COMPLETED' ? '✅ Đã thanh toán' : '⏳ Chưa thanh toán'}
-                    </ThemedText>
-                    {selectedOrder.payment.method && (
-                      <ThemedText style={styles.detailInfoSubtext}>Phương thức: {selectedOrder.payment.method}</ThemedText>
-                    )}
+                {/* Location Info */}
+                <View style={styles.detailInfoBox}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <Icon name="place" type="material" color="#003D5B" size={24} />
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>
+                        {selectedOrder.locker?.name || selectedOrder.lockerName || 'N/A'}
+                      </ThemedText>
+                      <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+                        Ô tủ số: <ThemedText style={{ fontWeight: 'bold' }}>{selectedOrder.boxNumber || selectedOrder.sendBoxNumber || 'N/A'}</ThemedText>
+                      </ThemedText>
+                    </View>
                   </View>
-                )}
+                </View>
+
+                {/* People Info */}
+                <View style={styles.detailInfoBox}>
+                   <View style={{ flexDirection: 'row', paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
+                     <View style={{ flex: 1 }}>
+                       <ThemedText style={{ fontSize: 12, color: '#999', marginBottom: 4 }}>Người gửi</ThemedText>
+                       <ThemedText style={{ fontSize: 15, fontWeight: '600', color: '#333' }}>{selectedOrder.senderName || selectedOrder.customer?.fullName || 'N/A'}</ThemedText>
+                       <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 2 }}>{selectedOrder.senderPhone || selectedOrder.customer?.phoneNumber}</ThemedText>
+                     </View>
+                   </View>
+                   <View style={{ flexDirection: 'row', paddingTop: 16 }}>
+                     <View style={{ flex: 1 }}>
+                       <ThemedText style={{ fontSize: 12, color: '#999', marginBottom: 4 }}>Người nhận</ThemedText>
+                       <ThemedText style={{ fontSize: 15, fontWeight: '600', color: '#333' }}>{selectedOrder.receiverName || 'Chưa nhập'}</ThemedText>
+                       {selectedOrder.receiverPhone && <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 2 }}>{selectedOrder.receiverPhone}</ThemedText>}
+                     </View>
+                   </View>
+                </View>
+
+                {/* Payment Info */}
+                <View style={styles.detailInfoBox}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>Thanh toán</ThemedText>
+                    <View style={{ backgroundColor: selectedOrder.payment?.status === 'COMPLETED' ? '#E8F5E9' : '#FFF3E0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 }}>
+                      <ThemedText style={{ fontSize: 12, fontWeight: 'bold', color: selectedOrder.payment?.status === 'COMPLETED' ? '#4CAF50' : '#FF9800' }}>
+                        {selectedOrder.payment?.status === 'COMPLETED' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  {/* Items/Services */}
+                  {selectedOrder.items && selectedOrder.items.length > 0 && (
+                    <View style={{ marginBottom: 16 }}>
+                      {selectedOrder.items.map((item, index) => (
+                        <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <ThemedText style={{ fontSize: 14, color: '#555' }}>• {item.serviceName || 'Dịch vụ'} (x{item.quantity || 1})</ThemedText>
+                          <ThemedText style={{ fontSize: 14, color: '#333', fontWeight: '500' }}>{formatPrice(item.subtotal || item.price)}</ThemedText>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Pricing Breakdown */}
+                  <View style={{ borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingTop: 16, gap: 8 }}>
+                    {selectedOrder.estimatedPrice && (
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <ThemedText style={{ fontSize: 14, color: '#666' }}>Giá ước tính</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: '#333' }}>{formatPrice(typeof selectedOrder.estimatedPrice === 'number' ? selectedOrder.estimatedPrice : 0)}</ThemedText>
+                      </View>
+                    )}
+                    {selectedOrder.actualPrice && (
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <ThemedText style={{ fontSize: 14, color: '#666' }}>Giá thực tế</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: '#333' }}>{formatPrice(selectedOrder.actualPrice)}</ThemedText>
+                      </View>
+                    )}
+                    {selectedOrder.discountAmount && selectedOrder.discountAmount > 0 && (
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <ThemedText style={{ fontSize: 14, color: '#4CAF50' }}>Giảm giá</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: '#4CAF50', fontWeight: '500' }}>-{formatPrice(selectedOrder.discountAmount)}</ThemedText>
+                      </View>
+                    )}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E0E0E0', borderStyle: 'dashed' }}>
+                      <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#111' }}>Tổng cộng</ThemedText>
+                      <ThemedText style={{ fontSize: 18, fontWeight: '900', color: '#003D5B' }}>
+                        {formatPrice(selectedOrder.totalAmount || selectedOrder.actualPrice || selectedOrder.totalPrice || 0)}
+                      </ThemedText>
+                    </View>
+                  </View>
+                </View>
 
                 {/* Timestamps */}
-                <View style={styles.detailInfoBox}>
-                  <ThemedText style={styles.detailInfoTitle}>Thời gian</ThemedText>
-                  <ThemedText style={styles.detailInfoSubtext}>Tạo: {formatDate(selectedOrder.createdAt)}</ThemedText>
-                  {selectedOrder.confirmedAt && (
-                    <ThemedText style={styles.detailInfoSubtext}>Xác nhận: {formatDate(selectedOrder.confirmedAt)}</ThemedText>
-                  )}
+                <View style={{ paddingHorizontal: 4, marginTop: 8, opacity: 0.6, alignItems: 'center' }}>
+                  <ThemedText style={{ fontSize: 11, color: '#666' }}>Tạo lúc: {formatDate(selectedOrder.createdAt)}</ThemedText>
                   {selectedOrder.completedAt && (
-                    <ThemedText style={styles.detailInfoSubtext}>Hoàn thành: {formatDate(selectedOrder.completedAt)}</ThemedText>
+                    <ThemedText style={{ fontSize: 11, color: '#666', marginTop: 4 }}>Hoàn thành: {formatDate(selectedOrder.completedAt)}</ThemedText>
                   )}
                 </View>
 
-                <View style={{height: 20}} />
               </ScrollView>
             ) : (
               <ThemedText style={{textAlign: 'center', margin: 20}}>Không có dữ liệu</ThemedText>
@@ -1488,6 +1552,11 @@ const styles = StyleSheet.create({
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  bottomSheetView: {
+      flex: 1,
+      justifyContent: 'flex-end',
       backgroundColor: 'rgba(0,0,0,0.5)',
   },
   trackingModalView: {
