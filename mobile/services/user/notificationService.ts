@@ -49,8 +49,16 @@ export const markAsRead = async (id: number): Promise<ApiResponse<Notification>>
 /**
  * Mark all notifications as read
  */
-export const markAllAsRead = async (): Promise<ApiResponse<{ message: string }>> => {
-    const response = await api.put<ApiResponse<{ message: string }>>('/notifications/read-all');
+export const markAllAsRead = async (): Promise<ApiResponse<{ markedCount: number }>> => {
+    const response = await api.put<ApiResponse<{ markedCount: number }>>('/notifications/read-all');
+    return response.data;
+};
+
+/**
+ * Mark a batch of notifications as read
+ */
+export const markBatchAsRead = async (notificationIds: number[]): Promise<ApiResponse<{ markedCount: number }>> => {
+    const response = await api.put<ApiResponse<{ markedCount: number }>>('/notifications/read/batch', { notificationIds });
     return response.data;
 };
 
@@ -62,6 +70,14 @@ export const deleteNotification = async (id: number): Promise<ApiResponse<{ mess
     return response.data;
 };
 
+/**
+ * Delete all notifications
+ */
+export const deleteAllNotifications = async (): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>('/notifications/all');
+    return response.data;
+};
+
 export const notificationService = {
     getNotifications,
     getAllNotifications,
@@ -69,7 +85,9 @@ export const notificationService = {
     getUnreadCount,
     markAsRead,
     markAllAsRead,
+    markBatchAsRead,
     deleteNotification,
+    deleteAllNotifications,
 };
 
 export default notificationService;

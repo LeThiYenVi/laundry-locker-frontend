@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { orderService, userService, loyaltyService } from "@/services/user";
 import type { LoyaltySummary } from "@/services/user/loyaltyService";
-import { Order, User } from "@/types";
+import { Order, User, UserStatisticsResponse } from "@/types";
 import { Icon } from "@rneui/themed";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -72,6 +72,9 @@ export default function ProfileScreen() {
     completedOrders: 0,
   });
 
+  // User Statistics from API
+  const [userStats, setUserStats] = useState<UserStatisticsResponse | null>(null);
+
   // Loyalty state
   const [loyalty, setLoyalty] = useState<LoyaltySummary | null>(null);
 
@@ -115,6 +118,17 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const fetchUserStatistics = useCallback(async () => {
+    try {
+      const response = await userService.getUserStatistics();
+      if (response.success) {
+        setUserStats(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user statistics:", error);
+    }
+  }, []);
+
   const fetchLoyalty = useCallback(async () => {
     try {
       const response = await loyaltyService.getLoyaltySummary();
@@ -144,13 +158,14 @@ export default function ProfileScreen() {
     fetchOrderStats();
     fetchLoyalty();
     fetchPartnerProfile();
-  }, [fetchProfile, fetchOrderStats, fetchLoyalty, fetchPartnerProfile]);
+    fetchUserStatistics();
+  }, [fetchProfile, fetchOrderStats, fetchLoyalty, fetchPartnerProfile, fetchUserStatistics]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchProfile(), fetchOrderStats(), fetchLoyalty(), fetchPartnerProfile()]);
+    await Promise.all([fetchProfile(), fetchOrderStats(), fetchLoyalty(), fetchPartnerProfile(), fetchUserStatistics()]);
     setRefreshing(false);
-  }, [fetchProfile, fetchOrderStats, fetchLoyalty, fetchPartnerProfile]);
+  }, [fetchProfile, fetchOrderStats, fetchLoyalty, fetchPartnerProfile, fetchUserStatistics]);
 
   const openEditModal = () => {
     setEditForm({
@@ -383,24 +398,33 @@ export default function ProfileScreen() {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
-              <Icon name="shopping-bag" type="material" size={24} color="#003D5B" />
+              <Icon name="local-laundry-service" type="material" size={24} color="#1976D2" />
             </View>
-            <ThemedText style={styles.statValue}>{stats.totalOrders}</ThemedText>
-            <ThemedText style={styles.statLabel}>Tổng đơn</ThemedText>
+            <ThemedText style={styles.statValue}>{userStats?.totalLaundryOrders ?? stats.completedOrders}</ThemedText>
+            <ThemedText style={styles.statLabel}>Giặt đồ</ThemedText>
           </View>
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
-              <Icon name="pending-actions" type="material" size={24} color="#FF9800" />
+              <Icon name="inventory-2" type="material" size={24} color="#E65100" />
             </View>
-            <ThemedText style={styles.statValue}>{stats.activeOrders}</ThemedText>
-            <ThemedText style={styles.statLabel}>Đang xử lý</ThemedText>
+            <ThemedText style={styles.statValue}>{userStats?.totalStorageOrders ?? stats.activeOrders}</ThemedText>
+            <ThemedText style={styles.statLabel}>Lưu trữ</ThemedText>
           </View>
           <View style={styles.statCard}>
             <View style={styles.statIconContainer}>
-              <Icon name="check-circle" type="material" size={24} color="#4CAF50" />
+              <Icon name="payments" type="material" size={24} color="#4CAF50" />
             </View>
-            <ThemedText style={styles.statValue}>{stats.completedOrders}</ThemedText>
-            <ThemedText style={styles.statLabel}>Hoàn thành</ThemedText>
+            <ThemedText style={styles.statValue}>
+              {userStats ? `${(userStats.totalAmountSpent / 1000).toFixed(0)}k` : `${stats.totalOrders}`}
+            </ThemedText>
+            <ThemedText style={styles.statLabel}>Đã chi (₫)</ThemedText>
+          </View>
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Icon name="confirmation-number" type="material" size={24} color="#9C27B0" />
+            </View>
+            <ThemedText style={styles.statValue}>{userStats?.totalVouchersUsed ?? 0}</ThemedText>
+            <ThemedText style={styles.statLabel}>Voucher</ThemedText>
           </View>
         </View>
 
