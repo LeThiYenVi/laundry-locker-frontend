@@ -12,8 +12,11 @@
 // ============================================
 // WiFi Configuration
 // ============================================
-#define WIFI_SSID "Thai Binh"              // Thay bằng tên WiFi của bạn
-#define WIFI_PASSWORD "thaibinh7704"      // Thay bằng mật khẩu WiFi
+// #define WIFI_SSID "Thai Binh"              // Thay bằng tên WiFi của bạn
+// #define WIFI_PASSWORD "thaibinh7704"      // Thay bằng mật khẩu WiFi
+
+#define WIFI_SSID "MinhNhat-L3"              
+#define WIFI_PASSWORD "29112002" 
 
 // ============================================
 // Backend API Configuration

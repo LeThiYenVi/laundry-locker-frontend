@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Image } from "expo-image";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
@@ -26,6 +27,8 @@ export default function StoreDetailScreen() {
     closeTime: params.closeTime as string,
     latitude: params.latitude ? Number(params.latitude) : undefined,
     longitude: params.longitude ? Number(params.longitude) : undefined,
+    image: params.image as string,
+    imageUrl: params.imageUrl as string,
   };
 
   useFocusEffect(
@@ -94,10 +97,21 @@ export default function StoreDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Map Header Placeholder */}
+        {/* Map Header Placeholder / Image */}
         <View style={styles.mapContainer}>
-             <IconSymbol size={60} name="map.fill" color="#CBD5E0" />
-             <ThemedText style={styles.mapLabel}>Location Preview</ThemedText>
+             {store.image || store.imageUrl ? (
+                 <Image
+                     source={{ uri: store.image || store.imageUrl }}
+                     style={{ width: '100%', height: '100%' }}
+                     contentFit="cover"
+                     transition={1000}
+                 />
+             ) : (
+                 <>
+                     <IconSymbol size={60} name="map.fill" color="#CBD5E0" />
+                     <ThemedText style={styles.mapLabel}>Location Preview</ThemedText>
+                 </>
+             )}
         </View>
 
         {/* Store Info Card */}
