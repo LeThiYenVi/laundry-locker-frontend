@@ -1,4 +1,4 @@
-import type { ApiResponse, Box, Locker } from '@/types';
+import type { ApiResponse, Box, Locker, LockerReportRequest, LockerReportResponse } from '@/types';
 import api from '../api';
 
 /**
@@ -41,12 +41,24 @@ export const getAvailableBoxes = async (lockerId: number): Promise<ApiResponse<B
     return response.data;
 };
 
+/**
+ * Report a broken locker
+ */
+export const reportLocker = async (
+    lockerId: number,
+    data: LockerReportRequest
+): Promise<ApiResponse<LockerReportResponse>> => {
+    const response = await api.post<ApiResponse<LockerReportResponse>>(`/lockers/${lockerId}/report`, data);
+    return response.data;
+};
+
 export const lockerService = {
     getAllLockers,
     getLockersByStore,
     getLockerById,
     getBoxesByLocker,
     getAvailableBoxes,
+    reportLocker,
 };
 
 export default lockerService;

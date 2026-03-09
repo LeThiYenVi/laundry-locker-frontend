@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { orderService, paymentService } from "@/services/user";
-import { Order } from "@/types";
+import { Order, OrderRatingRequest, OrderRatingResponse, OrderComplaintRequest, OrderComplaintResponse } from "@/types";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
@@ -13,6 +13,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -31,6 +32,19 @@ export default function OrdersScreen() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+
+  // Rating state
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [existingRating, setExistingRating] = useState<OrderRatingResponse | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  // Complaint state
+  const [existingComplaints, setExistingComplaints] = useState<OrderComplaintResponse[]>([]);
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [complaintType, setComplaintType] = useState<'DAMAGED' | 'MISSING' | 'WRONG_ITEM' | 'QUALITY' | 'OTHER'>('DAMAGED');
+  const [complaintDesc, setComplaintDesc] = useState("");
+  const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
 
   const filters: { value: OrderFilter; label: string }[] = [
     { value: "ALL", label: "Tất cả" },
@@ -170,11 +184,40 @@ export default function OrdersScreen() {
     try {
       setIsLoadingDetail(true);
       setShowDetailModal(true);
+      // Reset rating state
+      setRatingValue(0);
+      setRatingComment("");
+      setExistingRating(null);
+      // Reset complaint state
+      setExistingComplaints([]);
+      setShowComplaintForm(false);
+      setComplaintType('DAMAGED');
+      setComplaintDesc("");
       
       const response = await orderService.getOrderById(orderId);
       if (response.success && response.data) {
         setSelectedOrder(response.data);
         console.log('[OrderDetail] Full order:', JSON.stringify(response.data, null, 2));
+        
+        // Fetch existing rating and complaints for completed orders
+        if (response.data.status === 'COMPLETED') {
+          try {
+            const ratingRes = await orderService.getOrderRating(orderId);
+            if (ratingRes.success && ratingRes.data) {
+              setExistingRating(ratingRes.data);
+            }
+          } catch {
+            // No rating yet — that's fine
+          }
+          try {
+            const complaintsRes = await orderService.getOrderComplaints(orderId);
+            if (complaintsRes.success && complaintsRes.data) {
+              setExistingComplaints(complaintsRes.data);
+            }
+          } catch {
+            // No complaints — fine
+          }
+        }
       }
     } catch (err: any) {
       console.error('Failed to fetch order details:', err);
@@ -185,27 +228,91 @@ export default function OrdersScreen() {
     }
   };
 
-  const handleConfirmOrder = async (orderId: number) => {
+  const handleSubmitComplaint = async () => {
+    if (!selectedOrder) return;
+    if (!complaintDesc.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng mô tả vấn đề bạn gặp phải');
+      return;
+    }
+    setIsSubmittingComplaint(true);
     try {
-      const response = await orderService.confirmOrder(orderId);
-      if (response.success) {
-        // Refresh orders list
-        fetchOrders(true);
+      const data: OrderComplaintRequest = {
+        type: complaintType,
+        description: complaintDesc.trim(),
+      };
+      const res = await orderService.createComplaint(selectedOrder.id, data);
+      if (res.success && res.data) {
+        setExistingComplaints([res.data]);
+        setShowComplaintForm(false);
+        Alert.alert('Thành công', 'Khiếu nại của bạn đã được ghi nhận. Chúng tôi sẽ xử lý sớm nhất.');
       }
     } catch (err: any) {
-      console.error("Failed to confirm order:", err);
+      const msg = err?.response?.data?.message || 'Không thể gửi khiếu nại';
+      Alert.alert('Lỗi', msg);
+    } finally {
+      setIsSubmittingComplaint(false);
     }
   };
 
+  const handleConfirmOrder = async (orderId: number) => {
+    Alert.alert(
+      "Xác nhận gửi đồ",
+      "Bạn xác nhận đã đặt đồ vào tủ locker?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xác nhận",
+          onPress: async () => {
+            try {
+              const response = await orderService.confirmOrder(orderId);
+              if (response.success) {
+                Alert.alert("Thành công", "Đơn hàng đã được xác nhận!");
+                fetchOrders(true);
+                setShowDetailModal(false);
+              }
+            } catch (err: any) {
+              console.error("Failed to confirm order:", err);
+              Alert.alert("Lỗi", err?.response?.data?.message || "Không thể xác nhận đơn hàng");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleCancelOrder = async (orderId: number) => {
+    Alert.alert(
+      "Hủy đơn hàng",
+      "Vui lòng chọn lý do hủy:",
+      [
+        { text: "Không hủy", style: "cancel" },
+        {
+          text: "Đổi ý không muốn giặt",
+          onPress: () => executeCancelOrder(orderId, "Đổi ý không muốn giặt"),
+        },
+        {
+          text: "Đặt nhầm đơn",
+          onPress: () => executeCancelOrder(orderId, "Đặt nhầm đơn"),
+        },
+        {
+          text: "Lý do khác",
+          onPress: () => executeCancelOrder(orderId, "Khách hủy"),
+        },
+      ]
+    );
+  };
+
+  const executeCancelOrder = async (orderId: number, reason: string) => {
     try {
-      const response = await orderService.cancelOrder(orderId, "Khách hủy");
+      const response = await orderService.cancelOrder(orderId, reason);
       if (response.success) {
-        // Refresh orders list
+        Alert.alert("Đã hủy", "Đơn hàng đã được hủy thành công.");
         fetchOrders(true);
+        setShowDetailModal(false);
       }
     } catch (err: any) {
       console.error("Failed to cancel order:", err);
+      Alert.alert("Lỗi", err?.response?.data?.message || "Không thể hủy đơn hàng");
     }
   };
 
@@ -260,6 +367,36 @@ export default function OrdersScreen() {
               } else {
                 Alert.alert("Lỗi", errMsg);
               }
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleResetPin = async (orderId: number) => {
+    Alert.alert(
+      "Cấp lại mã PIN",
+      "Mã PIN hiện tại sẽ bị hủy và tạo mã mới. Bạn có chắc chắn?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xác nhận",
+          onPress: async () => {
+            try {
+              const response = await orderService.resetOrderPin(orderId);
+              if (response.success && response.data) {
+                setSelectedOrder(response.data);
+                Alert.alert(
+                  "Thành công",
+                  `Mã PIN mới: ${response.data.pinCode || response.data.pin}`,
+                );
+                fetchOrders(true);
+              }
+            } catch (err: any) {
+              console.error("Failed to reset PIN:", err);
+              const msg = err?.response?.data?.message || "Không thể cấp lại mã PIN";
+              Alert.alert("Lỗi", msg);
             }
           },
         },
@@ -749,6 +886,27 @@ export default function OrdersScreen() {
                     <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 12, textAlign: 'center' }}>
                       Vui lòng đến {selectedOrder.locker?.name || selectedOrder.lockerName || 'Kiosk'} nhập mã PIN này để mở tủ
                     </ThemedText>
+                    {/* Reset PIN Button - only for active orders */}
+                    {selectedOrder.status !== 'COMPLETED' && selectedOrder.status !== 'CANCELED' && (
+                      <TouchableOpacity
+                        onPress={() => handleResetPin(selectedOrder.id)}
+                        style={{
+                          marginTop: 14,
+                          backgroundColor: '#FFF3E0',
+                          paddingHorizontal: 20,
+                          paddingVertical: 10,
+                          borderRadius: 20,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          borderWidth: 1,
+                          borderColor: '#FFB74D',
+                        }}
+                      >
+                        <Icon name="refresh" type="material" size={16} color="#E65100" />
+                        <ThemedText style={{ fontSize: 13, fontWeight: '600', color: '#E65100' }}>Cấp lại mã PIN</ThemedText>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )}
 
@@ -859,6 +1017,239 @@ export default function OrdersScreen() {
                     <ThemedText style={{ fontSize: 11, color: '#666', marginTop: 4 }}>Hoàn thành: {formatDate(selectedOrder.completedAt)}</ThemedText>
                   )}
                 </View>
+
+                {/* Rating Section - for COMPLETED orders */}
+                {selectedOrder.status === 'COMPLETED' && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>
+                      {existingRating ? 'Đánh giá của bạn' : 'Đánh giá đơn hàng'}
+                    </ThemedText>
+
+                    {/* Stars */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <TouchableOpacity
+                          key={star}
+                          onPress={() => !existingRating && setRatingValue(star)}
+                          disabled={!!existingRating}
+                          activeOpacity={existingRating ? 1 : 0.6}
+                        >
+                          <Icon
+                            name={star <= (existingRating?.rating || ratingValue) ? 'star' : 'star-border'}
+                            type="material"
+                            size={36}
+                            color={star <= (existingRating?.rating || ratingValue) ? '#FFB300' : '#DDD'}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    {existingRating ? (
+                      <View>
+                        {existingRating.comment ? (
+                          <ThemedText style={{ fontSize: 14, color: '#555', fontStyle: 'italic', textAlign: 'center', marginBottom: 8 }}>
+                            "{existingRating.comment}"
+                          </ThemedText>
+                        ) : null}
+                        {existingRating.partnerResponse ? (
+                          <View style={{ backgroundColor: '#F0F8FF', padding: 12, borderRadius: 10, marginTop: 4 }}>
+                            <ThemedText style={{ fontSize: 12, fontWeight: '600', color: '#003D5B', marginBottom: 4 }}>Phản hồi từ cửa hàng:</ThemedText>
+                            <ThemedText style={{ fontSize: 13, color: '#555' }}>{existingRating.partnerResponse}</ThemedText>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : (
+                      <View>
+                        <TextInput
+                          style={{
+                            borderWidth: 1,
+                            borderColor: '#E0E0E0',
+                            borderRadius: 12,
+                            padding: 12,
+                            fontSize: 14,
+                            minHeight: 70,
+                            textAlignVertical: 'top',
+                            backgroundColor: '#FAFAFA',
+                            marginBottom: 12,
+                          }}
+                          placeholder="Nhận xét về đơn hàng (tùy chọn)..."
+                          placeholderTextColor="#BDBDBD"
+                          multiline
+                          numberOfLines={3}
+                          value={ratingComment}
+                          onChangeText={setRatingComment}
+                          maxLength={500}
+                        />
+                        <TouchableOpacity
+                          onPress={async () => {
+                            if (ratingValue === 0) {
+                              Alert.alert('Lỗi', 'Vui lòng chọn số sao');
+                              return;
+                            }
+                            setIsSubmittingRating(true);
+                            try {
+                              const data: OrderRatingRequest = {
+                                rating: ratingValue,
+                                comment: ratingComment.trim() || undefined,
+                              };
+                              const res = await orderService.rateOrder(selectedOrder.id, data);
+                              if (res.success) {
+                                setExistingRating(res.data);
+                                Alert.alert('Cảm ơn!', 'Đánh giá của bạn đã được ghi nhận.');
+                              }
+                            } catch (err: any) {
+                              const msg = err?.response?.data?.message || 'Không thể gửi đánh giá';
+                              Alert.alert('Lỗi', msg);
+                            } finally {
+                              setIsSubmittingRating(false);
+                            }
+                          }}
+                          disabled={isSubmittingRating || ratingValue === 0}
+                          style={{
+                            backgroundColor: ratingValue > 0 ? '#003D5B' : '#CCC',
+                            paddingVertical: 14,
+                            borderRadius: 12,
+                            alignItems: 'center',
+                            opacity: isSubmittingRating ? 0.7 : 1,
+                          }}
+                        >
+                          {isSubmittingRating ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                          ) : (
+                            <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Gửi đánh giá</ThemedText>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Complaint Section - for COMPLETED orders */}
+                {selectedOrder.status === 'COMPLETED' && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>
+                      Khiếu nại đơn hàng
+                    </ThemedText>
+
+                    {existingComplaints.length > 0 ? (
+                      // Show existing complaint
+                      existingComplaints.map((c) => (
+                        <View key={c.id} style={{ backgroundColor: '#FFF8E1', borderRadius: 12, padding: 14, marginBottom: 8 }}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Icon name="report-problem" type="material" size={16} color="#F57F17" />
+                              <ThemedText style={{ fontSize: 13, fontWeight: '700', color: '#F57F17' }}>
+                                {c.type === 'DAMAGED' ? 'Hư hỏng' : c.type === 'MISSING' ? 'Thiếu đồ' : c.type === 'WRONG_ITEM' ? 'Sai đồ' : c.type === 'QUALITY' ? 'Chất lượng' : 'Khác'}
+                              </ThemedText>
+                            </View>
+                            <View style={{
+                              backgroundColor: c.status === 'RESOLVED' ? '#E8F5E9' : c.status === 'REJECTED' ? '#FFEBEE' : c.status === 'INVESTIGATING' ? '#E3F2FD' : '#FFF3E0',
+                              paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10
+                            }}>
+                              <ThemedText style={{
+                                fontSize: 11, fontWeight: '700',
+                                color: c.status === 'RESOLVED' ? '#4CAF50' : c.status === 'REJECTED' ? '#F44336' : c.status === 'INVESTIGATING' ? '#1976D2' : '#FF9800'
+                              }}>
+                                {c.status === 'PENDING' ? 'Chờ xử lý' : c.status === 'INVESTIGATING' ? 'Đang điều tra' : c.status === 'RESOLVED' ? 'Đã xử lý' : 'Từ chối'}
+                              </ThemedText>
+                            </View>
+                          </View>
+                          <ThemedText style={{ fontSize: 13, color: '#555', lineHeight: 20 }}>{c.description}</ThemedText>
+                          {c.resolution && (
+                            <View style={{ marginTop: 8, backgroundColor: '#F0F8FF', padding: 10, borderRadius: 8 }}>
+                              <ThemedText style={{ fontSize: 12, fontWeight: '600', color: '#003D5B', marginBottom: 2 }}>Phản hồi:</ThemedText>
+                              <ThemedText style={{ fontSize: 13, color: '#555' }}>{c.resolution}</ThemedText>
+                            </View>
+                          )}
+                        </View>
+                      ))
+                    ) : showComplaintForm ? (
+                      // Show complaint form
+                      <View>
+                        {/* Type Picker */}
+                        <ThemedText style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>Loại khiếu nại:</ThemedText>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                          {[
+                            { value: 'DAMAGED' as const, label: '💔 Hư hỏng' },
+                            { value: 'MISSING' as const, label: '❓ Thiếu đồ' },
+                            { value: 'WRONG_ITEM' as const, label: '🔄 Sai đồ' },
+                            { value: 'QUALITY' as const, label: '👎 Chất lượng' },
+                            { value: 'OTHER' as const, label: '📝 Khác' },
+                          ].map((opt) => (
+                            <TouchableOpacity
+                              key={opt.value}
+                              onPress={() => setComplaintType(opt.value)}
+                              style={{
+                                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+                                backgroundColor: complaintType === opt.value ? '#FF5722' : '#F5F5F5',
+                                borderWidth: 1,
+                                borderColor: complaintType === opt.value ? '#FF5722' : '#E0E0E0',
+                              }}
+                            >
+                              <ThemedText style={{
+                                fontSize: 12, fontWeight: '600',
+                                color: complaintType === opt.value ? '#fff' : '#555',
+                              }}>{opt.label}</ThemedText>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
+                        {/* Description Input */}
+                        <TextInput
+                          style={{
+                            borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12,
+                            padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: 'top',
+                            backgroundColor: '#FAFAFA', marginBottom: 14,
+                          }}
+                          placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+                          placeholderTextColor="#BDBDBD"
+                          multiline numberOfLines={4}
+                          value={complaintDesc}
+                          onChangeText={setComplaintDesc}
+                          maxLength={1000}
+                        />
+
+                        {/* Submit / Cancel */}
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                          <TouchableOpacity
+                            onPress={() => setShowComplaintForm(false)}
+                            style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: '#F5F5F5' }}
+                          >
+                            <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#666' }}>Hủy</ThemedText>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={handleSubmitComplaint}
+                            disabled={isSubmittingComplaint || !complaintDesc.trim()}
+                            style={{
+                              flex: 2, paddingVertical: 12, borderRadius: 12, alignItems: 'center',
+                              backgroundColor: complaintDesc.trim() ? '#FF5722' : '#CCC',
+                              opacity: isSubmittingComplaint ? 0.7 : 1,
+                            }}
+                          >
+                            {isSubmittingComplaint ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Gửi khiếu nại</ThemedText>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      // Show complaint button
+                      <TouchableOpacity
+                        onPress={() => setShowComplaintForm(true)}
+                        style={{
+                          flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                          paddingVertical: 14, borderRadius: 12,
+                          backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFB74D',
+                        }}
+                      >
+                        <Icon name="report-problem" type="material" size={18} color="#E65100" />
+                        <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#E65100' }}>Khiếu nại đơn hàng</ThemedText>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
 
               </ScrollView>
             ) : (

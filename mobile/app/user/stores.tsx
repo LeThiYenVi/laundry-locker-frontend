@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Image } from "expo-image";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { storeService } from "@/services/user";
@@ -70,6 +71,8 @@ export default function StoresScreen() {
         closeTime: store.closeTime,
         latitude: store.latitude,
         longitude: store.longitude,
+        image: store.image,
+        imageUrl: store.imageUrl,
       } as any
     });
   };
@@ -91,7 +94,14 @@ export default function StoresScreen() {
       </View>
 
       <View style={styles.mapContainer}>
-        {item.latitude && item.longitude ? (
+        {item.image || item.imageUrl ? (
+            <Image
+              source={{ uri: item.image || item.imageUrl }}
+              style={{ width: '100%', height: '100%' }}
+              contentFit="cover"
+              transition={1000}
+            />
+        ) : item.latitude && item.longitude ? (
             <View style={styles.mapPlaceholderContent}>
                 <IconSymbol size={40} name="map.fill" color="#A0AEC0" />
                 <ThemedText style={styles.mapPlaceholderLabel}>Map Preview</ThemedText>
