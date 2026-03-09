@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { useAuth } from "@/context/AuthContext";
 import { orderService, userService, loyaltyService } from "@/services/user";
 import type { LoyaltySummary } from "@/services/user/loyaltyService";
-import { Order, User, UserStatisticsResponse } from "@/types";
+import { Order, OrderComplaintResponse, User, UserStatisticsResponse } from "@/types";
 import { Icon } from "@rneui/themed";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    FlatList,
     Modal,
     RefreshControl,
     ScrollView,
@@ -80,6 +81,11 @@ export default function ProfileScreen() {
 
   // Partner Profile state
   const [partnerProfile, setPartnerProfile] = useState<any | null>(null);
+
+  // Complaints state
+  const [complaintsModalVisible, setComplaintsModalVisible] = useState(false);
+  const [myComplaints, setMyComplaints] = useState<OrderComplaintResponse[]>([]);
+  const [loadingComplaints, setLoadingComplaints] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -298,6 +304,42 @@ export default function ProfileScreen() {
       } finally {
           setUpdatingAvatar(false);
       }
+  };
+
+  const handleOpenComplaints = async () => {
+    setComplaintsModalVisible(true);
+    setLoadingComplaints(true);
+    try {
+      const response = await orderService.getMyComplaints();
+      if (response.success && response.data) {
+        setMyComplaints(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch complaints:", error);
+      setMyComplaints([]);
+    } finally {
+      setLoadingComplaints(false);
+    }
+  };
+
+  const getComplaintTypeLabel = (type: string): string => {
+    switch (type) {
+      case 'DAMAGED': return '💔 Hư hỏng';
+      case 'MISSING': return '❓ Thiếu đồ';
+      case 'WRONG_ITEM': return '🔄 Sai đồ';
+      case 'QUALITY': return '👎 Chất lượng';
+      default: return '📝 Khác';
+    }
+  };
+
+  const getComplaintStatusInfo = (status: string): { label: string; bg: string; color: string } => {
+    switch (status) {
+      case 'PENDING': return { label: 'Chờ xử lý', bg: '#FFF3E0', color: '#FF9800' };
+      case 'INVESTIGATING': return { label: 'Đang điều tra', bg: '#E3F2FD', color: '#1976D2' };
+      case 'RESOLVED': return { label: 'Đã xử lý', bg: '#E8F5E9', color: '#4CAF50' };
+      case 'REJECTED': return { label: 'Từ chối', bg: '#FFEBEE', color: '#F44336' };
+      default: return { label: status, bg: '#F5F5F5', color: '#666' };
+    }
   };
 
   const handleLogout = () => {
@@ -605,6 +647,15 @@ export default function ProfileScreen() {
                 <Icon name="local-offer" type="material" size={28} color="#4CAF50" />
               </View>
               <ThemedText style={styles.quickActionText}>Ưu đãi</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.quickActionCard}
+              onPress={handleOpenComplaints}
+            >
+              <View style={[styles.quickActionIcon, { backgroundColor: '#FFF3E0' }]}>
+                <Icon name="report-problem" type="material" size={28} color="#FF5722" />
+              </View>
+              <ThemedText style={styles.quickActionText}>Khiếu nại</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -975,6 +1026,90 @@ export default function ProfileScreen() {
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* My Complaints Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={complaintsModalVisible}
+        onRequestClose={() => setComplaintsModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, { maxHeight: '80%', paddingBottom: 0 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <ThemedText style={styles.modalText}>Khiếu nại của tôi</ThemedText>
+              <TouchableOpacity onPress={() => setComplaintsModalVisible(false)}>
+                <Icon name="close" type="material" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {loadingComplaints ? (
+              <ActivityIndicator size="large" color="#003D5B" style={{ marginVertical: 40 }} />
+            ) : myComplaints.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Icon name="check-circle" type="material" size={56} color="#4CAF50" />
+                <ThemedText style={{ fontSize: 15, color: '#666', marginTop: 12, textAlign: 'center' }}>
+                  Bạn chưa có khiếu nại nào
+                </ThemedText>
+              </View>
+            ) : (
+              <FlatList
+                data={myComplaints}
+                keyExtractor={(item) => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                renderItem={({ item }) => {
+                  const statusInfo = getComplaintStatusInfo(item.status);
+                  return (
+                    <View style={{
+                      backgroundColor: '#FAFAFA', borderRadius: 14, padding: 14,
+                      marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0',
+                    }}>
+                      {/* Header: Type + Status */}
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Icon name="report-problem" type="material" size={16} color="#F57F17" />
+                          <ThemedText style={{ fontSize: 13, fontWeight: '700', color: '#F57F17' }}>
+                            {getComplaintTypeLabel(item.type)}
+                          </ThemedText>
+                        </View>
+                        <View style={{ backgroundColor: statusInfo.bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 }}>
+                          <ThemedText style={{ fontSize: 11, fontWeight: '700', color: statusInfo.color }}>
+                            {statusInfo.label}
+                          </ThemedText>
+                        </View>
+                      </View>
+
+                      {/* Order ID */}
+                      <ThemedText style={{ fontSize: 12, color: '#999', marginBottom: 4 }}>
+                        Đơn hàng #{item.orderId}
+                      </ThemedText>
+
+                      {/* Description */}
+                      <ThemedText style={{ fontSize: 13, color: '#555', lineHeight: 20 }}>
+                        {item.description}
+                      </ThemedText>
+
+                      {/* Resolution */}
+                      {item.resolution && (
+                        <View style={{ marginTop: 8, backgroundColor: '#F0F8FF', padding: 10, borderRadius: 8 }}>
+                          <ThemedText style={{ fontSize: 12, fontWeight: '600', color: '#003D5B', marginBottom: 2 }}>Phản hồi:</ThemedText>
+                          <ThemedText style={{ fontSize: 13, color: '#555' }}>{item.resolution}</ThemedText>
+                        </View>
+                      )}
+
+                      {/* Date */}
+                      <ThemedText style={{ fontSize: 11, color: '#BBB', marginTop: 8 }}>
+                        {new Date(item.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </ThemedText>
+                    </View>
+                  );
+                }}
+              />
+            )}
           </View>
         </View>
       </Modal>
