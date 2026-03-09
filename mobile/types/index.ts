@@ -50,6 +50,112 @@ export interface Locker {
 
 export type LockerStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
 
+// Locker Report
+export type LockerReportStatus = 'PENDING' | 'RESOLVED' | 'REJECTED';
+
+export interface LockerReport {
+  id: number;
+  userId: number;
+  lockerId: number;
+  description: string;
+  status: LockerReportStatus;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+export interface LockerReportRequest {
+  description: string;
+}
+
+export interface LockerReportResponse {
+  id: number;
+  userId: number;
+  userFullName: string;
+  userEmail: string;
+  userPhone: string;
+  lockerId: number;
+  lockerName: string;
+  description: string;
+  status: LockerReportStatus;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+// User Statistics
+export interface UserStatisticsResponse {
+  totalLaundryOrders: number;
+  totalStorageOrders: number;
+  totalAmountSpent: number;
+  totalVouchersUsed: number;
+}
+
+// Order Rating
+export interface OrderRatingRequest {
+  rating: number; // 1-5
+  comment?: string;
+  serviceRating?: number; // 1-5
+  speedRating?: number; // 1-5
+  staffRating?: number; // 1-5
+}
+
+export interface OrderRatingResponse {
+  id: number;
+  orderId: number;
+  userId: number;
+  userName: string;
+  userAvatar?: string;
+  rating: number;
+  comment?: string;
+  serviceRating?: number;
+  speedRating?: number;
+  staffRating?: number;
+  partnerResponse?: string;
+  createdAt: string;
+  respondedAt?: string;
+}
+
+// Order Timeline
+export interface OrderTimelineEvent {
+  status: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  icon?: string;
+  color?: string;
+  actor?: string;
+  metadata?: string;
+}
+
+export interface OrderTimelineResponse {
+  orderId: number;
+  currentStatus: string;
+  estimatedCompletion?: string;
+  progressPercentage: number;
+  events: OrderTimelineEvent[];
+  nextAction?: string;
+  nextActionActor?: string;
+}
+
+// Order Complaint
+export interface OrderComplaintRequest {
+  type: 'DAMAGED' | 'MISSING' | 'WRONG_ITEM' | 'QUALITY' | 'OTHER';
+  description: string;
+  imageUrls?: string[];
+}
+
+export interface OrderComplaintResponse {
+  id: number;
+  orderId: number;
+  userId: number;
+  type: string;
+  description: string;
+  imageUrls?: string[];
+  status: 'PENDING' | 'INVESTIGATING' | 'RESOLVED' | 'REJECTED';
+  resolution?: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
 // Box
 export interface Box {
   id: number;
@@ -317,6 +423,20 @@ export interface Payment {
 
 export type PaymentMethod = 'VNPAY' | 'MOMO' | 'CASH';
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'EXPIRED';
+export type RefundStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+
+export interface RefundResponse {
+  id: number;
+  paymentId: number;
+  orderId: number;
+  amount: number;
+  reason: string;
+  status: RefundStatus;
+  rejectionReason?: string;
+  processedBy?: number;
+  createdAt: string;
+  processedAt?: string;
+}
 
 export interface CreatePaymentRequest {
   orderId: number;

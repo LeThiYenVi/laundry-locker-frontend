@@ -1,4 +1,4 @@
-import type { ApiResponse, User } from '@/types';
+import type { ApiResponse, User, UserStatisticsResponse } from '@/types';
 import api from '../api';
 
 /**
@@ -62,6 +62,14 @@ export const removeFcmToken = async (fcmToken: string): Promise<ApiResponse<any>
     return response.data;
 };
 
+/**
+ * Get user statistics
+ */
+export const getUserStatistics = async (): Promise<ApiResponse<UserStatisticsResponse>> => {
+    const response = await api.get<ApiResponse<UserStatisticsResponse>>('/users/me/statistics');
+    return response.data;
+};
+
 export const userService = {
     getProfile,
     updateProfile,
@@ -69,6 +77,7 @@ export const userService = {
     changePassword,
     registerFcmToken,
     removeFcmToken,
+    getUserStatistics,
 };
 
 export default userService;

@@ -18,7 +18,7 @@ import api from '../api';
  */
 export const phoneLogin = async (idToken: string): Promise<ApiResponse<PhoneLoginResponse>> => {
     const payload: PhoneLoginRequest = { idToken };
-const response = await api.post<ApiResponse<PhoneLoginResponse>>('/auth/phone-login', payload);
+    const response = await api.post<ApiResponse<PhoneLoginResponse>>('/auth/phone-login', payload);
     return response.data;
 };
 
@@ -81,6 +81,26 @@ export const logout = async (token: string): Promise<ApiResponse<{ message: stri
     return response.data;
 };
 
+/**
+ * Forgot Password — sends OTP to email
+ */
+export const forgotPassword = async (email: string): Promise<ApiResponse<{ message: string }>> => {
+    const response = await api.post<ApiResponse<{ message: string }>>('/auth/forgot-password', { email });
+    return response.data;
+};
+
+/**
+ * Reset Password — verify OTP and set new password
+ */
+export const resetPassword = async (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+}): Promise<ApiResponse<{ message: string }>> => {
+    const response = await api.post<ApiResponse<{ message: string }>>('/auth/reset-password', data);
+    return response.data;
+};
+
 export const authService = {
     phoneLogin,
     completeRegistration,
@@ -89,6 +109,8 @@ export const authService = {
     emailCompleteRegistration,
     refreshToken,
     logout,
+    forgotPassword,
+    resetPassword,
 };
 
 export default authService;

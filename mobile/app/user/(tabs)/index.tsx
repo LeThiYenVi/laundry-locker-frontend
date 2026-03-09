@@ -311,6 +311,8 @@ export default function HomeScreen() {
                 closeTime: firstStore.closeTime,
                 latitude: firstStore.latitude,
                 longitude: firstStore.longitude,
+                image: firstStore.image,
+                imageUrl: firstStore.imageUrl,
               } as any
             })}
             activeOpacity={0.9}
@@ -482,22 +484,24 @@ const styles = StyleSheet.create({
   },
   notificationBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: 2,
+    right: 2,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: "#FF3B30",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 4,
     borderWidth: 2,
     borderColor: "#fff",
   },
   notificationBadgeText: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "bold",
     color: "#fff",
+    textAlign: "center",
+    textAlignVertical: "center",
+    includeFontPadding: false,
   },
   greetingTextContainer: {
     flex: 1,

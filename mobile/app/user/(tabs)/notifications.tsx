@@ -145,6 +145,32 @@ export default function NotificationsScreen() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (notifications.length === 0) return;
+    Alert.alert(
+      "Xóa tất cả thông báo",
+      "Bạn có chắc chắn muốn xóa tất cả thông báo? Hành động này không thể hoàn tác.",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa tất cả",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await notificationService.deleteAllNotifications();
+              if (response.success) {
+                setNotifications([]);
+                setUnreadCount(0);
+              }
+            } catch (error: any) {
+              Alert.alert("Lỗi", "Không thể xóa thông báo");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderNotificationItem = ({ item }: { item: Notification }) => {
     const iconInfo = getNotificationIcon(item.type);
     return (
@@ -215,11 +241,19 @@ export default function NotificationsScreen() {
             </View>
           )}
         </View>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={handleMarkAllAsRead}>
-            <ThemedText style={styles.markAllText}>Đánh dấu tất cả đã đọc</ThemedText>
-          </TouchableOpacity>
-        )}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          {unreadCount > 0 ? (
+            <TouchableOpacity onPress={handleMarkAllAsRead}>
+              <ThemedText style={styles.markAllText}>Đánh dấu tất cả đã đọc</ThemedText>
+            </TouchableOpacity>
+          ) : <View />}
+          {notifications.length > 0 && (
+            <TouchableOpacity onPress={handleDeleteAll} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Icon name="delete-sweep" type="material" size={16} color="#F44336" />
+              <ThemedText style={{ fontSize: 13, color: '#F44336', fontWeight: '600' }}>Xóa tất cả</ThemedText>
+            </TouchableOpacity>
+          )}
+        </View>
       </LinearGradient>
 
       {/* Notifications List */}

@@ -1,4 +1,4 @@
-import type { ApiResponse, CreateOrderRequest, Order, OrderTrackingDetail, PaginatedResponse, PaymentMethod } from '@/types';
+import type { ApiResponse, CreateOrderRequest, Order, OrderComplaintRequest, OrderComplaintResponse, OrderRatingRequest, OrderRatingResponse, OrderTimelineResponse, OrderTrackingDetail, PaginatedResponse, PaymentMethod } from '@/types';
 import api from '../api';
 
 /**
@@ -120,12 +120,92 @@ export const pickupStorageOrder = async (orderId: number): Promise<ApiResponse<O
     return response.data;
 };
 
+/**
+ * Reset Order PIN
+ * API: POST /api/v1/orders/{orderId}/reset-pin
+ */
+export const resetOrderPin = async (orderId: number): Promise<ApiResponse<Order>> => {
+    const response = await api.post<ApiResponse<Order>>(`/orders/${orderId}/reset-pin`);
+    return response.data;
+};
+
+/**
+ * Rate a completed order
+ * API: POST /api/v1/orders/{orderId}/rate
+ */
+export const rateOrder = async (
+    orderId: number,
+    data: OrderRatingRequest
+): Promise<ApiResponse<OrderRatingResponse>> => {
+    const response = await api.post<ApiResponse<OrderRatingResponse>>(`/orders/${orderId}/rate`, data);
+    return response.data;
+};
+
+/**
+ * Get order rating
+ * API: GET /api/v1/orders/{orderId}/rating
+ */
+export const getOrderRating = async (orderId: number): Promise<ApiResponse<OrderRatingResponse>> => {
+    const response = await api.get<ApiResponse<OrderRatingResponse>>(`/orders/${orderId}/rating`);
+    return response.data;
+};
+
+/**
+ * Get order timeline
+ * API: GET /api/v1/orders/{orderId}/timeline
+ */
+export const getOrderTimeline = async (orderId: number): Promise<ApiResponse<OrderTimelineResponse>> => {
+    const response = await api.get<ApiResponse<OrderTimelineResponse>>(`/orders/${orderId}/timeline`);
+    return response.data;
+};
+
+/**
+ * Get order by order code (e.g., ORD-20260202-ABC123)
+ * API: GET /api/v1/orders/code/{orderCode}
+ */
+export const getOrderByCode = async (orderCode: string): Promise<ApiResponse<Order>> => {
+    const response = await api.get<ApiResponse<Order>>(`/orders/code/${orderCode}`);
+    return response.data;
+};
+
+/**
+ * Create complaint for a completed order
+ * API: POST /api/v1/orders/{orderId}/complaint
+ */
+export const createComplaint = async (
+    orderId: number,
+    data: OrderComplaintRequest
+): Promise<ApiResponse<OrderComplaintResponse>> => {
+    const response = await api.post<ApiResponse<OrderComplaintResponse>>(`/orders/${orderId}/complaint`, data);
+    return response.data;
+};
+
+/**
+ * Get complaints for an order
+ * API: GET /api/v1/orders/{orderId}/complaints
+ */
+export const getOrderComplaints = async (orderId: number): Promise<ApiResponse<OrderComplaintResponse[]>> => {
+    const response = await api.get<ApiResponse<OrderComplaintResponse[]>>(`/orders/${orderId}/complaints`);
+    return response.data;
+};
+
+/**
+ * Get all complaints by current user
+ * API: GET /api/v1/orders/my-complaints
+ */
+export const getMyComplaints = async (): Promise<ApiResponse<OrderComplaintResponse[]>> => {
+    const response = await api.get<ApiResponse<OrderComplaintResponse[]>>('/orders/my-complaints');
+    return response.data;
+};
+
 export const orderService = {
     createOrder,
     getOrders,
     getOrderById,
     getOrderByPin,
+    getOrderByCode,
     getOrderStatus,
+    getOrderTimeline,
     confirmOrder,
     checkoutOrder,
     cancelOrder,
@@ -133,6 +213,12 @@ export const orderService = {
     removePromotion,
     completeOrder,
     pickupStorageOrder,
+    resetOrderPin,
+    rateOrder,
+    getOrderRating,
+    createComplaint,
+    getOrderComplaints,
+    getMyComplaints,
 };
 
 export default orderService;

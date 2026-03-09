@@ -4,10 +4,12 @@ import { lockerService, storeService } from "@/services/user";
 import { Box, Locker, Store } from "@/types";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Dimensions,
   Modal,
@@ -52,6 +54,12 @@ export default function LockersScreen() {
   // All stores modal state
   const [showAllStoresModal, setShowAllStoresModal] = useState(false);
   const [allStoresModalAnim] = useState(new Animated.Value(0));
+
+  // Report locker state
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportDescription, setReportDescription] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportLockerId, setReportLockerId] = useState<number | null>(null);
 
   // Fetch stores on mount
   const fetchStores = useCallback(async () => {
@@ -300,6 +308,41 @@ export default function LockersScreen() {
     }
   };
 
+  const handleReportLocker = () => {
+    if (!selectedLocker) return;
+    setReportLockerId(selectedLocker.id);
+    setReportDescription("");
+    setReportModalVisible(true);
+  };
+
+  const submitReport = async () => {
+    if (!reportLockerId) return;
+    if (!reportDescription.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập mô tả sự cố");
+      return;
+    }
+    setIsReporting(true);
+    try {
+      const response = await lockerService.reportLocker(reportLockerId, {
+        description: reportDescription.trim(),
+      });
+      if (response.success) {
+        setReportModalVisible(false);
+        setReportDescription("");
+        Alert.alert(
+          "Thành công",
+          "Báo cáo sự cố đã được gửi. Chúng tôi sẽ xử lý sớm nhất."
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to report locker:", err);
+      const msg = err?.response?.data?.message || "Không thể gửi báo cáo";
+      Alert.alert("Lỗi", msg);
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
   if (isLoadingStores) {
     return (
       <View style={styles.centerContainer}>
@@ -405,14 +448,23 @@ export default function LockersScreen() {
                   >
                     {/* Store Image with Gradient */}
                     <View style={styles.popularImageContainer}>
-                      <LinearGradient
-                        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.popularImage}
-                      >
-                        <Icon name="store" type="material" size={64} color="#003D5B" />
-                      </LinearGradient>
+                      {store.image || store.imageUrl ? (
+                        <Image
+                          source={{ uri: store.image || store.imageUrl }}
+                          style={styles.popularImage}
+                          contentFit="cover"
+                          transition={1000}
+                        />
+                      ) : (
+                        <LinearGradient
+                          colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.popularImage}
+                        >
+                          <Icon name="store" type="material" size={64} color="#003D5B" />
+                        </LinearGradient>
+                      )}
                       
                       {/* Overlay Badge */}
                       <View style={styles.overlayBadge}>
@@ -486,14 +538,23 @@ export default function LockersScreen() {
                   >
                     {/* Store Image */}
                     <View style={styles.recommendedImageContainer}>
-                      <LinearGradient
-                        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.recommendedImage}
-                      >
-                        <Icon name="store" type="material" size={40} color="#003D5B" />
-                      </LinearGradient>
+                      {store.image || store.imageUrl ? (
+                        <Image
+                          source={{ uri: store.image || store.imageUrl }}
+                          style={styles.recommendedImage}
+                          contentFit="cover"
+                          transition={1000}
+                        />
+                      ) : (
+                        <LinearGradient
+                          colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.recommendedImage}
+                        >
+                          <Icon name="store" type="material" size={40} color="#003D5B" />
+                        </LinearGradient>
+                      )}
                       
                       {/* Small Badge */}
                       <View style={[styles.smallBadge, { left: 8, right: undefined }]}>
@@ -768,6 +829,29 @@ export default function LockersScreen() {
                 </>
               )}
             </ScrollView>
+
+            {/* Report Issue Button */}
+            {selectedLocker && (
+              <TouchableOpacity
+                onPress={handleReportLocker}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  backgroundColor: '#FFF3E0',
+                  marginHorizontal: 20,
+                  marginBottom: 20,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#FFB74D',
+                }}
+              >
+                <Icon name="report-problem" type="material" size={20} color="#E65100" />
+                <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#E65100' }}>Báo cáo sự cố</ThemedText>
+              </TouchableOpacity>
+            )}
           </Animated.View>
         </View>
       </Modal>
@@ -828,14 +912,23 @@ export default function LockersScreen() {
                   >
                     {/* Store Image */}
                     <View style={styles.allStoreImageContainer}>
-                      <LinearGradient
-                        colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.allStoreImage}
-                      >
-                        <Icon name="store" type="material" size={48} color="#003D5B" />
-                      </LinearGradient>
+                      {store.image || store.imageUrl ? (
+                        <Image
+                          source={{ uri: store.image || store.imageUrl }}
+                          style={styles.allStoreImage}
+                          contentFit="cover"
+                          transition={1000}
+                        />
+                      ) : (
+                        <LinearGradient
+                          colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.allStoreImage}
+                        >
+                          <Icon name="store" type="material" size={48} color="#003D5B" />
+                        </LinearGradient>
+                      )}
                       
                       {/* Badge */}
                       <View style={styles.allStoreBadge}>
@@ -871,6 +964,103 @@ export default function LockersScreen() {
               </View>
             </ScrollView>
           </Animated.View>
+        </View>
+      </Modal>
+
+      {/* Report Locker Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={reportModalVisible}
+        onRequestClose={() => setReportModalVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+        }}>
+          <View style={{
+            width: '88%',
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            padding: 24,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            elevation: 8,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF3E0', justifyContent: 'center', alignItems: 'center' }}>
+                <Icon name="report-problem" type="material" size={22} color="#E65100" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={{ fontSize: 17, fontWeight: 'bold', color: '#333' }}>Báo cáo sự cố</ThemedText>
+                <ThemedText style={{ fontSize: 13, color: '#666' }}>{selectedLocker?.name || 'Tủ locker'}</ThemedText>
+              </View>
+              <TouchableOpacity onPress={() => setReportModalVisible(false)}>
+                <Icon name="close" type="material" size={24} color="#999" />
+              </TouchableOpacity>
+            </View>
+
+            <ThemedText style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>Mô tả sự cố *</ThemedText>
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: '#E0E0E0',
+                borderRadius: 12,
+                padding: 14,
+                fontSize: 14,
+                minHeight: 100,
+                textAlignVertical: 'top',
+                backgroundColor: '#FAFAFA',
+              }}
+              placeholder="Ví dụ: Tủ không mở được, màn hình bị lỗi..." 
+              placeholderTextColor="#BDBDBD"
+              multiline
+              numberOfLines={4}
+              value={reportDescription}
+              onChangeText={setReportDescription}
+              maxLength={500}
+            />
+            <ThemedText style={{ fontSize: 11, color: '#999', marginTop: 4, textAlign: 'right' }}>
+              {reportDescription.length}/500
+            </ThemedText>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+              <TouchableOpacity
+                onPress={() => setReportModalVisible(false)}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#F5F5F5',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                }}
+              >
+                <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#666' }}>Hủy</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={submitReport}
+                disabled={isReporting}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#E65100',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  opacity: isReporting ? 0.7 : 1,
+                }}
+              >
+                {isReporting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Gửi báo cáo</ThemedText>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
