@@ -445,6 +445,22 @@ export const partnerApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // Force collect order (skip access code / MQTT) → backend returns OrderResponse
+    forceCollectOrder: builder.mutation<PartnerOrder, number>({
+      query: (orderId) => ({
+        url: PARTNER_ENDPOINTS.ORDER_COLLECT(orderId),
+        method: "POST",
+      }),
+      transformResponse: (response: ApiResponse<BackendOrderResponse>) =>
+        mapOrderResponse(response.data),
+      invalidatesTags: (_result, _error, orderId) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
+        "Orders",
+        "Dashboard",
+      ],
+    }),
+
     // Start processing order → backend returns OrderResponse
     processOrder: builder.mutation<PartnerOrder, number>({
       query: (orderId) => ({
@@ -691,6 +707,7 @@ export const {
   useGetPendingOrdersQuery,
   useGetPartnerOrderByIdQuery,
   useAcceptOrderMutation,
+  useForceCollectOrderMutation,
   useUpdateOrderWeightMutation,
   useProcessOrderMutation,
   useMarkOrderReadyMutation,

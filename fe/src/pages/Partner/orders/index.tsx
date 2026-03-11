@@ -25,7 +25,7 @@ export default function PartnerOrders() {
     setWeightModal,
     submitWeight,
     accessCodeModal,
-    setAccessCodeModal,
+    handleAccessCodeModalClose,
     errorToast,
     setErrorToast,
     wsConnected,
@@ -130,7 +130,7 @@ export default function PartnerOrders() {
       {/* Access Code Modal */}
       <AccessCodeModal
         isOpen={accessCodeModal.open}
-        onClose={() => setAccessCodeModal((prev) => ({ ...prev, open: false }))}
+        onClose={handleAccessCodeModalClose}
         code={accessCodeModal.code}
         action={accessCodeModal.action}
       />

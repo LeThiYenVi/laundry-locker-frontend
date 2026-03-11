@@ -247,7 +247,18 @@
     },
     "settings": {
       "title": "Cài đặt",
-      "subtitle": "Quản lý tùy chọn ứng dụng"
+      "subtitle": "Quản lý tùy chọn ứng dụng",
+      "language": "Ngôn ngữ",
+      "languageHelp": "Chọn ngôn ngữ hiển thị",
+      "theme": "Giao diện",
+      "themeHelp": "Chuyển đổi sáng / tối / hệ thống",
+      "analytics": "Phân tích",
+      "analyticsHelp": "Gửi dữ liệu ẩn danh để cải thiện ứng dụng",
+      "devMode": "Chế độ dev",
+      "devModeHelp": "Hiện thêm thông tin debug",
+      "reset": "Đặt lại",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu..."
     },
     "notifications": {
       "title": "Quản lý thông báo",

@@ -127,9 +127,7 @@ export default function PartnerOrderDetail() {
     order.status === OrderStatus.COLLECTED ||
     order.status === OrderStatus.PROCESSING;
   const canProcess = order.status === OrderStatus.COLLECTED;
-  const canMarkReady =
-    order.status === OrderStatus.PROCESSING ||
-    order.status === ("PROCESSED" as string);
+  const canMarkReady = order.status === OrderStatus.PROCESSING;
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-8">

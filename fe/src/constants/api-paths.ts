@@ -183,6 +183,7 @@ export const PARTNER_ENDPOINTS = {
   ORDER_PROCESS: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/process`,
   ORDER_READY: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/ready`,
   ORDER_WEIGHT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/weight`,
+  ORDER_COLLECT: (id: number) => `${ROOT_URI.PARTNER}/orders/${id}/collect`,
   ORDER_STATISTICS: `${ROOT_URI.PARTNER}/orders/statistics`,
   ACCESS_CODES: `${ROOT_URI.PARTNER}/access-codes`,
   ACCESS_CODE_GENERATE: `${ROOT_URI.PARTNER}/access-codes/generate`,
