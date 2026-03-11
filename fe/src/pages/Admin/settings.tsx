@@ -1,9 +1,8 @@
 import * as React from "react";
-import { Card, CardContent, Button, Switch } from "~/components/ui";
+import { Button, Switch } from "~/components/ui";
 import LanguageSwitcher from "~/components/ui/LanguageSwitcher";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogFooter,
@@ -11,15 +10,7 @@ import {
   DialogDescription,
 } from "~/components/ui";
 import { useTranslation } from "react-i18next";
-import {
-  Globe,
-  SunMoon,
-  Save,
-  RefreshCw,
-  Sun,
-  Moon,
-  Monitor,
-} from "lucide-react";
+import { Globe, SunMoon, BarChart2, Code2, Save, RefreshCw, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "~/context/theme-context";
 
 type SettingsModalProps = {
@@ -39,7 +30,6 @@ export default function SettingsModal({
 
   const handleSave = () => {
     setSaving(true);
-    // placeholder for API save
     setTimeout(() => setSaving(false), 700);
   };
 
@@ -51,122 +41,88 @@ export default function SettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-0 bg-card opacity-100 shadow-lg ">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{t("admin.settings.title") || "Settings"}</DialogTitle>
-          <DialogDescription>
-            {t("admin.settings.subtitle") || "Manage application preferences"}
-          </DialogDescription>
+          <DialogTitle>{t("admin.settings.title")}</DialogTitle>
+          <DialogDescription>{t("admin.settings.subtitle")}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2  ">
-          <Card className="bg-card text-card-foreground border-border">
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Globe size={16} />{" "}
-                    {t("admin.settings.language") || "Language"}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t("admin.settings.languageHelp") || t("info.devHint")}
-                  </div>
-                </div>
-                <LanguageSwitcher />
+        <div className="divide-y divide-border">
+          {/* Language */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2.5">
+              <Globe size={16} className="text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">{t("admin.settings.language")}</p>
+                <p className="text-xs text-muted-foreground">{t("admin.settings.languageHelp")}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <LanguageSwitcher />
+          </div>
 
-          <Card className="bg-card text-card-foreground border-border ">
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <SunMoon size={16} /> {t("admin.settings.theme") || "Theme"}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t("admin.settings.themeHelp") ||
-                      "Toggle between light and dark modes"}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {(["light", "system", "dark"] as const).map((t_) => (
-                    <button
-                      key={t_}
-                      onClick={() => setTheme(t_)}
-                      title={t_}
-                      className={`p-1.5 rounded-md transition-colors ${
-                        theme === t_
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-muted-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {t_ === "light" && <Sun size={16} />}
-                      {t_ === "system" && <Monitor size={16} />}
-                      {t_ === "dark" && <Moon size={16} />}
-                    </button>
-                  ))}
-                </div>
+          {/* Theme */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2.5">
+              <SunMoon size={16} className="text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">{t("admin.settings.theme")}</p>
+                <p className="text-xs text-muted-foreground">{t("admin.settings.themeHelp")}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+              {(["light", "system", "dark"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setTheme(mode)}
+                  title={mode}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    theme === mode
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {mode === "light" && <Sun size={15} />}
+                  {mode === "system" && <Monitor size={15} />}
+                  {mode === "dark" && <Moon size={15} />}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <Card className="bg-card text-card-foreground border-border">
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">
-                    {t("admin.settings.analytics") || "Analytics"}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t("admin.settings.analyticsHelp") ||
-                      "Share anonymous usage data to help us improve."}
-                  </div>
-                </div>
-                <Switch
-                  checked={analytics}
-                  onCheckedChange={(v) => setAnalytics(!!v)}
-                />
+          {/* Analytics */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2.5">
+              <BarChart2 size={16} className="text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">{t("admin.settings.analytics")}</p>
+                <p className="text-xs text-muted-foreground">{t("admin.settings.analyticsHelp")}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <Switch checked={analytics} onCheckedChange={(v) => setAnalytics(!!v)} />
+          </div>
 
-          <Card className="bg-card text-card-foreground border-border">
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">
-                    {t("admin.settings.devMode") || "Developer mode"}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t("admin.settings.devModeHelp") || t("info.devHint")}
-                  </div>
-                </div>
-                <Switch
-                  checked={devMode}
-                  onCheckedChange={(v) => setDevMode(!!v)}
-                />
+          {/* Dev Mode */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2.5">
+              <Code2 size={16} className="text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">{t("admin.settings.devMode")}</p>
+                <p className="text-xs text-muted-foreground">{t("admin.settings.devModeHelp")}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <Switch checked={devMode} onCheckedChange={(v) => setDevMode(!!v)} />
+          </div>
         </div>
 
-        <DialogFooter>
-          <div className="flex items-center gap-2 w-full sm:justify-end">
-            <Button
-              variant="ghost"
-              onClick={handleReset}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw size={16} /> {t("admin.settings.reset") || "Reset"}
-            </Button>
-            <Button onClick={handleSave} className="flex items-center gap-2">
-              <Save size={16} />{" "}
-              {saving
-                ? t("admin.settings.saving") || "Saving..."
-                : t("admin.settings.save") || "Save changes"}
-            </Button>
-          </div>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="ghost" onClick={handleReset} className="gap-1.5">
+            <RefreshCw size={15} />
+            {t("admin.settings.reset")}
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+            <Save size={15} />
+            {saving ? t("admin.settings.saving") : t("admin.settings.save")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

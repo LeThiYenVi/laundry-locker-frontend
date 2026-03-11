@@ -245,7 +245,18 @@
     },
     "settings": {
       "title": "設定",
-      "subtitle": "アプリ設定の管理"
+      "subtitle": "アプリ設定の管理",
+      "language": "言語",
+      "languageHelp": "表示言語を選択",
+      "theme": "テーマ",
+      "themeHelp": "ライト / ダーク / システムを切替",
+      "analytics": "分析",
+      "analyticsHelp": "アプリ改善のため匿名データを送信",
+      "devMode": "開発者モード",
+      "devModeHelp": "デバッグ情報を表示",
+      "reset": "リセット",
+      "save": "変更を保存",
+      "saving": "保存中..."
     },
     "notifications": {
       "title": "通知管理",

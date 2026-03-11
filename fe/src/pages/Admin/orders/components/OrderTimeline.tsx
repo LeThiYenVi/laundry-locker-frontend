@@ -1,12 +1,12 @@
 import {
   CheckCircle2,
-  Circle,
   Clock,
   Package,
   Truck,
   RotateCcw,
   Box,
   XCircle,
+  CircleDashed,
 } from "lucide-react";
 import { OrderStatus } from "~/types/admin/enums";
 
@@ -26,7 +26,7 @@ interface OrderTimelineProps {
   order: Order;
 }
 
-const statusOrder = [
+const STATUS_FLOW = [
   OrderStatus.INITIALIZED,
   OrderStatus.RESERVED,
   OrderStatus.WAITING,
@@ -35,193 +35,144 @@ const statusOrder = [
   OrderStatus.READY,
   OrderStatus.RETURNED,
   OrderStatus.COMPLETED,
-  OrderStatus.CANCELED,
 ];
 
-const statusConfig: Record<
+const STATUS_META: Record<
   OrderStatus,
-  { label: string; icon: React.ElementType; description: string }
+  { label: string; icon: React.ElementType }
 > = {
-  [OrderStatus.INITIALIZED]: {
-    label: "Khởi tạo",
-    icon: Clock,
-    description: "Đơn hàng được tạo",
-  },
-  [OrderStatus.RESERVED]: {
-    label: "Đã đặt",
-    icon: Package,
-    description: "Đã đặt chỗ",
-  },
-  [OrderStatus.WAITING]: {
-    label: "Chờ thu gom",
-    icon: Truck,
-    description: "Chờ staff đến thu gom",
-  },
-  [OrderStatus.COLLECTED]: {
-    label: "Đã thu gom",
-    icon: CheckCircle2,
-    description: "Staff đã lấy đồ từ tủ",
-  },
-  [OrderStatus.PROCESSING]: {
-    label: "Đang xử lý",
-    icon: RotateCcw,
-    description: "Đang giặt/ủi/xử lý",
-  },
-  [OrderStatus.READY]: {
-    label: "Sẵn sàng",
-    icon: CheckCircle2,
-    description: "Đã giặt xong, chờ trả",
-  },
-  [OrderStatus.RETURNED]: {
-    label: "Đã trả",
-    icon: Box,
-    description: "Đã trả đồ vào tủ",
-  },
-  [OrderStatus.COMPLETED]: {
-    label: "Hoàn thành",
-    icon: CheckCircle2,
-    description: "Khách đã lấy đồ",
-  },
-  [OrderStatus.CANCELED]: {
-    label: "Đã hủy",
-    icon: XCircle,
-    description: "Đơn hàng bị hủy",
-  },
+  [OrderStatus.INITIALIZED]: { label: "Khởi tạo", icon: Clock },
+  [OrderStatus.RESERVED]:    { label: "Đã đặt",    icon: Package },
+  [OrderStatus.WAITING]:     { label: "Chờ thu",   icon: Truck },
+  [OrderStatus.COLLECTED]:   { label: "Đã thu",    icon: CheckCircle2 },
+  [OrderStatus.PROCESSING]:  { label: "Xử lý",     icon: RotateCcw },
+  [OrderStatus.READY]:       { label: "Sẵn sàng",  icon: CheckCircle2 },
+  [OrderStatus.RETURNED]:    { label: "Đã trả",    icon: Box },
+  [OrderStatus.COMPLETED]:   { label: "Hoàn thành",icon: CheckCircle2 },
+  [OrderStatus.CANCELED]:    { label: "Đã hủy",    icon: XCircle },
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("vi-VN", {
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
-    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
-};
 
 export function OrderTimeline({ order }: OrderTimelineProps) {
-  const timeline = order.timeline || [];
-  
-  // Build timeline from events or generate from current status
-  const getTimelineEvents = (): OrderTimelineEvent[] => {
-    if (timeline.length > 0) {
-      return timeline;
-    }
-    
-    // Generate basic timeline from status
-    const events: OrderTimelineEvent[] = [
-      { status: OrderStatus.INITIALIZED, timestamp: order.createdAt },
-    ];
-    
-    const currentIndex = statusOrder.indexOf(order.status);
-    if (currentIndex > 0) {
-      for (let i = 1; i <= currentIndex; i++) {
-        events.push({
-          status: statusOrder[i],
-          timestamp: order.createdAt, // Placeholder
-        });
-      }
-    }
-    
-    return events;
-  };
-
-  const events = getTimelineEvents();
   const isCanceled = order.status === OrderStatus.CANCELED;
+  const currentIdx = STATUS_FLOW.indexOf(order.status);
+
+  const events: OrderTimelineEvent[] =
+    order.timeline && order.timeline.length > 0
+      ? order.timeline
+      : [{ status: OrderStatus.INITIALIZED, timestamp: order.createdAt ?? "" }];
 
   return (
-    <div className="space-y-0">
-      {events.map((event, index) => {
-        const config = statusConfig[event.status];
-        const Icon = config.icon;
-        const isLast = index === events.length - 1;
-        const isActive = index === events.length - 1 && !isCanceled;
-
-        return (
-          <div key={index} className="flex gap-4">
-            {/* Timeline line and icon */}
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : isCanceled && isLast
-                    ? "bg-red-100 text-red-600"
-                    : "bg-muted/50 text-muted-foreground"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-              </div>
-              {!isLast && (
-                <div className="w-0.5 h-full bg-muted my-2" />
-              )}
-            </div>
-
-            {/* Content */}
-            <div className={`pb-8 ${isLast ? "" : ""}`}>
-              <div className="flex items-center gap-2">
-                <h4
-                  className={`font-medium ${
-                    isActive
-                      ? "text-blue-600"
-                      : isCanceled && isLast
-                      ? "text-red-600"
-                      : "text-foreground"
-                  }`}
-                >
-                  {config.label}
-                </h4>
-                {isActive && (
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    Hiện tại
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">{config.description}</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
-                {formatDate(event.timestamp)}
-              </p>
-              {event.note && (
-                <p className="text-sm text-muted-foreground mt-1 italic">
-                  "{event.note}"
-                </p>
-              )}
-            </div>
+    <div className="space-y-4">
+      {/* Horizontal stepper */}
+      {isCanceled ? (
+        <div className="flex items-center gap-2 px-1">
+          <div className="flex items-center gap-1.5 text-red-600">
+            <XCircle className="h-5 w-5 shrink-0" />
+            <span className="text-sm font-medium">Đơn hàng đã bị hủy</span>
           </div>
-        );
-      })}
-
-      {/* Future steps (if not canceled) */}
-      {!isCanceled && order.status !== OrderStatus.COMPLETED && (
-        <>
-          {statusOrder
-            .slice(statusOrder.indexOf(order.status) + 1)
-            .map((status, index) => {
-              const config = statusConfig[status];
-              const Icon = config.icon;
-              const isLastFuture =
-                index ===
-                statusOrder.slice(statusOrder.indexOf(order.status) + 1).length -
-                  1;
+        </div>
+      ) : (
+        <div className="overflow-x-auto pb-1">
+          <div className="flex items-center min-w-max px-1 gap-0">
+            {STATUS_FLOW.map((status, idx) => {
+              const meta = STATUS_META[status];
+              const Icon = meta.icon;
+              const done = idx < currentIdx;
+              const active = idx === currentIdx;
+              const future = idx > currentIdx;
 
               return (
-                <div key={`future-${index}`} className="flex gap-4 opacity-50">
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-full bg-muted/50 text-muted-foreground/70 flex items-center justify-center border-2 border-dashed border-border/70">
-                      <Icon className="h-5 w-5" />
+                <div key={status} className="flex items-center">
+                  {/* Step node */}
+                  <div className="flex flex-col items-center gap-1 w-16">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : done
+                            ? "bg-primary/20 text-primary"
+                            : "bg-muted/50 text-muted-foreground/40"
+                      }`}
+                    >
+                      {future ? (
+                        <CircleDashed className="h-4 w-4" />
+                      ) : (
+                        <Icon className="h-4 w-4" />
+                      )}
                     </div>
-                    {!isLastFuture && (
-                      <div className="w-0.5 h-full bg-muted my-2" />
-                    )}
+                    <span
+                      className={`text-[10px] text-center leading-tight ${
+                        active
+                          ? "text-primary font-semibold"
+                          : done
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground/40"
+                      }`}
+                    >
+                      {meta.label}
+                    </span>
                   </div>
-                  <div className="pb-8">
-                    <h4 className="font-medium text-muted-foreground/70">{config.label}</h4>
-                    <p className="text-sm text-muted-foreground/70">{config.description}</p>
+
+                  {/* Connector line */}
+                  {idx < STATUS_FLOW.length - 1 && (
+                    <div
+                      className={`h-0.5 w-4 mb-4 ${
+                        idx < currentIdx ? "bg-primary/30" : "bg-muted/50"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Compact event log — only if real timeline data exists */}
+      {order.timeline && order.timeline.length > 0 && (
+        <div className="border-t border-border/30 pt-3">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {events.map((event, idx) => {
+              const meta = STATUS_META[event.status];
+              const Icon = meta.icon;
+              const isActive = idx === events.length - 1;
+              return (
+                <div key={idx} className="flex items-start gap-2">
+                  <Icon
+                    className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${
+                      isActive ? "text-primary" : "text-muted-foreground/50"
+                    }`}
+                  />
+                  <div>
+                    <p
+                      className={`text-xs font-medium ${
+                        isActive ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {meta.label}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/60">
+                      {formatDate(event.timestamp)}
+                    </p>
+                    {event.note && (
+                      <p className="text-[10px] text-muted-foreground/60 italic">
+                        {event.note}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
             })}
-        </>
+          </div>
+        </div>
       )}
     </div>
   );

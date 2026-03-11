@@ -6,7 +6,6 @@ export const STATUS_LABELS: Record<string, string> = {
   WAITING: "Chờ lấy đồ",
   COLLECTED: "Đã lấy",
   PROCESSING: "Đang giặt",
-  PROCESSED: "Giặt xong",
   READY: "Sẵn sàng trả",
   RETURNED: "Đã trả",
   COMPLETED: "Hoàn thành",

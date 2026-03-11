@@ -69,7 +69,7 @@ const getStatusBadge = (
       labelKey: "admin.notifications.status.archived",
     },
   };
-  const variant = variants[status];
+  const variant = variants[status] ?? variants[NotificationStatus.UNREAD];
   const Icon = variant.icon;
   return (
     <Badge

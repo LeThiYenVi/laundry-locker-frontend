@@ -110,7 +110,7 @@ export function Sidebar({
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed left-0 top-0 h-screen bg-sidebar-background flex flex-col z-50 rounded-r-md shadow-2xl",
+          "fixed left-0 top-0 h-screen bg-sidebar-background flex flex-col z-50",
           isTablet && !isMobileOpen && "overflow-hidden",
         )}
       >
@@ -225,31 +225,33 @@ export function Sidebar({
         </nav>
 
         {/* User Section */}
-        <div className="p-3 border-t border-sidebar-border space-y-2">
-          {/* Settings */}
-          <button
-            onClick={onSettingsClick}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all",
-              "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
-              !isExpanded && !isMobileOpen && "justify-center",
-            )}
-          >
-            <Settings size={20} />
-            <AnimatePresence mode="wait">
-              {(isExpanded || isMobileOpen) && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="font-medium whitespace-nowrap overflow-hidden"
-                >
-                  {t("admin.sidebar.settings")}
-                </motion.span>
+        <div className="p-3 space-y-2">
+          {/* Settings — only shown when caller provides onSettingsClick */}
+          {onSettingsClick && (
+            <button
+              onClick={onSettingsClick}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all",
+                "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+                !isExpanded && !isMobileOpen && "justify-center",
               )}
-            </AnimatePresence>
-          </button>
+            >
+              <Settings size={20} />
+              <AnimatePresence mode="wait">
+                {(isExpanded || isMobileOpen) && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="font-medium whitespace-nowrap overflow-hidden"
+                  >
+                    {t("admin.sidebar.settings")}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          )}
 
           {/* Logout */}
           <button

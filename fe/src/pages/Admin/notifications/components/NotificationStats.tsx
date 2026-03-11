@@ -1,4 +1,4 @@
-import { Bell, CheckCheck, Archive, TrendingUp, Mail } from "lucide-react";
+import { Bell, BellOff, CheckCheck, Archive, TrendingUp, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "~/components/ui/card";
 import type { NotificationStatsResponse } from "~/types/admin/notification";
@@ -59,7 +59,7 @@ export function NotificationStats({ stats, isLoading }: NotificationStatsProps) 
       <StatCard
         title={t("admin.notifications.stats.unread")}
         value={stats?.unreadCount ?? 0}
-        icon={Bell}
+        icon={BellOff}
         isLoading={isLoading}
       />
       <StatCard
@@ -83,7 +83,7 @@ export function NotificationStats({ stats, isLoading }: NotificationStatsProps) 
       <StatCard
         title={t("admin.notifications.stats.avgReadTime")}
         value={stats?.averageReadTime != null ? `${stats.averageReadTime}m` : "—"}
-        icon={Mail}
+        icon={Clock}
         isLoading={isLoading}
         description={t("admin.notifications.stats.minutes")}
       />
