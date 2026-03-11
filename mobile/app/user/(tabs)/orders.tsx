@@ -1,9 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
 import { orderService, paymentService } from "@/services/user";
-import { Order, OrderRatingRequest, OrderRatingResponse, OrderComplaintRequest, OrderComplaintResponse } from "@/types";
-import { Icon } from "@rneui/themed";
+import { Order, OrderRatingRequest, OrderRatingResponse, OrderComplaintRequest, OrderComplaintResponse, RefundResponse } from "@/types";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, memo } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +11,7 @@ import {
   Modal,
   RefreshControl,
   ScrollView,
+  FlatList,
   StatusBar,
   StyleSheet,
   TextInput,
@@ -20,6 +21,222 @@ import {
 
 type OrderFilter = "ALL" | "INITIALIZED" | "WAITING" | "PROCESSING" | "COMPLETED";
 
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case "INITIALIZED": return "#2196F3"; // Blue
+    case "WAITING": return "#FF9800"; // Orange
+    case "COLLECTED": return "#9C27B0"; // Purple
+    case "PROCESSING": return "#FF5722"; // Deep Orange
+    case "READY": return "#00BCD4"; // Cyan
+    case "RETURNED": return "#4CAF50"; // Green
+    case "COMPLETED": return "#4CAF50"; // Green
+    case "CANCELED": return "#9E9E9E"; // Gray
+    default: return "#666";
+  }
+};
+
+const getStatusGradient = (status: string): string[] => {
+  switch (status) {
+    case "INITIALIZED": return ["#4A90E2", "#357ABD"];
+    case "WAITING": return ["#FF9800", "#F57C00"];
+    case "COLLECTED": return ["#9C27B0", "#7B1FA2"];
+    case "PROCESSING": return ["#FF5722", "#E64A19"];
+    case "READY": return ["#00BCD4", "#0097A7"];
+    case "RETURNED": return ["#4CAF50", "#388E3C"];
+    case "COMPLETED": return ["#4CAF50", "#388E3C"];
+    case "CANCELED": return ["#9E9E9E", "#757575"];
+    default: return ["#66", "#444"];
+  }
+};
+
+const getStatusText = (status: string, type?: string): string => {
+  switch (status) {
+    case "INITIALIZED": return "Khởi tạo";
+    case "WAITING": return type === "STORAGE" ? "Đang lưu trữ" : "Chờ thu gom";
+    case "COLLECTED": return "Đã thu gom";
+    case "PROCESSING": return "Đang giặt";
+    case "READY": return "Sẵn sàng";
+    case "RETURNED": return "Đã trả";
+    case "COMPLETED": return "Hoàn thành";
+    case "CANCELED": return "Đã hủy";
+    default: return status;
+  }
+};
+
+const formatDate = (dateString?: string): string => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+};
+
+const formatPrice = (price: number | undefined | null): string => {
+  if (price === undefined || price === null || isNaN(price)) return "0 ₫";
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency", currency: "VND",
+  }).format(price);
+};
+
+// Extract Memoized component for better FlatList performance
+interface MemoizedOrderCardProps {
+  order: Order;
+  orderRatingsMap: Record<number, any>;
+  handleOrderPress: (orderId: number) => void;
+  getStatusColor: (status: string) => string;
+  getStatusText: (status: string, type?: string) => string;
+  formatDate: (dateString?: string) => string;
+  formatPrice: (price: number | undefined | null) => string;
+  handleTrackOrder: (orderId: number) => void;
+  handleConfirmOrder: (orderId: number) => void;
+  handleCancelOrder: (orderId: number) => void;
+}
+
+const MemoizedOrderCard = memo(({ 
+  order, 
+  orderRatingsMap, 
+  handleOrderPress, 
+  getStatusColor, 
+  getStatusText, 
+  formatDate, 
+  formatPrice, 
+  handleTrackOrder, 
+  handleConfirmOrder, 
+  handleCancelOrder, 
+}: MemoizedOrderCardProps) => {
+  return (
+    <TouchableOpacity 
+      style={styles.modernCard}
+      onPress={() => handleOrderPress(order.id)}
+      activeOpacity={0.8}
+    >
+      {/* Top Accent Line */}
+      <View style={[styles.cardAccentTop, { backgroundColor: getStatusColor(order.status) }]} />
+
+      {/* Header: ID + Status */}
+      <View style={styles.cardHeader}>
+        <View style={styles.cardHeaderLeft}>
+          <ThemedText style={styles.modernOrderNumber} numberOfLines={1}>
+            {order.orderCode || `Đơn #${order.id}`}
+          </ThemedText>
+          {order.type && (
+            <View style={[styles.modernTypeBadge, { backgroundColor: order.type === 'LAUNDRY' ? '#E3F2FD' : '#FFF3E0' }]}>
+              <ThemedText style={{fontSize: 12}}>
+                {order.type === 'LAUNDRY' ? '🧺' : '📦'}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+        <View style={[styles.modernStatusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+            <ThemedText style={styles.modernStatusText} numberOfLines={1} adjustsFontSizeToFit={true}>
+              {getStatusText(order.status, order.type)}
+            </ThemedText>
+        </View>
+      </View>
+
+      <View style={styles.modernCardDivider} />
+
+      {/* Body: Order Details */}
+      <View style={styles.cardBody}>
+        {/* Info Row 1 */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoColumn}>
+            <View style={styles.infoLabelRow}>
+               <Icon name="location-on" size={12} color="#888" />
+               <ThemedText style={styles.infoLabel}>Tủ đồ</ThemedText>
+            </View>
+            <ThemedText style={styles.infoValue} numberOfLines={1}>
+               {order.locker?.name || order.lockerName || "N/A"}
+            </ThemedText>
+          </View>
+          
+          <View style={styles.infoColumn}>
+            <View style={styles.infoLabelRow}>
+               <Icon name="list" size={12} color="#888" />
+               <ThemedText style={styles.infoLabel}>Dịch vụ</ThemedText>
+            </View>
+            <ThemedText style={styles.infoValue}>
+               {order.orderDetails?.length || order.items?.length || order.services?.length || 0} món
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Info Row 2 */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoColumn}>
+            <View style={styles.infoLabelRow}>
+               <Icon name="payments" size={12} color="#888" />
+               <ThemedText style={styles.infoLabel}>Tổng tiền</ThemedText>
+            </View>
+            <ThemedText style={[styles.infoValue, { color: '#003D5B', fontWeight: 'bold' }]}>
+               {formatPrice(order.totalPrice || order.totalAmount || order.actualPrice || (typeof order.estimatedPrice === 'number' ? order.estimatedPrice : 0))}
+            </ThemedText>
+          </View>
+
+          {/* Optional PIN space if available */}
+          {order.pin ? (
+            <View style={styles.infoColumn}>
+              <View style={[styles.infoLabelRow, styles.pinHighlightBg]}>
+                 <Icon name="lock" size={12} color="#E65100" />
+                 <ThemedText style={styles.pinHighlightLabel}>Mã PIN</ThemedText>
+              </View>
+              <ThemedText style={styles.pinHighlightValue}>{order.pin}</ThemedText>
+            </View>
+          ) : (
+            <View style={styles.infoColumn}>
+              <View style={styles.infoLabelRow}>
+                 <Icon name="person" size={12} color="#888" />
+                 <ThemedText style={styles.infoLabel}>Người gửi</ThemedText>
+              </View>
+              <ThemedText style={styles.infoValue} numberOfLines={1}>
+                 {order.senderName || "N/A"}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Footer: Time + Actions */}
+      <View style={styles.cardFooter}>
+         <View style={styles.cardTimeBox}>
+            <Icon name="schedule" size={12} color="#888" />
+            <ThemedText style={styles.cardTimeText}>{formatDate(order.createdAt)}</ThemedText>
+         </View>
+         
+         <View style={styles.cardActions}>
+            {order.status !== "CANCELED" && order.type !== "STORAGE" && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: '#E3F2FD' }]}
+                  onPress={() => handleTrackOrder(order.id)}
+                >
+                   <ThemedText style={[styles.actionBtnText, { color: '#1976D2' }]}>Theo dõi</ThemedText>
+                </TouchableOpacity>
+            )}
+            
+            {order.status === "INITIALIZED" && (
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: '#E8F5E9' }]}
+                onPress={() => handleConfirmOrder(order.id)}
+              >
+                <ThemedText style={[styles.actionBtnText, { color: '#2E7D32' }]}>Xác nhận</ThemedText>
+              </TouchableOpacity>
+            )}
+
+            {(order.status === "WAITING" && order.type !== "STORAGE" || order.status === "COLLECTED") && (
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: '#FFEBEE' }]}
+                onPress={() => handleCancelOrder(order.id)}
+              >
+                <ThemedText style={[styles.actionBtnText, { color: '#C62828' }]}>Hủy đơn</ThemedText>
+              </TouchableOpacity>
+            )}
+         </View>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -27,6 +244,9 @@ export default function OrdersScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   
   // Order detail modal state
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -46,6 +266,20 @@ export default function OrdersScreen() {
   const [complaintDesc, setComplaintDesc] = useState("");
   const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
 
+  // Refund state
+  const [orderRefunds, setOrderRefunds] = useState<RefundResponse[]>([]);
+  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
+
+  // Reorder state
+  const [isReordering, setIsReordering] = useState(false);
+
+  // Timeline detail state
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [showTimelineDetail, setShowTimelineDetail] = useState(false);
+  const [isLoadingTimeline, setIsLoadingTimeline] = useState(false);
+
   const filters: { value: OrderFilter; label: string }[] = [
     { value: "ALL", label: "Tất cả" },
     { value: "INITIALIZED", label: "Khởi tạo" },
@@ -54,7 +288,9 @@ export default function OrdersScreen() {
     { value: "COMPLETED", label: "Hoàn thành" },
   ];
 
-  const fetchOrders = useCallback(async (isRefresh = false) => {
+  const [orderRatingsMap, setOrderRatingsMap] = useState<Record<number, any>>({});
+
+  const fetchOrders = useCallback(async (page: number = 0, isRefresh = false) => {
     try {
       if (isRefresh) {
         setIsRefreshing(true);
@@ -63,12 +299,23 @@ export default function OrdersScreen() {
       }
       setError(null);
 
-      const response = await orderService.getOrders();
+      const [response, ratingsRes] = await Promise.all([
+        orderService.getOrders(page, 10),
+        orderService.getMyRatings().catch(() => ({ success: false, data: [] }))
+      ]);
+
       if (response.success && response.data) {
         // API returns PaginatedResponse<Order>
         const ordersList = response.data.content || [];
-        console.log("Orders Data:", JSON.stringify(ordersList, null, 2));
         setOrders(ordersList);
+        setCurrentPage(response.data.number ?? 0);
+        setTotalPages(response.data.totalPages ?? 1);
+      }
+
+      if (ratingsRes.success && ratingsRes.data) {
+        const rMap: Record<number, any> = {};
+        ratingsRes.data.forEach((r: any) => { rMap[r.orderId] = r; });
+        setOrderRatingsMap(rMap);
       }
     } catch (err: any) {
       setError(err.message || "Không thể tải danh sách đơn hàng");
@@ -79,7 +326,7 @@ export default function OrdersScreen() {
   }, []);
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(0);
   }, [fetchOrders]);
 
   useEffect(() => {
@@ -91,96 +338,7 @@ export default function OrdersScreen() {
     }
   }, [orders, selectedFilter]);
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "INITIALIZED":
-        return "#2196F3"; // Blue
-      case "WAITING":
-        return "#FF9800"; // Orange
-      case "COLLECTED":
-        return "#9C27B0"; // Purple
-      case "PROCESSING":
-        return "#FF5722"; // Deep Orange
-      case "READY":
-        return "#00BCD4"; // Cyan
-      case "RETURNED":
-        return "#4CAF50"; // Green
-      case "COMPLETED":
-        return "#4CAF50"; // Green
-      case "CANCELED":
-        return "#9E9E9E"; // Gray
-      default:
-        return "#666";
-    }
-  };
-
-  const getStatusGradient = (status: string): string[] => {
-    switch (status) {
-      case "INITIALIZED":
-        return ["#4A90E2", "#357ABD"];
-      case "WAITING":
-        return ["#FF9800", "#F57C00"];
-      case "COLLECTED":
-        return ["#9C27B0", "#7B1FA2"];
-      case "PROCESSING":
-        return ["#FF5722", "#E64A19"];
-      case "READY":
-        return ["#00BCD4", "#0097A7"];
-      case "RETURNED":
-        return ["#4CAF50", "#388E3C"];
-      case "COMPLETED":
-        return ["#4CAF50", "#388E3C"];
-      case "CANCELED":
-        return ["#9E9E9E", "#757575"];
-      default:
-        return ["#666", "#444"];
-    }
-  };
-
-  const getStatusText = (status: string, type?: string): string => {
-    switch (status) {
-      case "INITIALIZED":
-        return "Khởi tạo";
-      case "WAITING":
-        return type === "STORAGE" ? "Đang lưu trữ" : "Chờ thu gom";
-      case "COLLECTED":
-        return "Đã thu gom";
-      case "PROCESSING":
-        return "Đang giặt";
-      case "READY":
-        return "Sẵn sàng";
-      case "RETURNED":
-        return "Đã trả";
-      case "COMPLETED":
-        return "Hoàn thành";
-      case "CANCELED":
-        return "Đã hủy";
-      default:
-        return status;
-    }
-  };
-
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatPrice = (price: number | undefined | null): string => {
-    if (price === undefined || price === null || isNaN(price)) return "0 ₫";
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
-  };
-
-  const handleOrderPress = async (orderId: number) => {
+  const handleOrderPress = useCallback(async (orderId: number) => {
     try {
       setIsLoadingDetail(true);
       setShowDetailModal(true);
@@ -193,6 +351,10 @@ export default function OrdersScreen() {
       setShowComplaintForm(false);
       setComplaintType('DAMAGED');
       setComplaintDesc("");
+      // Reset refund state
+      setOrderRefunds([]);
+      setShowRefundForm(false);
+      setRefundReason("");
       
       const response = await orderService.getOrderById(orderId);
       if (response.success && response.data) {
@@ -218,6 +380,17 @@ export default function OrdersScreen() {
             // No complaints — fine
           }
         }
+        // Fetch refund data for CANCELED orders that were paid
+        if (response.data.status === 'CANCELED' && response.data.payment?.status === 'COMPLETED') {
+          try {
+            const refundRes = await paymentService.getOrderRefunds(orderId);
+            if (refundRes.success && refundRes.data) {
+              setOrderRefunds(refundRes.data);
+            }
+          } catch {
+            // No refunds — fine
+          }
+        }
       }
     } catch (err: any) {
       console.error('Failed to fetch order details:', err);
@@ -226,7 +399,7 @@ export default function OrdersScreen() {
     } finally {
       setIsLoadingDetail(false);
     }
-  };
+  }, []);
 
   const handleSubmitComplaint = async () => {
     if (!selectedOrder) return;
@@ -254,7 +427,7 @@ export default function OrdersScreen() {
     }
   };
 
-  const handleConfirmOrder = async (orderId: number) => {
+  const handleConfirmOrder = useCallback(async (orderId: number) => {
     Alert.alert(
       "Xác nhận gửi đồ",
       "Bạn xác nhận đã đặt đồ vào tủ locker?",
@@ -267,7 +440,7 @@ export default function OrdersScreen() {
               const response = await orderService.confirmOrder(orderId);
               if (response.success) {
                 Alert.alert("Thành công", "Đơn hàng đã được xác nhận!");
-                fetchOrders(true);
+                fetchOrders(0, true);
                 setShowDetailModal(false);
               }
             } catch (err: any) {
@@ -278,9 +451,23 @@ export default function OrdersScreen() {
         },
       ]
     );
-  };
+  }, [fetchOrders]);
 
-  const handleCancelOrder = async (orderId: number) => {
+  const executeCancelOrder = useCallback(async (orderId: number, reason: string) => {
+    try {
+      const response = await orderService.cancelOrder(orderId, reason);
+      if (response.success) {
+        Alert.alert("Đã hủy", "Đơn hàng đã được hủy thành công.");
+        fetchOrders(0, true);
+        setShowDetailModal(false);
+      }
+    } catch (err: any) {
+      console.error("Failed to cancel order:", err);
+      Alert.alert("Lỗi", err?.response?.data?.message || "Không thể hủy đơn hàng");
+    }
+  }, [fetchOrders]);
+
+  const handleCancelOrder = useCallback(async (orderId: number) => {
     Alert.alert(
       "Hủy đơn hàng",
       "Vui lòng chọn lý do hủy:",
@@ -300,21 +487,7 @@ export default function OrdersScreen() {
         },
       ]
     );
-  };
-
-  const executeCancelOrder = async (orderId: number, reason: string) => {
-    try {
-      const response = await orderService.cancelOrder(orderId, reason);
-      if (response.success) {
-        Alert.alert("Đã hủy", "Đơn hàng đã được hủy thành công.");
-        fetchOrders(true);
-        setShowDetailModal(false);
-      }
-    } catch (err: any) {
-      console.error("Failed to cancel order:", err);
-      Alert.alert("Lỗi", err?.response?.data?.message || "Không thể hủy đơn hàng");
-    }
-  };
+  }, [executeCancelOrder]);
 
   const handlePickupStorage = async (orderId: number) => {
     Alert.alert(
@@ -333,7 +506,7 @@ export default function OrdersScreen() {
                   "Tủ locker đã được mở! Vui lòng lấy đồ của bạn.",
                   [{ text: "OK" }]
                 );
-                fetchOrders(true);
+                fetchOrders(0, true);
                 setShowDetailModal(false);
               }
             } catch (err: any) {
@@ -391,7 +564,7 @@ export default function OrdersScreen() {
                   "Thành công",
                   `Mã PIN mới: ${response.data.pinCode || response.data.pin}`,
                 );
-                fetchOrders(true);
+                fetchOrders(0, true);
               }
             } catch (err: any) {
               console.error("Failed to reset PIN:", err);
@@ -404,12 +577,106 @@ export default function OrdersScreen() {
     );
   };
 
+  const handleReorder = async (orderId: number) => {
+    Alert.alert(
+      "Đặt lại đơn hàng",
+      "Tạo đơn hàng mới với cùng dịch vụ và tủ locker?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Đặt lại",
+          onPress: async () => {
+            setIsReordering(true);
+            try {
+              const response = await orderService.reorderFromExisting(orderId);
+              if (response.success && response.data) {
+                Alert.alert(
+                  "Thành công",
+                  `Đơn hàng mới #${response.data.id} đã được tạo!\nMã PIN: ${response.data.pinCode || response.data.pin || 'N/A'}`,
+                  [{ text: "OK", onPress: () => {
+                    setShowDetailModal(false);
+                    fetchOrders(0, true);
+                  }}]
+                );
+              }
+            } catch (err: any) {
+              const msg = err?.response?.data?.message || 'Không thể đặt lại đơn hàng';
+              Alert.alert('Lỗi', msg);
+            } finally {
+              setIsReordering(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRequestRefund = async () => {
+    if (!selectedOrder) return;
+    if (!refundReason.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập lý do yêu cầu hoàn tiền');
+      return;
+    }
+    setIsSubmittingRefund(true);
+    try {
+      // Find the payment ID from the order
+      const paymentsRes = await paymentService.getPaymentsByOrder(selectedOrder.id);
+      if (!paymentsRes.success || !paymentsRes.data?.length) {
+        Alert.alert('Lỗi', 'Không tìm thấy thông tin thanh toán');
+        return;
+      }
+      const completedPayment = paymentsRes.data.find((p: any) => p.status === 'COMPLETED');
+      if (!completedPayment) {
+        Alert.alert('Lỗi', 'Không tìm thấy khoản thanh toán đã hoàn thành');
+        return;
+      }
+      const res = await paymentService.requestRefund(completedPayment.id, { reason: refundReason.trim() });
+      if (res.success && res.data) {
+        setOrderRefunds([res.data]);
+        setShowRefundForm(false);
+        setRefundReason("");
+        Alert.alert('Thành công', 'Yêu cầu hoàn tiền đã được ghi nhận. Chúng tôi sẽ xử lý sớm nhất.');
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Không thể gửi yêu cầu hoàn tiền';
+      Alert.alert('Lỗi', msg);
+    } finally {
+      setIsSubmittingRefund(false);
+    }
+  };
+
+  const handleViewTimeline = async (orderId: number) => {
+    setIsLoadingTimeline(true);
+    setShowTimelineDetail(true);
+    try {
+      const response = await orderService.getOrderTimeline(orderId);
+      if (response.success && response.data) {
+        setTimelineEvents((response.data as any).events || [response.data]);
+      }
+    } catch (err: any) {
+      console.warn('Timeline API not available:', err);
+      setTimelineEvents([]);
+    } finally {
+      setIsLoadingTimeline(false);
+    }
+  };
+
+  const getRefundStatusInfo = (status: string) => {
+    switch (status) {
+      case 'PENDING': return { label: 'Chờ xử lý', color: '#FF9800', bg: '#FFF3E0' };
+      case 'APPROVED': return { label: 'Đã duyệt', color: '#2196F3', bg: '#E3F2FD' };
+      case 'COMPLETED': return { label: 'Đã hoàn tiền', color: '#4CAF50', bg: '#E8F5E9' };
+      case 'REJECTED': return { label: 'Từ chối', color: '#F44336', bg: '#FFEBEE' };
+      default: return { label: status, color: '#666', bg: '#F5F5F5' };
+    }
+  };
+
   // State for Tracking Modal
   const [trackingModalVisible, setTrackingModalVisible] = useState(false);
   const [trackingData, setTrackingData] = useState<any>(null); // Using any temporarily to avoid import issue if type not refreshed, but will cast to OrderTrackingDetail
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
 
-  const handleTrackOrder = async (orderId: number) => {
+  const handleTrackOrder = useCallback(async (orderId: number) => {
     setIsLoadingTracking(true);
     setTrackingModalVisible(true); // Show modal immediately with loading state
     try {
@@ -453,7 +720,7 @@ export default function OrdersScreen() {
     } finally {
         setIsLoadingTracking(false);
     }
-  };
+  }, [orders]);
 
   const renderTimeline = (currentStatus: string) => {
       const steps = [
@@ -519,9 +786,9 @@ export default function OrdersScreen() {
   if (error && orders.length === 0) {
     return (
       <View style={styles.centerContainer}>
-        <Icon name="error-outline" type="material" size={64} color="#F44336" />
+        <Icon name="error-outline" size={64} color="#F44336" />
         <ThemedText style={styles.errorText}>{error}</ThemedText>
-        <TouchableOpacity style={styles.retryButton} onPress={() => fetchOrders()}>
+        <TouchableOpacity style={styles.retryButton} onPress={() => fetchOrders(0)}>
           <ThemedText style={styles.retryText}>Thử lại</ThemedText>
         </TouchableOpacity>
       </View>
@@ -600,184 +867,76 @@ export default function OrdersScreen() {
       </View>
 
       {/* Orders List */}
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => fetchOrders(true)}
-            colors={["#003D5B"]}
-          />
-        }
-      >
+      <View style={styles.content}>
         {filteredOrders.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Icon name="inbox" type="material" size={64} color="#999" />
-            <ThemedText style={styles.emptyText}>
-              Không có đơn hàng nào
-            </ThemedText>
-          </View>
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={() => fetchOrders(0, true)} colors={["#003D5B"]} />
+            }
+          >
+            <View style={styles.emptyContainer}>
+              <Icon name="inbox" size={64} color="#999" />
+              <ThemedText style={styles.emptyText}>
+                Không có đơn hàng nào
+              </ThemedText>
+            </View>
+          </ScrollView>
         ) : (
-          filteredOrders.map((order) => (
-            <TouchableOpacity 
-              key={order.id} 
-              style={styles.ticketContainer}
-              onPress={() => handleOrderPress(order.id)}
-              activeOpacity={0.8}
-            >
-              {/* Blue Accent Line */}
-              <View style={styles.ticketAccent} />
-              
-              {/* Left Notch */}
-              <View style={[styles.notch, styles.notchLeft]} />
-              
-              {/* Right Notch */}
-              <View style={[styles.notch, styles.notchRight]} />
-              
-              {/* Ticket Content */}
-              <View style={styles.ticketContent}>
-                {/* Left Section */}
-                <View style={styles.ticketLeft}>
-                  {/* Order Code/ID with Type Badge */}
-                  <View style={styles.orderHeaderRow}>
-                    <ThemedText style={styles.ticketOrderNumber}>
-                      {order.orderCode || `Đơn #${order.id}`}
-                    </ThemedText>
-                    {order.type && (
-                      <View style={[
-                        styles.typeBadge, 
-                        { backgroundColor: order.type === 'LAUNDRY' ? '#E3F2FD' : '#FFF3E0' }
-                      ]}>
-                        <ThemedText style={[
-                          styles.typeBadgeText,
-                          { color: order.type === 'LAUNDRY' ? '#1976D2' : '#E65100' }
-                        ]}>
-                          {order.type === 'LAUNDRY' ? '🧺' : '📦'}
-                        </ThemedText>
-                      </View>
-                    )}
-                  </View>
-                  
-                  {/* Locker Info */}
-                  {(order.locker?.name || order.lockerName) && (
-                    <View style={styles.ticketLocationRow}>
-                      <Icon name="location-on" type="material" size={11} color="#666" />
-                      <ThemedText style={styles.ticketLocationText} numberOfLines={1}>
-                        {order.locker?.name || order.lockerName}
-                      </ThemedText>
-                    </View>
-                  )}
-                  
-                  {/* Items/Services Count */}
-                  {(order.items?.length || order.services?.length) ? (
-                    <View style={styles.ticketItemsRow}>
-                      <Icon name="list" type="material" size={11} color="#666" />
-                      <ThemedText style={styles.ticketItemsText}>
-                        {order.items?.length || order.services?.length} dịch vụ
-                      </ThemedText>
-                    </View>
-                  ) : null}
-                  
-                  {/* Sender Info */}
-                  {order.senderName && (
-                    <View style={styles.ticketPersonRow}>
-                      <Icon name="person" type="material" size={11} color="#666" />
-                      <ThemedText style={styles.ticketPersonText} numberOfLines={1}>
-                        Gửi: {order.senderName}
-                      </ThemedText>
-                    </View>
-                  )}
-                  
-                  {/* Receiver Info */}
-                  {order.receiverName && (
-                    <View style={styles.ticketPersonRow}>
-                      <Icon name="person-outline" type="material" size={11} color="#666" />
-                      <ThemedText style={styles.ticketPersonText} numberOfLines={1}>
-                        Nhận: {order.receiverName}
-                      </ThemedText>
-                    </View>
-                  )}
-                  
-                  {/* Price Display */}
-                  <View style={styles.ticketTotal}>
-                    <ThemedText style={styles.ticketTotalLabel}>Tổng:</ThemedText>
-                    <ThemedText style={styles.ticketTotalValue}>
-                      {formatPrice(order.totalAmount || order.actualPrice || order.totalPrice || (typeof order.estimatedPrice === 'number' ? order.estimatedPrice : 0))}
-                    </ThemedText>
-                  </View>
-                  
-                  {/* Discount Info */}
-                  {(order.discountAmount || order.promotionDiscount) ? (
-                    <View style={styles.discountRow}>
-                      <Icon name="local-offer" type="material" size={10} color="#4CAF50" />
-                      <ThemedText style={styles.discountText}>
-                        -{formatPrice(order.discountAmount || order.promotionDiscount)}
-                      </ThemedText>
-                    </View>
-                  ) : null}
-                  
-                  <View style={styles.ticketTime}>
-                    <Icon name="schedule" type="material" size={11} color="#9CA3AF" />
-                    <ThemedText style={styles.ticketTimeText}>
-                      {formatDate(order.createdAt)}
-                    </ThemedText>
-                  </View>
-                </View>
-                
-                {/* Vertical Dashed Line */}
-                <View style={styles.ticketDivider} />
-                
-                {/* Right Section */}
-                <View style={styles.ticketRight}>
-                  <View style={[styles.ticketStatus, { backgroundColor: getStatusColor(order.status) }]}>
-                    <ThemedText style={styles.ticketStatusText}>
-                      {getStatusText(order.status, order.type)}
-                    </ThemedText>
-                  </View>
-                  
-                  {order.pin && (
-                    <View style={styles.ticketPin}>
-                      <Icon name="lock" type="material" size={12} color="#F59E0B" />
-                      <ThemedText style={styles.ticketPinText}>{order.pin}</ThemedText>
-                    </View>
-                  )}
-
-                  {/* Track Button */}
-                  {order.status !== "CANCELED" && order.type !== "STORAGE" && (
-                      <TouchableOpacity
-                        style={[styles.ticketButton, { backgroundColor: '#2196F3' }]}
-                        onPress={() => handleTrackOrder(order.id)}
-                      >
-                         <ThemedText style={styles.ticketButtonText}>Theo dõi</ThemedText>
-                      </TouchableOpacity>
-                  )}
-                  
-                  {order.status === "INITIALIZED" && (
-                    <TouchableOpacity
-                      style={styles.ticketButton}
-                      onPress={() => handleConfirmOrder(order.id)}
+          <View style={{ flex: 1 }}>
+            <FlatList
+              data={filteredOrders}
+              keyExtractor={(item) => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 100 }}
+              refreshControl={
+                <RefreshControl refreshing={isRefreshing} onRefresh={() => fetchOrders(0, true)} colors={["#003D5B"]} />
+              }
+              renderItem={({ item }) => (
+                <MemoizedOrderCard
+                  order={item}
+                  orderRatingsMap={orderRatingsMap}
+                  handleOrderPress={handleOrderPress}
+                  getStatusColor={getStatusColor}
+                  getStatusText={getStatusText}
+                  formatDate={formatDate}
+                  formatPrice={formatPrice}
+                  handleTrackOrder={handleTrackOrder}
+                  handleConfirmOrder={handleConfirmOrder}
+                  handleCancelOrder={handleCancelOrder}
+                />
+              )}
+              ListFooterComponent={
+                totalPages > 1 ? (
+                  <View style={styles.paginationContainer}>
+                    <TouchableOpacity 
+                      style={[styles.pageButton, currentPage === 0 && styles.pageButtonDisabled]} 
+                      disabled={currentPage === 0}
+                      onPress={() => fetchOrders(currentPage - 1)}
                     >
-                      <ThemedText style={styles.ticketButtonText}>Xác nhận</ThemedText>
+                      <Icon name="chevron-left" size={20} color={currentPage === 0 ? "#9ca3af" : "#003D5B"} />
+                      <ThemedText style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>Trước</ThemedText>
                     </TouchableOpacity>
-                  )}
-
-                  {/* Cancel button - hide for STORAGE orders in WAITING (items in locker) */}
-                  {(order.status === "WAITING" && order.type !== "STORAGE" || order.status === "COLLECTED") && (
-                    <TouchableOpacity
-                      style={[styles.ticketButton, styles.ticketButtonCancel]}
-                      onPress={() => handleCancelOrder(order.id)}
+                    <ThemedText style={styles.pageText}>Trang {currentPage + 1} / {totalPages}</ThemedText>
+                    <TouchableOpacity 
+                      style={[styles.pageButton, currentPage >= totalPages - 1 && styles.pageButtonDisabled]} 
+                      disabled={currentPage >= totalPages - 1}
+                      onPress={() => fetchOrders(currentPage + 1)}
                     >
-                      <ThemedText style={styles.ticketButtonCancelText}>Hủy đơn</ThemedText>
+                      <ThemedText style={[styles.pageButtonText, currentPage >= totalPages - 1 && styles.pageButtonTextDisabled]}>Tiếp</ThemedText>
+                      <Icon name="chevron-right" size={20} color={currentPage >= totalPages - 1 ? "#9ca3af" : "#003D5B"} />
                     </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
+                  </View>
+                ) : null
+              }
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              removeClippedSubviews={true}
+            />
+          </View>
         )}
-
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </View>
 
       {/* Tracking Modal */}
       <Modal
@@ -827,6 +986,19 @@ export default function OrdersScreen() {
                              <ThemedText style={styles.statusDescText}>{trackingData.statusDescription}</ThemedText>
                              <ThemedText style={styles.nextActionText}>👉 {trackingData.nextAction}</ThemedText>
                         </View>
+
+                        {/* Timeline Detail Button */}
+                        <TouchableOpacity
+                          onPress={() => handleViewTimeline(trackingData.orderId)}
+                          style={{
+                            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            paddingVertical: 14, borderRadius: 12, marginTop: 16,
+                            backgroundColor: '#E3F2FD', borderWidth: 1, borderColor: '#90CAF9',
+                          }}
+                        >
+                          <Icon name="timeline" size={18} color="#1565C0" />
+                          <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#1565C0' }}>Xem chi tiết lộ trình</ThemedText>
+                        </TouchableOpacity>
                     </ScrollView>
                 ) : (
                     <ThemedText style={{textAlign: 'center', margin: 20}}>Không có dữ liệu</ThemedText>
@@ -903,7 +1075,7 @@ export default function OrdersScreen() {
                           borderColor: '#FFB74D',
                         }}
                       >
-                        <Icon name="refresh" type="material" size={16} color="#E65100" />
+                        <Icon name="refresh" size={16} color="#E65100" />
                         <ThemedText style={{ fontSize: 13, fontWeight: '600', color: '#E65100' }}>Cấp lại mã PIN</ThemedText>
                       </TouchableOpacity>
                     )}
@@ -914,7 +1086,7 @@ export default function OrdersScreen() {
                 <View style={[styles.detailInfoBox, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: getStatusColor(selectedOrder.status) + '30', justifyContent: 'center', alignItems: 'center' }}>
-                      <Icon name="info" type="material" size={20} color={getStatusColor(selectedOrder.status)} />
+                      <Icon name="info" size={20} color={getStatusColor(selectedOrder.status)} />
                     </View>
                     <View>
                       <ThemedText style={{ fontSize: 13, color: '#666' }}>Trạng thái</ThemedText>
@@ -928,7 +1100,7 @@ export default function OrdersScreen() {
                 {/* Location Info */}
                 <View style={styles.detailInfoBox}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    <Icon name="place" type="material" color="#003D5B" size={24} />
+                    <Icon name="place" color="#003D5B" size={24} />
                     <View style={{ flex: 1 }}>
                       <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>
                         {selectedOrder.locker?.name || selectedOrder.lockerName || 'N/A'}
@@ -1137,7 +1309,7 @@ export default function OrdersScreen() {
                         <View key={c.id} style={{ backgroundColor: '#FFF8E1', borderRadius: 12, padding: 14, marginBottom: 8 }}>
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Icon name="report-problem" type="material" size={16} color="#F57F17" />
+                              <Icon name="report-problem" size={16} color="#F57F17" />
                               <ThemedText style={{ fontSize: 13, fontWeight: '700', color: '#F57F17' }}>
                                 {c.type === 'DAMAGED' ? 'Hư hỏng' : c.type === 'MISSING' ? 'Thiếu đồ' : c.type === 'WRONG_ITEM' ? 'Sai đồ' : c.type === 'QUALITY' ? 'Chất lượng' : 'Khác'}
                               </ThemedText>
@@ -1244,16 +1416,182 @@ export default function OrdersScreen() {
                           backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFB74D',
                         }}
                       >
-                        <Icon name="report-problem" type="material" size={18} color="#E65100" />
+                        <Icon name="report-problem" size={18} color="#E65100" />
                         <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#E65100' }}>Khiếu nại đơn hàng</ThemedText>
                       </TouchableOpacity>
                     )}
                   </View>
                 )}
 
+                {/* Refund Section - for CANCELED orders that were paid */}
+                {selectedOrder.status === 'CANCELED' && selectedOrder.payment?.status === 'COMPLETED' && (
+                  <View style={styles.detailInfoBox}>
+                    <ThemedText style={{ fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>
+                      💰 Hoàn tiền
+                    </ThemedText>
+
+                    {orderRefunds.length > 0 ? (
+                      orderRefunds.map((refund, idx) => {
+                        const statusInfo = getRefundStatusInfo(refund.status);
+                        return (
+                          <View key={idx} style={{ backgroundColor: '#F5F5F5', borderRadius: 12, padding: 14, marginBottom: 8 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                              <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#333' }}>
+                                {formatPrice(refund.amount)}
+                              </ThemedText>
+                              <View style={{ backgroundColor: statusInfo.bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 }}>
+                                <ThemedText style={{ fontSize: 11, fontWeight: '700', color: statusInfo.color }}>
+                                  {statusInfo.label}
+                                </ThemedText>
+                              </View>
+                            </View>
+                            <ThemedText style={{ fontSize: 13, color: '#555' }}>Lý do: {refund.reason}</ThemedText>
+                            <ThemedText style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                              {formatDate(refund.createdAt)}
+                            </ThemedText>
+                          </View>
+                        );
+                      })
+                    ) : showRefundForm ? (
+                      <View>
+                        <TextInput
+                          style={{
+                            borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12,
+                            padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: 'top',
+                            backgroundColor: '#FAFAFA', marginBottom: 14,
+                          }}
+                          placeholder="Nhập lý do yêu cầu hoàn tiền..."
+                          placeholderTextColor="#BDBDBD"
+                          multiline numberOfLines={3}
+                          value={refundReason}
+                          onChangeText={setRefundReason}
+                          maxLength={500}
+                        />
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                          <TouchableOpacity
+                            onPress={() => setShowRefundForm(false)}
+                            style={{ flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', backgroundColor: '#F5F5F5' }}
+                          >
+                            <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#666' }}>Hủy</ThemedText>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={handleRequestRefund}
+                            disabled={isSubmittingRefund || !refundReason.trim()}
+                            style={{
+                              flex: 2, paddingVertical: 12, borderRadius: 12, alignItems: 'center',
+                              backgroundColor: refundReason.trim() ? '#FF9800' : '#CCC',
+                              opacity: isSubmittingRefund ? 0.7 : 1,
+                            }}
+                          >
+                            {isSubmittingRefund ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Gửi yêu cầu</ThemedText>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => setShowRefundForm(true)}
+                        style={{
+                          flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                          paddingVertical: 14, borderRadius: 12,
+                          backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFB74D',
+                        }}
+                      >
+                        <Icon name="account-balance-wallet" size={18} color="#E65100" />
+                        <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#E65100' }}>Yêu cầu hoàn tiền</ThemedText>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Reorder Button - for COMPLETED or CANCELED orders */}
+                {(selectedOrder.status === 'COMPLETED' || selectedOrder.status === 'CANCELED') && (
+                  <TouchableOpacity
+                    onPress={() => handleReorder(selectedOrder.id)}
+                    disabled={isReordering}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                      paddingVertical: 16, borderRadius: 14, marginTop: 8,
+                      backgroundColor: '#003D5B',
+                      opacity: isReordering ? 0.7 : 1,
+                      shadowColor: '#003D5B', shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+                    }}
+                  >
+                    {isReordering ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Icon name="refresh" size={20} color="#fff" />
+                        <ThemedText style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Đặt lại đơn hàng</ThemedText>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+
               </ScrollView>
             ) : (
               <ThemedText style={{textAlign: 'center', margin: 20}}>Không có dữ liệu</ThemedText>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Timeline Detail Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showTimelineDetail}
+        onRequestClose={() => setShowTimelineDetail(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.trackingModalView}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Chi tiết lộ trình</ThemedText>
+              <TouchableOpacity onPress={() => setShowTimelineDetail(false)}>
+                <Icon name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+
+            {isLoadingTimeline ? (
+              <ActivityIndicator size="large" color="#003D5B" style={{marginVertical: 40}} />
+            ) : timelineEvents.length > 0 ? (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {timelineEvents.map((event: any, index: number) => (
+                  <View key={index} style={{ flexDirection: 'row', marginBottom: 20 }}>
+                    <View style={{ alignItems: 'center', marginRight: 14, width: 24 }}>
+                      <View style={{
+                        width: 12, height: 12, borderRadius: 6,
+                        backgroundColor: index === 0 ? '#4CAF50' : '#BDBDBD',
+                        borderWidth: 2,
+                        borderColor: index === 0 ? '#A5D6A7' : '#E0E0E0',
+                      }} />
+                      {index < timelineEvents.length - 1 && (
+                        <View style={{ width: 2, flex: 1, backgroundColor: '#E0E0E0', marginTop: 4 }} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1, paddingBottom: 4 }}>
+                      <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#333' }}>
+                        {event.statusDescription || event.status || 'Cập nhật'}
+                      </ThemedText>
+                      {event.description && (
+                        <ThemedText style={{ fontSize: 13, color: '#666', marginTop: 2 }}>{event.description}</ThemedText>
+                      )}
+                      <ThemedText style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                        {formatDate(event.timestamp || event.createdAt)}
+                      </ThemedText>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={{ alignItems: 'center', marginVertical: 30 }}>
+                <Icon name="timeline" size={48} color="#CCC" />
+                <ThemedText style={{ fontSize: 14, color: '#999', marginTop: 12 }}>Chưa có dữ liệu lộ trình</ThemedText>
+              </View>
             )}
           </View>
         </View>
@@ -1601,7 +1939,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#FFE0B2",
   },
-  pinLabel: {
+  detailPinLabel: {
     fontSize: 14,
     fontWeight: "600",
     color: "#E65100",
@@ -1670,13 +2008,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#6B7280",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
+  detailTotalLabel: { fontSize: 15, fontWeight: "700", color: "#111" },
   totalAmountBox: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -1699,9 +2031,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ticketButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   },
   ticketButtonPrimary: {
     // Gradient will be applied via LinearGradient
@@ -1736,203 +2071,148 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Notch Cuts Design
-  // Ticket-style order cards
-  ticketContainer: {
-    position: "relative",
+  // Modern Card Styles
+  modernCard: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    marginHorizontal: 20,
-    marginTop: 12,
+    borderRadius: 16,
+    marginHorizontal: 16,
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 4,
     overflow: "hidden",
   },
-  ticketAccent: {
-    position: "absolute",
-    width: 4,
-    height: "100%",
-    backgroundColor: "#3B82F6",
-    left: 0,
-    top: 0,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+  cardAccentTop: {
+    height: 4,
+    width: "100%",
   },
-  notch: {
-    position: "absolute",
-    width: 20,
-    height: 20,
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    top: "50%",
-    marginTop: -10,
-    zIndex: 10,
-  },
-  notchLeft: {
-    left: -10,
-  },
-  notchRight: {
-    right: -10,
-  },
-  ticketContent: {
+  cardHeader: {
     flexDirection: "row",
-    paddingVertical: 14,
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
   },
-  ticketLeft: {
-    flex: 2,
-    paddingRight: 12,
-    justifyContent: "center",
-  },
-  ticketOrderNumber: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#1F2937",
-    marginBottom: 6,
-  },
-  ticketTotal: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
-  },
-  ticketTotalLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  ticketTotalValue: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1F2937",
-  },
-  ticketTime: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  ticketTimeText: {
-    fontSize: 10,
-    color: "#9CA3AF",
-  },
-  // New styles for enhanced order display
-  orderHeaderRow: {
+  cardHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 4,
+    flex: 1,
+    paddingRight: 8,
   },
-  typeBadge: {
+  modernOrderNumber: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1F2937",
+    letterSpacing: 0.2,
+  },
+  modernTypeBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
-  },
-  typeBadgeText: {
-    fontSize: 12,
-  },
-  ticketLocationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 4,
-  },
-  ticketLocationText: {
-    fontSize: 11,
-    color: "#666",
-    flex: 1,
-  },
-  ticketItemsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 4,
-  },
-  ticketItemsText: {
-    fontSize: 11,
-    color: "#666",
-  },
-  ticketPersonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 3,
-  },
-  ticketPersonText: {
-    fontSize: 11,
-    color: "#555",
-    flex: 1,
-  },
-  discountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 2,
-  },
-  discountText: {
-    fontSize: 10,
-    color: "#4CAF50",
-    fontWeight: "600",
-  },
-  ticketDivider: {
-    width: 1,
-    backgroundColor: "#E5E7EB",
-    marginHorizontal: 12,
-    borderStyle: "dashed",
-    borderLeftWidth: 1,
-    borderLeftColor: "#E5E7EB",
-  },
-  ticketRight: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  ticketStatus: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  ticketStatusText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  ticketPin: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#FEF3C7",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 6,
   },
-  ticketPinText: {
-    fontSize: 11,
-    fontWeight: "900",
-    color: "#D97706",
-    letterSpacing: 1,
-  },
-  ticketButton: {
-    backgroundColor: "#10B981",
+  modernStatusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    minWidth: 90,
-    alignItems: 'center',
+    paddingVertical: 6,
+    borderRadius: 20,
+    flexShrink: 0,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  ticketButtonCancel: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#EF4444",
-  },
-  ticketButtonCancelText: {
-    fontSize: 11,
+  modernStatusText: {
+    fontSize: 12,
     fontWeight: "700",
-    color: "#EF4444",
+    color: "#fff",
+    textAlign: "center",
+  },
+  modernCardDivider: {
+    height: 1,
+    backgroundColor: "#F3F4F6",
+    marginHorizontal: 16,
+  },
+  cardBody: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  infoColumn: {
+    flex: 1,
+    gap: 4,
+  },
+  infoLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  infoLabel: {
+    fontSize: 11,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  infoValue: {
+    fontSize: 13,
+    color: "#374151",
+    fontWeight: "600",
+  },
+  pinHighlightBg: {
+    backgroundColor: "#FFF3E0",
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  pinHighlightLabel: {
+    fontSize: 11,
+    color: "#E65100",
+    fontWeight: "700",
+  },
+  pinHighlightValue: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#E65100",
+    letterSpacing: 1.5,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#F9FAFB",
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+  cardTimeBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  cardTimeText: {
+    fontSize: 11,
+    color: "#9CA3AF",
+    fontWeight: "500",
+  },
+  cardActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   bottomSpacer: {
     height: 100,
@@ -2155,12 +2435,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     alignItems: "center",
   },
-  detailPinLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#92400E",
-    marginBottom: 4,
-  },
   detailPinValue: {
     fontSize: 24,
     fontWeight: "700",
@@ -2211,14 +2485,54 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
   },
-  detailTotalLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111",
-  },
   detailTotalValue: {
     fontSize: 18,
     fontWeight: "700",
     color: "#003D5B",
   },
+  // Pagination Styles
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  pageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#F0F8FF',
+  },
+  pageButtonDisabled: {
+    opacity: 0.4,
+    backgroundColor: '#F5F5F5',
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#003D5B',
+  },
+  pageButtonTextDisabled: {
+    color: '#9CA3AF',
+  },
+  pageText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
 });
+
+

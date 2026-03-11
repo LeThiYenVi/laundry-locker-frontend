@@ -259,8 +259,9 @@ export default function ConfirmOrderScreen() {
           if (pollRef.current) clearInterval(pollRef.current);
           setIsPolling(false);
           setPaymentSuccess(true);
+          setShowSuccessModal(false);
           Alert.alert('Thành công!', 'Thanh toán MoMo thành công.', [
-            { text: 'Xem đơn hàng', onPress: () => { setShowSuccessModal(false); router.push('/user/(tabs)/orders' as any); } },
+            { text: 'OK', onPress: () => router.push('/user/(tabs)/orders' as any) },
           ]);
         }
       } catch { /* ignore polling errors */ }

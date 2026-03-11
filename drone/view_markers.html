@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArUco Marker Viewer</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #ffffff;
+        color: #e0e0e0;
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        padding: 32px 24px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 36px;
+      }
+      header h1 {
+        font-size: 1.8rem;
+        color: #0a0a0a;
+        letter-spacing: 1px;
+      }
+      header p {
+        margin-top: 8px;
+        color: #888;
+        font-size: 0.95rem;
+      }
+
+      /* ── Controls ── */
+      .controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+      }
+      .controls label {
+        color: #aaa;
+        font-size: 0.9rem;
+      }
+      .controls input[type="range"] {
+        width: 160px;
+        accent-color: #00d4ff;
+      }
+      .controls span {
+        color: #00d4ff;
+        font-weight: 600;
+        min-width: 40px;
+      }
+
+      /* ── Grid ── */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .card {
+        background: #1a1d27;
+        border: 1px solid #2a2d3a;
+        border-radius: 14px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        transition:
+          border-color 0.2s,
+          transform 0.2s;
+      }
+      .card:hover {
+        border-color: #00d4ff55;
+        transform: translateY(-3px);
+      }
+
+      .card canvas {
+        border-radius: 8px;
+        image-rendering: pixelated;
+        box-shadow: 0 0 20px #00d4ff22;
+      }
+
+      .card-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        letter-spacing: 0.5px;
+      }
+      .card-sub {
+        font-size: 0.78rem;
+        color: #666;
+      }
+
+      .badge {
+        display: inline-block;
+        background: #00d4ff22;
+        color: #00d4ff;
+        border: 1px solid #00d4ff44;
+        border-radius: 20px;
+        padding: 3px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      /* ── Info box ── */
+      .info-box {
+        max-width: 680px;
+        margin: 36px auto 0;
+        background: #1a1d27;
+        border: 1px solid #2a2d3a;
+        border-left: 3px solid #00d4ff;
+        border-radius: 10px;
+        padding: 18px 22px;
+        font-size: 0.87rem;
+        line-height: 1.8;
+        color: #aaa;
+      }
+      .info-box strong {
+        color: #fff;
+      }
+      .info-box code {
+        background: #0f1117;
+        color: #00d4ff;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+
+      /* ── Download button ── */
+      .dl-btn {
+        display: block;
+        margin: 8px auto 0;
+        padding: 6px 18px;
+        background: transparent;
+        border: 1px solid #00d4ff55;
+        color: #00d4ff;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: background 0.15s;
+      }
+      .dl-btn:hover {
+        background: #00d4ff22;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>ArUco Marker Viewer</h1>
+      <p>Laundry Locker · Dictionary: 4×4_50 · 6 ô locker</p>
+    </header>
+
+    <div class="controls">
+      <label>Kích thước hiển thị:</label>
+      <input
+        type="range"
+        id="sizeSlider"
+        min="120"
+        max="380"
+        value="220"
+        step="10"
+      />
+      <span id="sizeVal">220 px</span>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="info-box">
+      <strong>Hướng dẫn sử dụng:</strong><br />
+      • Mỗi ô locker gắn <strong>1 marker</strong> — ID phải khớp nhau.<br />
+      • Nhấn <strong>Download</strong> để tải từng marker về in.<br />
+      • Sau khi in: đo kích thước thực → cập nhật
+      <code>ARUCO_MARKER_SIZE_M</code> trong <code>config.py</code>.<br />
+      • Marker <strong>bắt buộc phải có viền trắng</strong> xung quanh để camera
+      nhận ra.
+    </div>
+
+    <script>
+      // ─────────────────────────────────────────────────────────────
+      // ArUco DICT_4X4_50 — bit patterns cho ID 0 → 49
+      // Mỗi phần tử = 16 bits (4×4 grid), đọc từ trái-sang-phải, trên-xuống-dưới
+      // Nguồn: OpenCV aruco/dictionary_utils.hpp
+      // ─────────────────────────────────────────────────────────────
+      const DICT_4X4_50 = [
+        0b0111_0110_1100_1001, // ID 0
+        0b1110_1111_0001_0011, // ID 1
+        0b0111_1001_0110_1111, // ID 2
+        0b1000_0101_1110_1010, // ID 3
+        0b0001_1001_0111_1110, // ID 4
+        0b0111_0110_0001_1100, // ID 5
+      ];
+
+      // Fallback: Nếu browser không hỗ trợ binary literal, dùng decimal
+      const DICT_FALLBACK = [
+        0x769_9, // workaround — dùng mảng bit dưới đây thay thế
+      ];
+
+      // Định nghĩa chính xác bằng mảng bit 4x4
+      // [row0_b3..b0, row1_b3..b0, row2_b3..b0, row3_b3..b0]  (MSB trái)
+      const MARKER_BITS = [
+        // ID 0
+        [
+          [0, 1, 1, 1],
+          [0, 1, 1, 0],
+          [1, 1, 0, 0],
+          [1, 0, 0, 1],
+        ],
+        // ID 1
+        [
+          [1, 1, 1, 0],
+          [1, 1, 1, 1],
+          [0, 0, 0, 1],
+          [0, 0, 1, 1],
+        ],
+        // ID 2
+        [
+          [0, 1, 1, 1],
+          [1, 0, 0, 1],
+          [0, 1, 1, 0],
+          [1, 1, 1, 1],
+        ],
+        // ID 3
+        [
+          [1, 0, 0, 0],
+          [0, 1, 0, 1],
+          [1, 1, 1, 0],
+          [1, 0, 1, 0],
+        ],
+        // ID 4
+        [
+          [0, 0, 0, 1],
+          [1, 0, 0, 1],
+          [0, 1, 1, 1],
+          [1, 1, 1, 0],
+        ],
+        // ID 5
+        [
+          [0, 1, 1, 1],
+          [0, 1, 1, 0],
+          [0, 0, 0, 1],
+          [1, 1, 0, 0],
+        ],
+      ];
+
+      const LOCKER_NAMES = [
+        "Ô Locker 0",
+        "Ô Locker 1",
+        "Ô Locker 2",
+        "Ô Locker 3",
+        "Ô Locker 4",
+        "Ô Locker 5",
+      ];
+
+      // ─────────────────────────────────────────────────────────────
+      // Vẽ ArUco marker lên canvas
+      // ─────────────────────────────────────────────────────────────
+      function drawMarker(canvas, bits4x4, sizePx) {
+        const CELLS = 6; // 4 data + 1 border mỗi bên
+        const BORDER = 1; // border dày 1 cell (đen)
+        const PADDING = 0.5; // padding trắng bên ngoài (tính theo cell)
+
+        const totalCells = CELLS + PADDING * 2;
+        const cellSize = sizePx / totalCells;
+
+        canvas.width = sizePx;
+        canvas.height = sizePx;
+        const ctx = canvas.getContext("2d");
+
+        // Nền trắng
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, sizePx, sizePx);
+
+        const offsetX = PADDING * cellSize;
+        const offsetY = PADDING * cellSize;
+
+        // Border đen (1 cell xung quanh)
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(offsetX, offsetY, CELLS * cellSize, CELLS * cellSize);
+
+        // Các ô data (4×4 ở giữa, offset +1 cell cho border)
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            const bit = bits4x4[r][c];
+            ctx.fillStyle = bit === 1 ? "#000000" : "#ffffff";
+            const x = offsetX + (c + BORDER) * cellSize;
+            const y = offsetY + (r + BORDER) * cellSize;
+            ctx.fillRect(x, y, cellSize + 0.5, cellSize + 0.5); // +0.5 tránh gap
+          }
+        }
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // Build UI
+      // ─────────────────────────────────────────────────────────────
+      function buildGrid(sizePx) {
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
+
+        MARKER_BITS.forEach((bits, id) => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const canvas = document.createElement("canvas");
+          drawMarker(canvas, bits, sizePx);
+
+          const label = document.createElement("div");
+          label.className = "card-label";
+          label.textContent = LOCKER_NAMES[id];
+
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.textContent = `ID = ${id}`;
+
+          const sub = document.createElement("div");
+          sub.className = "card-sub";
+          sub.textContent = "DICT_4X4_50";
+
+          const dlBtn = document.createElement("button");
+          dlBtn.className = "dl-btn";
+          dlBtn.textContent = "⬇ Download PNG";
+          dlBtn.onclick = () => {
+            // Render lại ở kích thước cao hơn để in đẹp
+            const printCanvas = document.createElement("canvas");
+            drawMarker(printCanvas, bits, 1000);
+            const link = document.createElement("a");
+            link.download = `marker_locker_${id}.png`;
+            link.href = printCanvas.toDataURL("image/png");
+            link.click();
+          };
+
+          card.appendChild(canvas);
+          card.appendChild(label);
+          card.appendChild(badge);
+          card.appendChild(sub);
+          card.appendChild(dlBtn);
+          grid.appendChild(card);
+        });
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // Slider
+      // ─────────────────────────────────────────────────────────────
+      const slider = document.getElementById("sizeSlider");
+      const sizeVal = document.getElementById("sizeVal");
+
+      slider.addEventListener("input", () => {
+        const v = parseInt(slider.value);
+        sizeVal.textContent = v + " px";
+        buildGrid(v);
+      });
+
+      buildGrid(parseInt(slider.value));
+    </script>
+  </body>
+</html>
