@@ -28,7 +28,7 @@ const TIER_META: Record<LoyaltyTier, { label: string; cls: string }> = {
     label: "Đồng",
     cls: "bg-orange-100 text-orange-700 border-orange-200",
   },
-  SILVER: { label: "Bạc", cls: "bg-gray-100 text-gray-700 border-gray-200" },
+  SILVER: { label: "Bạc", cls: "bg-muted/50 text-foreground/80 border-border/50" },
   GOLD: {
     label: "Vàng",
     cls: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -45,7 +45,7 @@ const TX_META: Record<string, { label: string; sign: string; cls: string }> = {
   ADD: { label: "Cộng điểm", sign: "+", cls: "text-blue-600" },
   DEDUCT: { label: "Trừ điểm", sign: "-", cls: "text-orange-600" },
   REFUND: { label: "Hoàn điểm", sign: "+", cls: "text-teal-600" },
-  EXPIRED: { label: "Hết hạn", sign: "-", cls: "text-gray-400" },
+  EXPIRED: { label: "Hết hạn", sign: "-", cls: "text-muted-foreground/70" },
 };
 
 export function UserLoyaltySection({ userId }: Props) {
@@ -104,7 +104,7 @@ export function UserLoyaltySection({ userId }: Props) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+      <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
         <Award size={16} className="text-yellow-500" /> Chương trình tích điểm
       </h2>
 
@@ -127,7 +127,7 @@ export function UserLoyaltySection({ userId }: Props) {
             ) : loyalty ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Hạng thành viên</span>
+                  <span className="text-sm text-muted-foreground">Hạng thành viên</span>
                   <Badge
                     variant="outline"
                     className={`text-xs ${TIER_META[loyalty.currentTier]?.cls ?? ""}`}
@@ -137,21 +137,21 @@ export function UserLoyaltySection({ userId }: Props) {
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Điểm hiện tại</span>
+                  <span className="text-sm text-muted-foreground">Điểm hiện tại</span>
                   <span className="font-semibold">
                     {loyalty.currentPoints.toLocaleString("vi-VN")} điểm
                   </span>
                 </div>
                 {loyalty.pointsToNextTier != null && (
                   <div>
-                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <div className="flex justify-between text-xs text-muted-foreground/70 mb-1">
                       <span>Đến hạng tiếp theo</span>
                       <span>
                         {loyalty.pointsToNextTier.toLocaleString("vi-VN")} điểm
                         nữa
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full">
+                    <div className="h-2 bg-muted/50 rounded-full">
                       <div
                         className="h-2 rounded-full bg-yellow-400"
                         style={{
@@ -178,15 +178,15 @@ export function UserLoyaltySection({ userId }: Props) {
                         loyalty.totalPointsRedeemed.toLocaleString("vi-VN"),
                     },
                   ].map(({ label, value }) => (
-                    <div key={label} className="bg-gray-50 rounded-lg p-2">
-                      <p className="text-xs text-gray-400">{label}</p>
+                    <div key={label} className="bg-muted/30 rounded-lg p-2">
+                      <p className="text-xs text-muted-foreground/70">{label}</p>
                       <p className="text-sm font-semibold">{value}</p>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground/70">
                 Chưa có thông tin tích điểm.
               </p>
             )}
@@ -207,7 +207,7 @@ export function UserLoyaltySection({ userId }: Props) {
               </div>
             )}
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Số điểm
               </label>
               <input
@@ -218,11 +218,11 @@ export function UserLoyaltySection({ userId }: Props) {
                 onChange={(e) =>
                   setAdjustForm((f) => ({ ...f, pointsAmount: e.target.value }))
                 }
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-sm border border-border/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Loại điều chỉnh
               </label>
               <div className="flex gap-2">
@@ -238,7 +238,7 @@ export function UserLoyaltySection({ userId }: Props) {
                         ? t === "ADD"
                           ? "bg-green-50 border-green-300 text-green-700"
                           : "bg-red-50 border-red-300 text-red-700"
-                        : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                        : "border-border/50 text-muted-foreground hover:bg-muted/50"
                     }`}
                   >
                     {t === "ADD" ? <Plus size={14} /> : <Minus size={14} />}
@@ -248,7 +248,7 @@ export function UserLoyaltySection({ userId }: Props) {
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Lý do <span className="text-red-400">*</span>
               </label>
               <input
@@ -258,11 +258,11 @@ export function UserLoyaltySection({ userId }: Props) {
                 onChange={(e) =>
                   setAdjustForm((f) => ({ ...f, reason: e.target.value }))
                 }
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-sm border border-border/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Ghi chú admin
               </label>
               <input
@@ -272,7 +272,7 @@ export function UserLoyaltySection({ userId }: Props) {
                 onChange={(e) =>
                   setAdjustForm((f) => ({ ...f, adminNotes: e.target.value }))
                 }
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-sm border border-border/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
             <Button
@@ -302,7 +302,7 @@ export function UserLoyaltySection({ userId }: Props) {
               ))}
             </div>
           ) : historyList.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">
+            <p className="text-sm text-muted-foreground/70 text-center py-6">
               Chưa có giao dịch điểm nào.
             </p>
           ) : (
@@ -314,7 +314,7 @@ export function UserLoyaltySection({ userId }: Props) {
                       {["Loại", "Điểm", "Trước/Sau", "Ngày"].map((h) => (
                         <th
                           key={h}
-                          className="text-left py-2 px-2 text-xs text-gray-500 font-medium"
+                          className="text-left py-2 px-2 text-xs text-muted-foreground font-medium"
                         >
                           {h}
                         </th>
@@ -326,12 +326,12 @@ export function UserLoyaltySection({ userId }: Props) {
                       const meta = TX_META[tx.transactionType] ?? {
                         label: tx.transactionType,
                         sign: "",
-                        cls: "text-gray-600",
+                        cls: "text-muted-foreground",
                       };
                       return (
                         <tr
                           key={tx.transactionId}
-                          className="border-b hover:bg-gray-50"
+                          className="border-b hover:bg-muted/50"
                         >
                           <td className="py-2 px-2">
                             <Badge variant="outline" className="text-xs">
@@ -342,11 +342,11 @@ export function UserLoyaltySection({ userId }: Props) {
                             {meta.sign}
                             {tx.pointsAmount.toLocaleString("vi-VN")}
                           </td>
-                          <td className="py-2 px-2 text-gray-500">
+                          <td className="py-2 px-2 text-muted-foreground">
                             {tx.balanceBefore.toLocaleString("vi-VN")} →{" "}
                             {tx.balanceAfter.toLocaleString("vi-VN")}
                           </td>
-                          <td className="py-2 px-2 text-gray-400 text-xs whitespace-nowrap">
+                          <td className="py-2 px-2 text-muted-foreground/70 text-xs whitespace-nowrap">
                             {new Date(tx.transactionDate).toLocaleDateString(
                               "vi-VN",
                             )}
@@ -359,7 +359,7 @@ export function UserLoyaltySection({ userId }: Props) {
               </div>
               {historyTotal > 10 && (
                 <div className="flex items-center justify-between pt-3">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-muted-foreground/70">
                     {historyTotal} giao dịch
                   </span>
                   <div className="flex gap-2">

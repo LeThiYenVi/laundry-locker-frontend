@@ -35,7 +35,7 @@ const getRoleBadge = (role: string) => {
     ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
     SUPER_ADMIN: "bg-red-50 text-red-700 border-red-200",
     STAFF: "bg-blue-50 text-blue-700 border-blue-200",
-    USER: "bg-gray-50 text-gray-700 border-gray-200",
+    USER: "bg-muted/30 text-foreground/80 border-border/50",
     PARTNER: "bg-orange-50 text-orange-700 border-orange-200",
     MODERATOR: "bg-teal-50 text-teal-700 border-teal-200",
   };
@@ -124,14 +124,14 @@ export default function UserDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
-            <div className="h-64 bg-gray-200 rounded animate-pulse" />
+            <div className="h-64 bg-muted rounded animate-pulse" />
           </div>
           <div className="space-y-4">
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function UserDetailPage() {
   if (!user) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/70" />
         <h3 className="mt-4 text-lg font-medium">Không tìm thấy người dùng</h3>
         <Button onClick={() => navigate(-1)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -167,7 +167,7 @@ export default function UserDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Chi tiết người dùng</h1>
-            <p className="text-sm text-gray-500">ID: {user?.id}</p>
+            <p className="text-sm text-muted-foreground">ID: {user?.id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ export default function UserDetailPage() {
               className={
                 user.enabled
                   ? "bg-green-50 text-green-700"
-                  : "bg-gray-50 text-gray-700"
+                  : "bg-muted/30 text-foreground/80"
               }
             >
               {user.enabled ? "Đang hoạt động" : "Đã khóa"}
@@ -228,7 +228,7 @@ export default function UserDetailPage() {
                 </Avatar>
                 <div className="flex-1 space-y-3">
                   <div>
-                    <label className="text-sm text-gray-500 mb-1 block">
+                    <label className="text-sm text-muted-foreground mb-1 block">
                       Tên người dùng
                     </label>
                     <Input
@@ -249,7 +249,7 @@ export default function UserDetailPage() {
 
               <div className="grid grid-cols-2 gap-6 pt-6 border-t">
                 <div>
-                  <label className="text-sm text-gray-500 mb-1 block">
+                  <label className="text-sm text-muted-foreground mb-1 block">
                     <Mail className="inline h-4 w-4 mr-1" />
                     Email
                   </label>
@@ -263,13 +263,13 @@ export default function UserDetailPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Nhà cung cấp</p>
+                  <p className="text-sm text-muted-foreground mb-1">Nhà cung cấp</p>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{user.provider}</Badge>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 mb-1 block">
+                  <label className="text-sm text-muted-foreground mb-1 block">
                     <Phone className="inline h-4 w-4 mr-1" />
                     Số điện thoại
                   </label>
@@ -284,14 +284,14 @@ export default function UserDetailPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">
+                  <p className="text-sm text-muted-foreground mb-1">
                     Email đã xác minh
                   </p>
                   <p className="font-medium">
                     {user.emailVerified ? (
                       <span className="text-green-600">Đã xác minh</span>
                     ) : (
-                      <span className="text-gray-600">Chưa xác minh</span>
+                      <span className="text-muted-foreground">Chưa xác minh</span>
                     )}
                   </p>
                 </div>
@@ -310,7 +310,7 @@ export default function UserDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">{user.orderCount || 0}</p>
-                <p className="text-sm text-gray-500 mt-2">Tổng số đơn hàng</p>
+                <p className="text-sm text-muted-foreground mt-2">Tổng số đơn hàng</p>
               </CardContent>
             </Card>
             <Card>
@@ -324,7 +324,7 @@ export default function UserDetailPage() {
                 <p className="text-2xl font-bold text-blue-600">
                   {formatCurrency(user.totalSpent || 0)}
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Tổng giá trị đơn hàng
                 </p>
               </CardContent>
@@ -340,11 +340,11 @@ export default function UserDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Trạng thái</p>
+                <p className="text-sm text-muted-foreground">Trạng thái</p>
                 <div className="mt-2 flex items-center gap-2">
                   <span
                     className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                      user.enabled ? "bg-green-500" : "bg-gray-400"
+                      user.enabled ? "bg-green-500" : "bg-muted-foreground/50"
                     }`}
                   ></span>
                   <span className="font-medium">
@@ -353,8 +353,8 @@ export default function UserDetailPage() {
                 </div>
               </div>
               <div className="border-t pt-4">
-                <p className="text-sm text-gray-500">ID người dùng</p>
-                <p className="font-mono text-sm font-medium mt-2 bg-gray-50 p-2 rounded">
+                <p className="text-sm text-muted-foreground">ID người dùng</p>
+                <p className="font-mono text-sm font-medium mt-2 bg-muted/30 p-2 rounded">
                   {user.id}
                 </p>
               </div>
@@ -367,7 +367,7 @@ export default function UserDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>Ngày tạo</span>
                 </div>
@@ -376,7 +376,7 @@ export default function UserDetailPage() {
                 </p>
               </div>
               <div className="border-t pt-4">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>Cập nhật cuối cùng</span>
                 </div>
@@ -386,7 +386,7 @@ export default function UserDetailPage() {
               </div>
               {user.lastLogin && (
                 <div className="border-t pt-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
                     <span>Lần đăng nhập cuối</span>
                   </div>

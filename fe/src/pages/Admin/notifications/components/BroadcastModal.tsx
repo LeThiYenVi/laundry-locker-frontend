@@ -276,7 +276,7 @@ export function BroadcastModal({ isOpen, onClose }: BroadcastModalProps) {
                 setFormData((f) => ({ ...f, scheduledFor: e.target.value }))
               }
             />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground/70">
               {t("admin.notifications.broadcast.scheduledHint")}
             </p>
           </div>

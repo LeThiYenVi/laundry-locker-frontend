@@ -76,8 +76,8 @@ export function LockerStats({ statistics }: LockerStatsProps) {
                 <stat.icon size={20} className={stat.textColor} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
+                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
               </div>
             </div>
           </CardContent>

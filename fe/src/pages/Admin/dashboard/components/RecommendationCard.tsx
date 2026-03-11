@@ -40,13 +40,13 @@ export function RecommendationCard({
           </div>
           <ArrowRight
             size={18}
-            className="text-gray-400 group-hover:text-blue-600 transition-colors"
+            className="text-muted-foreground/70 group-hover:text-blue-600 transition-colors"
           />
         </div>
-        <h3 className="font-semibold text-gray-900 mb-1.5 leading-tight">
+        <h3 className="font-semibold text-foreground mb-1.5 leading-tight">
           {recommendation.title}
         </h3>
-        <p className="text-sm text-gray-500 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {recommendation.description}
         </p>
       </CardContent>

@@ -44,32 +44,32 @@
 
 /* DARK MODE - Tông lạnh (Cool Undertones) */
 .dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
+  --background: #0C1523;
+  --foreground: #DCE9F5;
+  --card: #111E30;
+  --card-foreground: #DCE9F5;
+  --popover: #142036;
+  --popover-foreground: #DCE9F5;
   --primary: #7BAAD1;
-  --primary-foreground: #0F172A;
-  --secondary: #26547A;
-  --secondary-foreground: #F8FAFC;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
-  --accent: #1A3D5C;
-  --accent-foreground: #F8FAFC;
-  --destructive: #991B1B;
-  --destructive-foreground: #F8FAFC;
-  --border: #1E293B;
-  --input: #1E293B;
+  --primary-foreground: #0C1523;
+  --secondary: #1C3254;
+  --secondary-foreground: #DCE9F5;
+  --muted: #0F1C2E;
+  --muted-foreground: #6E9AB8;
+  --accent: #192D4A;
+  --accent-foreground: #DCE9F5;
+  --destructive: #B91C1C;
+  --destructive-foreground: #FEF2F2;
+  --border: #1E3557;
+  --input: #0F1C2E;
   --ring: #7BAAD1;
-  --sidebar-background: #0A0F1C;
-  --sidebar-foreground: #F8FAFC;
+  --sidebar-background: #070F1D;
+  --sidebar-foreground: #DCE9F5;
   --sidebar-primary: #7BAAD1;
-  --sidebar-primary-foreground: #0F172A;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #1E293B;
+  --sidebar-primary-foreground: #0C1523;
+  --sidebar-accent: #111E30;
+  --sidebar-accent-foreground: #DCE9F5;
+  --sidebar-border: #162640;
   --sidebar-ring: #7BAAD1;
 }
 
@@ -169,7 +169,7 @@ html {
 }
 
 .dark .bg-gradient-brand {
-  background-image: linear-gradient(to bottom right, #7BAAD1, #26547A);
+  background-image: linear-gradient(to bottom right, #7BAAD1, #1C3254);
 }
 
 .bg-gradient-subtle {
@@ -177,7 +177,7 @@ html {
 }
 
 .dark .bg-gradient-subtle {
-  background-image: linear-gradient(to bottom, #1E293B, var(--background));
+  background-image: linear-gradient(to bottom, #111E30, var(--background));
 }
 
 .bg-gradient-dark {
@@ -192,9 +192,9 @@ html {
 }
 
 .dark .glass {
-  background-color: rgba(15, 23, 42, 0.7);
+  background-color: rgba(12, 21, 35, 0.75);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(30, 53, 87, 0.5);
 }
 
 /* Status badges */
@@ -284,15 +284,15 @@ html {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #0F172A;
+  background: #0C1523;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1E3557;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #2A4A74;
 }
 
 /* ============================================
@@ -305,6 +305,6 @@ html {
 }
 
 .dark ::selection {
-  background: #334155;
-  color: #F8FAFC;
+  background: #1E3557;
+  color: #DCE9F5;
 }

@@ -62,7 +62,7 @@ export function RevenueStats({
               <item.icon className={item.color} size={24} />
             </div>
             <div>
-              <div className="text-sm text-gray-500">{item.label}</div>
+              <div className="text-sm text-muted-foreground">{item.label}</div>
               <div className="text-xl font-bold">{item.value}</div>
             </div>
           </CardContent>

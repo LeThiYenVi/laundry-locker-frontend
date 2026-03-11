@@ -17,6 +17,7 @@ import type {
   StaffContact,
   CreateStaffContactRequest,
   UpdatePartnerProfileRequest,
+  OrderComplaintResponse,
 } from "../../types/partner.type";
 import type { OrderStatus } from "../../types/partner.enum";
 
@@ -444,6 +445,22 @@ export const partnerApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // Force collect order (skip access code / MQTT) → backend returns OrderResponse
+    forceCollectOrder: builder.mutation<PartnerOrder, number>({
+      query: (orderId) => ({
+        url: PARTNER_ENDPOINTS.ORDER_COLLECT(orderId),
+        method: "POST",
+      }),
+      transformResponse: (response: ApiResponse<BackendOrderResponse>) =>
+        mapOrderResponse(response.data),
+      invalidatesTags: (_result, _error, orderId) => [
+        { type: "PartnerOrder", id: orderId },
+        { type: "PartnerOrder", id: "LIST" },
+        "Orders",
+        "Dashboard",
+      ],
+    }),
+
     // Start processing order → backend returns OrderResponse
     processOrder: builder.mutation<PartnerOrder, number>({
       query: (orderId) => ({
@@ -659,6 +676,20 @@ export const partnerApi = baseApi.injectEndpoints({
       transformResponse: (response: ApiResponse<PartnerRevenueResponse>) =>
         response.data,
     }),
+
+    // ============================================
+    // Order Complaint Endpoints
+    // BE: GET /api/orders/{orderId}/complaints
+    // ============================================
+
+    getOrderComplaints: builder.query<OrderComplaintResponse[], number>({
+      query: (orderId) => PARTNER_ENDPOINTS.ORDER_COMPLAINTS(orderId),
+      transformResponse: (response: ApiResponse<OrderComplaintResponse[]>) =>
+        response.data ?? [],
+      providesTags: (_result, _error, orderId) => [
+        { type: "Orders", id: orderId },
+      ],
+    }),
   }),
 });
 
@@ -676,6 +707,7 @@ export const {
   useGetPendingOrdersQuery,
   useGetPartnerOrderByIdQuery,
   useAcceptOrderMutation,
+  useForceCollectOrderMutation,
   useUpdateOrderWeightMutation,
   useProcessOrderMutation,
   useMarkOrderReadyMutation,
@@ -702,4 +734,7 @@ export const {
 
   // Revenue
   useGetPartnerRevenueQuery,
+
+  // Complaints
+  useGetOrderComplaintsQuery,
 } = partnerApi;

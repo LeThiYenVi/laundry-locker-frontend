@@ -14,9 +14,9 @@ export function StaffList({ staff, isDeleting, onDelete }: StaffListProps) {
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <User className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <p className="text-gray-500 font-medium">Chưa có nhân viên nào</p>
-          <p className="text-sm text-gray-400 mt-1">
+          <User className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+          <p className="text-muted-foreground font-medium">Chưa có nhân viên nào</p>
+          <p className="text-sm text-muted-foreground/70 mt-1">
             Nhấn "Thêm nhân viên" để bắt đầu xây dựng đội ngũ
           </p>
         </CardContent>
@@ -48,30 +48,30 @@ export function StaffList({ staff, isDeleting, onDelete }: StaffListProps) {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">
+                <h3 className="font-semibold text-foreground truncate">
                   {member.name}
                 </h3>
-                <p className="text-sm text-gray-500">ID: {member.id}</p>
+                <p className="text-sm text-muted-foreground">ID: {member.id}</p>
               </div>
             </div>
 
             {/* Info */}
             <div className="space-y-2 mb-4">
               {member.email && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Mail size={14} className="shrink-0 text-gray-400" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail size={14} className="shrink-0 text-muted-foreground/70" />
                   <span className="truncate">{member.email}</span>
                 </div>
               )}
               {member.phoneNumber && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone size={14} className="shrink-0 text-gray-400" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone size={14} className="shrink-0 text-muted-foreground/70" />
                   <span>{member.phoneNumber}</span>
                 </div>
               )}
               {member.joinDate && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar size={14} className="shrink-0 text-gray-400" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar size={14} className="shrink-0 text-muted-foreground/70" />
                   <span>Tham gia: {formatDate(member.joinDate)}</span>
                 </div>
               )}

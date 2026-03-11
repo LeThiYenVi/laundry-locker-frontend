@@ -112,9 +112,9 @@ const getStatusBadge = (status: LockerStatus, t: (key: string) => string) => {
       label: t("admin.lockers.status.active"),
     },
     [LockerStatus.INACTIVE]: {
-      bg: "bg-gray-50",
-      text: "text-gray-700",
-      border: "border-gray-200",
+      bg: "bg-muted/30",
+      text: "text-foreground/80",
+      border: "border-border/50",
       icon: XCircle,
       label: t("admin.lockers.status.inactive"),
     },
@@ -168,7 +168,7 @@ export function LockerTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="font-mono font-semibold text-gray-900 text-sm cursor-help">
+                  <p className="font-mono font-semibold text-foreground text-sm cursor-help">
                     {row.original.code}
                   </p>
                 </TooltipTrigger>
@@ -177,7 +177,7 @@ export function LockerTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className="text-sm text-gray-600 font-medium truncate max-w-[150px]">
+            <p className="text-sm text-muted-foreground font-medium truncate max-w-[150px]">
               {row.original.name}
             </p>
           </div>
@@ -196,10 +196,10 @@ export function LockerTable({
             <TruncatedText
               text={row.original.storeName}
               maxLength={20}
-              className="font-medium text-gray-900"
+              className="font-medium text-foreground"
             />
-            <div className="flex items-center gap-1 text-gray-500 text-sm mt-0.5">
-              <MapPin size={14} className="flex-shrink-0 text-gray-400" />
+            <div className="flex items-center gap-1 text-muted-foreground text-sm mt-0.5">
+              <MapPin size={14} className="flex-shrink-0 text-muted-foreground/70" />
               <TruncatedText
                 text={row.original.address}
                 maxLength={25}
@@ -226,7 +226,7 @@ export function LockerTable({
         return (
           <div className="flex flex-col gap-1.5 w-28">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-foreground/80">
                 {availableBoxes}/{totalBoxes}
               </span>
               <span
@@ -241,7 +241,7 @@ export function LockerTable({
                 trống
               </span>
             </div>
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-muted/50 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
                   availablePercent > 50
@@ -253,7 +253,7 @@ export function LockerTable({
                 style={{ width: `${availablePercent}%` }}
               />
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-orange-400"></span>
                 {totalBoxes - availableBoxes} đang dùng
@@ -276,14 +276,14 @@ export function LockerTable({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:bg-gray-100"
+                  className="h-8 w-8 hover:bg-muted"
                 >
-                  <MoreHorizontal size={16} className="text-gray-500" />
+                  <MoreHorizontal size={16} className="text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-48 bg-white border border-gray-200"
+                className="w-48 bg-white border border-border/50"
               >
                 <DropdownMenuItem
                   onClick={() => navigate(`/admin/lockers/${locker.id}`)}

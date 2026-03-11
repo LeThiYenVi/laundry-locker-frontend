@@ -54,7 +54,7 @@ export function WeightUpdateModal({
           </div>
 
           {order && (
-            <div className="bg-gray-50 rounded-lg p-3 text-sm">
+            <div className="bg-muted/30 rounded-lg p-3 text-sm">
               <p>
                 <strong>Mã đơn:</strong> {order.orderCode}
               </p>

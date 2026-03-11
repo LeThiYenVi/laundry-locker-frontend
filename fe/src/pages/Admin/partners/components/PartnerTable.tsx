@@ -130,8 +130,8 @@ const getStatusBadge = (status: PartnerStatus, t: (key: string) => string) => {
       labelKey: "admin.partners.status.rejected",
     },
     [PartnerStatus.SUSPENDED]: {
-      className: "bg-gray-50 text-gray-700 border-gray-200",
-      icon: <AlertCircle size={14} className="text-gray-600" />,
+      className: "bg-muted/30 text-foreground/80 border-border/50",
+      icon: <AlertCircle size={14} className="text-muted-foreground" />,
       labelKey: "admin.partners.status.suspended",
     },
   };
@@ -167,9 +167,9 @@ export function PartnerTable({
             <TruncatedText
               text={row.original.name}
               maxLength={22}
-              className="font-semibold text-gray-900"
+              className="font-semibold text-foreground"
             />
-            <p className="text-sm text-gray-500 truncate max-w-[180px]">
+            <p className="text-sm text-muted-foreground truncate max-w-[180px]">
               {row.original.email}
             </p>
           </div>
@@ -190,10 +190,10 @@ export function PartnerTable({
             <TruncatedText
               text={row.original.representativeName}
               maxLength={18}
-              className="font-medium text-gray-700"
+              className="font-medium text-foreground/80"
             />
-            <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-0.5">
-              <Phone size={14} className="text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 text-muted-foreground text-sm mt-0.5">
+              <Phone size={14} className="text-muted-foreground/70 flex-shrink-0" />
               <span>{row.original.representativePhone}</span>
             </div>
           </div>
@@ -205,11 +205,11 @@ export function PartnerTable({
       header: t("admin.partners.columns.address"),
       cell: ({ row }) => (
         <div className="flex items-start gap-2">
-          <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
+          <MapPin size={16} className="text-muted-foreground/70 flex-shrink-0 mt-0.5" />
           <TruncatedText
             text={row.original.address || "Chưa cập nhật"}
             maxLength={30}
-            className="text-sm text-gray-600"
+            className="text-sm text-muted-foreground"
           />
         </div>
       ),
@@ -245,14 +245,14 @@ export function PartnerTable({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:bg-gray-100"
+                className="h-8 w-8 hover:bg-muted"
               >
-                <MoreHorizontal size={16} className="text-gray-500" />
+                <MoreHorizontal size={16} className="text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-44 bg-white border border-gray-200"
+              className="w-44 bg-white border border-border/50"
             >
               <DropdownMenuItem
                 onClick={() => onViewDetail(partner.id)}

@@ -100,7 +100,7 @@ export function SchedulerCard() {
         );
       default:
         return (
-          <Badge variant="outline" className="bg-gray-50 text-gray-600">
+          <Badge variant="outline" className="bg-muted/30 text-muted-foreground">
             <Clock className="mr-1 h-3 w-3" />
             Sẵn sàng
           </Badge>
@@ -112,7 +112,7 @@ export function SchedulerCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Clock className="h-5 w-5 text-blue-600" />
+          <Clock className="h-5 w-5 text-primary" />
           Scheduler Management
         </CardTitle>
       </CardHeader>
@@ -123,19 +123,19 @@ export function SchedulerCard() {
             return (
               <div
                 key={job.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                    <Icon className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{job.name}</h4>
                       {getStatusBadge(job.status)}
                     </div>
-                    <p className="text-sm text-gray-500">{job.description}</p>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
+                    <p className="text-sm text-muted-foreground">{job.description}</p>
+                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground/70">
                       <span className="flex items-center gap-1">
                         <RotateCcw className="h-3 w-3" />
                         {job.frequency}
@@ -163,9 +163,9 @@ export function SchedulerCard() {
           })}
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-          <p className="text-sm text-blue-700">
+        <div className="mt-4 p-3 bg-primary/5 rounded-lg flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-primary mt-0.5" />
+          <p className="text-sm text-muted-foreground">
             Các scheduler tự động chạy theo lịch. Bạn có thể trigger thủ công
             khi cần.
           </p>

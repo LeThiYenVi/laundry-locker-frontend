@@ -1,12 +1,14 @@
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "~/components/shared/page-header";
 import { Card, CardContent } from "~/components/ui/card";
 import { useScheduler } from "./hooks/useScheduler";
 import { SchedulerStatus } from "./components/SchedulerStatus";
 import { JobCard } from "./components/JobCard";
 import { JobResults } from "./components/JobResults";
-import { Timer, Package, Bell } from "lucide-react";
+import { Timer, Package, Bell, Info } from "lucide-react";
 
 export default function SchedulerPage() {
+  const { t } = useTranslation();
   const {
     handleTriggerAutoCancel,
     handleTriggerBoxRelease,
@@ -14,35 +16,31 @@ export default function SchedulerPage() {
     isTriggeringCancel,
     isTriggeringRelease,
     isTriggeringReminders,
-    isLoading,
     jobResults,
   } = useScheduler();
 
   const jobs = [
     {
-      title: "Auto-Cancel Orders",
-      description:
-        "Tự động hủy các đơn hàng INITIALIZED quá 30 phút không xác nhận. Giải phóng box và gửi notification cho khách.",
-      frequency: "Mỗi 5 phút",
+      title: t("admin.scheduler.jobs.autoCancel.title"),
+      description: t("admin.scheduler.jobs.autoCancel.description"),
+      frequency: t("admin.scheduler.jobs.autoCancel.frequency"),
       icon: <Timer size={20} className="text-orange-600" />,
       onTrigger: handleTriggerAutoCancel,
       isLoading: isTriggeringCancel,
     },
     {
-      title: "Release Boxes",
-      description:
-        "Giải phóng các box từ đơn hàng COMPLETED sau 5 phút. Xóa PIN code để đảm bảo bảo mật.",
-      frequency: "Mỗi 2 phút",
-      icon: <Package size={20} className="text-blue-600" />,
+      title: t("admin.scheduler.jobs.releaseBoxes.title"),
+      description: t("admin.scheduler.jobs.releaseBoxes.description"),
+      frequency: t("admin.scheduler.jobs.releaseBoxes.frequency"),
+      icon: <Package size={20} className="text-primary" />,
       onTrigger: handleTriggerBoxRelease,
       isLoading: isTriggeringRelease,
     },
     {
-      title: "Pickup Reminders",
-      description:
-        "Gửi notification nhắc nhở khách đến lấy đồ cho các đơn hàng RETURNED quá 24 giờ.",
-      frequency: "Mỗi 1 giờ",
-      icon: <Bell size={20} className="text-purple-600" />,
+      title: t("admin.scheduler.jobs.pickupReminders.title"),
+      description: t("admin.scheduler.jobs.pickupReminders.description"),
+      frequency: t("admin.scheduler.jobs.pickupReminders.frequency"),
+      icon: <Bell size={20} className="text-violet-500" />,
       onTrigger: handleTriggerPickupReminders,
       isLoading: isTriggeringReminders,
     },
@@ -51,14 +49,12 @@ export default function SchedulerPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Quản lý Scheduler"
-        description="Quản lý các tác vụ tự động và trigger thủ công"
+        title={t("admin.scheduler.title")}
+        description={t("admin.scheduler.description")}
       />
 
-      {/* Status Card */}
       <SchedulerStatus />
 
-      {/* Jobs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {jobs.map((job) => (
           <JobCard
@@ -73,17 +69,18 @@ export default function SchedulerPage() {
         ))}
       </div>
 
-      {/* Results */}
       <JobResults results={jobResults} />
 
-      {/* Info Card */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="border border-primary/20 bg-primary/5">
         <CardContent className="p-6">
-          <h3 className="font-semibold text-blue-900 mb-2">Thông tin</h3>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>Các scheduler job chạy tự động theo tần suất đã cấu hình</li>
-            <li>Admin có thể trigger thủ công để test hoặc xử lý gấp</li>
-            <li>Kết quả chạy job được lưu lại 10 lần gần nhất</li>
+          <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+            <Info size={16} className="text-primary" />
+            {t("admin.scheduler.infoTitle")}
+          </h3>
+          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+            <li>{t("admin.scheduler.info1")}</li>
+            <li>{t("admin.scheduler.info2")}</li>
+            <li>{t("admin.scheduler.info3")}</li>
           </ul>
         </CardContent>
       </Card>

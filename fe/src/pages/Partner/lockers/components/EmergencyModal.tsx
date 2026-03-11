@@ -37,7 +37,7 @@ export function EmergencyModal({ isOpen, onClose, box, onUnlock, onReport }: Eme
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-2">
+          <div className="bg-muted/30 rounded-lg p-4 text-sm space-y-2">
             <p>
               <strong>Ô:</strong> {box.boxNumber}
             </p>

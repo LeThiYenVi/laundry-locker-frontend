@@ -12,7 +12,7 @@ export function WebSocketIndicator({ connected, error }: WebSocketIndicatorProps
         className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 shadow ${
           connected
             ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-gray-500"
+            : "bg-muted/50 text-muted-foreground"
         }`}
         title={connected ? "Kết nối real-time" : error || "Đang kết nối..."}
       >
@@ -23,7 +23,7 @@ export function WebSocketIndicator({ connected, error }: WebSocketIndicatorProps
           </>
         ) : (
           <>
-            <WifiOff size={14} className="text-gray-400" />
+            <WifiOff size={14} className="text-muted-foreground/70" />
             Offline
           </>
         )}

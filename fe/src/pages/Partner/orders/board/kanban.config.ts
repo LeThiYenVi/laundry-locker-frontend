@@ -37,13 +37,6 @@ export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
     badge: "bg-blue-100 text-blue-800 border-blue-200",
   },
   {
-    status: OrderStatus.PROCESSED,
-    label: "Giặt xong",
-    accent: "border-cyan-400",
-    bg: "bg-cyan-50/50 dark:bg-cyan-950/20",
-    badge: "bg-cyan-100 text-cyan-800 border-cyan-200",
-  },
-  {
     status: OrderStatus.READY,
     label: "Sẵn sàng trả",
     accent: "border-orange-400",
@@ -87,7 +80,6 @@ export const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> =
     [OrderStatus.COLLECTED]: [OrderStatus.PROCESSING, OrderStatus.READY],
     // UC3 Step 3: Partner marks ready → Staff RETURN code generated
     [OrderStatus.PROCESSING]: [OrderStatus.READY],
-    [OrderStatus.PROCESSED]: [OrderStatus.READY],
   };
 
 export function isTransitionAllowed(

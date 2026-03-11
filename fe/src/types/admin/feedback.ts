@@ -1,9 +1,9 @@
 // ============================================
 // Admin Feedback & Report Management Types
-// Based on: AdminFeedbackController, AdminReportController, AdminAnalyticsController
 // ============================================
 
-// ─── Feedback ────────────────────────────────────────────────────────────────
+// ─── Feedback (OrderRating) ───────────────────────────────────────────────────
+// NOTE: Admin-wide feedback list endpoint not yet in BE — FeedbackTab shows error gracefully
 
 export interface FeedbackDTO {
   id: number;
@@ -32,103 +32,41 @@ export interface FeedbackDetailDTO {
   orderAmount: number | null;
   adminReply: string | null;
   repliedAt: string | null;
-  resolvedBy: string | null; // Admin name
+  resolvedBy: string | null;
   resolvedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface UpdateFeedbackStatusRequest {
-  status: string; // "REVIEWED" | "RESOLVED"
+  status: string;
 }
 
 export interface ReplyFeedbackRequest {
   reply: string;
 }
 
-// ─── Reports ─────────────────────────────────────────────────────────────────
+// ─── LockerReport ─────────────────────────────────────────────────────────────
+// BE: GET /api/admin/lockers/reports  |  PUT /api/admin/lockers/reports/{id}/resolve
 
-export type ReportStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
-export type ReportCategory =
-  | "DAMAGED"
-  | "LOST"
-  | "QUALITY"
-  | "BILLING"
-  | "OTHER";
-export type ResolutionType = "REFUND" | "REPLACEMENT" | "DISCOUNT" | "OTHER";
+export type LockerReportStatus = "PENDING" | "RESOLVED" | "REJECTED";
 
 export interface ReportDTO {
   id: number;
+  lockerId: number;
+  lockerName: string;
   userId: number;
-  userName: string;
-  email: string;
-  category: ReportCategory;
-  title: string;
-  description: string;
-  status: ReportStatus;
-  relatedOrderId: number | null;
-  assignedStaffId: number | null;
-  assignedStaffName: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ReportNoteDTO {
-  id: number;
-  adminName: string;
-  noteText: string;
-  createdAt: string;
-}
-
-export interface ReportDetailDTO {
-  id: number;
-  userId: number;
-  userName: string;
+  userFullName: string;
   userEmail: string;
   userPhone: string;
-  category: ReportCategory;
-  title: string;
   description: string;
-  attachmentUrls: string[];
-  status: ReportStatus;
-  assignedStaffId: number | null;
-  assignedStaffName: string | null;
-  internalNotes: ReportNoteDTO[];
-  resolution: string | null;
-  resolutionType: ResolutionType | null;
-  compensationAmount: number | null;
-  resolvedAt: string | null;
+  status: LockerReportStatus;
   createdAt: string;
-  updatedAt: string;
-}
-
-export interface ReportStatsDTO {
-  totalReports: number;
-  openReports: number;
-  inProgressReports: number;
-  resolvedReports: number;
-  reportsByCategory: Record<ReportCategory, number>;
-  averageResolutionTime: number; // hours
-  resolutionRate: number; // percentage
-  reportsByStaff: Record<string, number>;
-}
-
-export interface UpdateReportStatusRequest {
-  status: ReportStatus;
-}
-
-export interface AssignReportRequest {
-  staffId: number;
-}
-
-export interface AddNoteRequest {
-  note: string;
+  resolvedAt: string | null;
 }
 
 export interface ResolveReportRequest {
-  resolution: string;
-  resolutionType: ResolutionType;
-  compensationAmount: number;
+  resolution?: string;
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────────────
@@ -142,7 +80,7 @@ export interface FeedbackTrendDTO {
 export interface FeedbackAnalyticsDTO {
   averageRating: number;
   totalFeedback: number;
-  ratingDistribution: Record<string, number>; // {"5": 450, "4": 280, ...}
+  ratingDistribution: Record<string, number>;
   feedbackToday: number;
   feedbackThisWeek: number;
   feedbackThisMonth: number;
@@ -151,10 +89,10 @@ export interface FeedbackAnalyticsDTO {
 }
 
 export interface SatisfactionMetricsDTO {
-  overallSatisfactionScore: number; // 0-100
+  overallSatisfactionScore: number;
   npsScore: number;
-  positivePercentage: number; // % of 4-5 ratings
-  negativePercentage: number; // % of 1-2 ratings
+  positivePercentage: number;
+  negativePercentage: number;
   mostCommonComplaint: string;
   topServiceQuality: string;
   departmentScores: Record<string, number>;

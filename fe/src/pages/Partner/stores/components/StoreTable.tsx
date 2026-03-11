@@ -31,7 +31,7 @@ const IconWrapper = ({
     green: "bg-green-50 text-green-600",
     red: "bg-red-50 text-red-500",
     amber: "bg-amber-50 text-amber-500",
-    gray: "bg-gray-50 text-gray-500",
+    gray: "bg-muted/30 text-muted-foreground",
   };
   return (
     <div
@@ -51,7 +51,7 @@ const TruncatedText = ({
   maxLength?: number;
   className?: string;
 }) => {
-  if (!text) return <span className={`${className} text-gray-400`}>—</span>;
+  if (!text) return <span className={`${className} text-muted-foreground/70`}>—</span>;
   if (text.length <= maxLength) return <span className={className}>{text}</span>;
 
   return (
@@ -77,7 +77,7 @@ const getStoreBadge = (status: string) => {
     case "INACTIVE":
       return "border-red-200 bg-red-50 text-red-700";
     default:
-      return "border-gray-200 bg-gray-50 text-gray-600";
+      return "border-border/50 bg-muted/30 text-muted-foreground";
   }
 };
 
@@ -109,7 +109,7 @@ export function StoreTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="font-semibold text-gray-900 truncate max-w-[180px] cursor-help">
+                  <p className="font-semibold text-foreground truncate max-w-[180px] cursor-help">
                     {row.original.name}
                   </p>
                 </TooltipTrigger>
@@ -118,7 +118,7 @@ export function StoreTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className="text-xs text-gray-400 mt-0.5">#{row.original.id}</p>
+            <p className="text-xs text-muted-foreground/70 mt-0.5">#{row.original.id}</p>
           </div>
         </div>
       ),
@@ -135,7 +135,7 @@ export function StoreTable({
             <TruncatedText
               text={row.original.address}
               maxLength={40}
-              className="text-sm text-gray-600"
+              className="text-sm text-muted-foreground"
             />
           </div>
         </div>
@@ -149,7 +149,7 @@ export function StoreTable({
           <IconWrapper color="gray">
             <Phone size={15} />
           </IconWrapper>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {row.original.contactPhone || "—"}
           </span>
         </div>

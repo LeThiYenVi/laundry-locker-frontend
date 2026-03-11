@@ -6,11 +6,7 @@ import {
 } from "~/types/admin/enums";
 import {
   useGetAllNotificationsQuery,
-  useGetNotificationStatsQuery,
   useDeleteNotificationMutation,
-  useBulkDeleteNotificationsMutation,
-  useUpdateNotificationStatusMutation,
-  useResendNotificationMutation,
 } from "@/stores/apis/admin/notifications";
 import type { AdminNotificationResponse } from "~/types/admin/notification";
 
@@ -36,20 +32,8 @@ export function useNotifications() {
     ...(channelFilter !== "ALL" ? { channel: channelFilter } : {}),
   });
 
-  const {
-    data: statsData,
-    isLoading: isLoadingStats,
-    refetch: refetchStats,
-  } = useGetNotificationStatsQuery();
-
   const [deleteNotification, { isLoading: isDeleting }] =
     useDeleteNotificationMutation();
-  const [bulkDeleteNotifications, { isLoading: isBulkDeleting }] =
-    useBulkDeleteNotificationsMutation();
-  const [updateNotificationStatus, { isLoading: isUpdatingStatus }] =
-    useUpdateNotificationStatusMutation();
-  const [resendNotification, { isLoading: isResending }] =
-    useResendNotificationMutation();
 
   const allNotifications: AdminNotificationResponse[] =
     data?.data?.content ?? [];
@@ -60,14 +44,12 @@ export function useNotifications() {
     return allNotifications.filter(
       (n) =>
         n.title.toLowerCase().includes(query) ||
-        n.recipientName.toLowerCase().includes(query) ||
+        (n.recipientName ?? "").toLowerCase().includes(query) ||
         n.message.toLowerCase().includes(query) ||
         n.recipientEmail?.toLowerCase().includes(query) ||
         String(n.id).includes(query),
     );
   }, [allNotifications, searchQuery]);
-
-  const stats = statsData?.data;
 
   const clearFilters = () => {
     setStatusFilter("ALL");
@@ -85,34 +67,19 @@ export function useNotifications() {
 
   const handleDelete = async (id: number) => {
     await deleteNotification(id).unwrap();
-    refetchStats();
-  };
-
-  const handleBulkDelete = async (ids: number[]) => {
-    await bulkDeleteNotifications(ids).unwrap();
-    refetchStats();
-  };
-
-  const handleUpdateStatus = async (id: number, status: NotificationStatus) => {
-    await updateNotificationStatus({ id, data: { status } }).unwrap();
-    refetchStats();
-  };
-
-  const handleResend = async (id: number) => {
-    await resendNotification(id).unwrap();
   };
 
   return {
     notifications: filteredNotifications,
     totalElements: data?.data?.totalElements ?? 0,
     totalPages: data?.data?.totalPages ?? 0,
-    stats,
+    stats: undefined,
     isLoading,
-    isLoadingStats,
+    isLoadingStats: false,
     isDeleting,
-    isBulkDeleting,
-    isUpdatingStatus,
-    isResending,
+    isBulkDeleting: false,
+    isUpdatingStatus: false,
+    isResending: false,
     statusFilter,
     setStatusFilter,
     typeFilter,
@@ -129,8 +96,8 @@ export function useNotifications() {
     clearFilters,
     hasActiveFilters,
     handleDelete,
-    handleBulkDelete,
-    handleUpdateStatus,
-    handleResend,
+    handleBulkDelete: async (_ids: number[]) => {},
+    handleUpdateStatus: async (_id: number, _status: NotificationStatus) => {},
+    handleResend: async (_id: number) => {},
   };
 }

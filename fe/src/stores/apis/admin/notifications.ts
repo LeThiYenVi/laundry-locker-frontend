@@ -7,10 +7,7 @@ import type {
   AdminNotificationResponse,
   CreateNotificationRequest,
   BroadcastNotificationRequest,
-  UpdateNotificationStatusRequest,
-  NotificationStatsResponse,
   BroadcastResult,
-  NotificationTemplateResponse,
 } from "../../../types";
 import type {
   NotificationStatus,
@@ -20,8 +17,6 @@ import type {
 
 const TAGS = {
   NOTIFICATIONS: "Notifications",
-  NOTIFICATION_STATS: "NotificationStats",
-  NOTIFICATION_TEMPLATES: "NotificationTemplates",
 } as const;
 
 export interface GetNotificationsParams extends PageableRequest {
@@ -49,7 +44,7 @@ export const notificationManagementApi = baseApi.injectEndpoints({
       number
     >({
       query: (id) => ADMIN_ENDPOINTS.NOTIFICATION_BY_ID(id),
-      providesTags: (result, error, id) => [{ type: TAGS.NOTIFICATIONS, id }],
+      providesTags: (_, __, id) => [{ type: TAGS.NOTIFICATIONS, id }],
     }),
 
     createNotification: builder.mutation<
@@ -61,23 +56,7 @@ export const notificationManagementApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: [TAGS.NOTIFICATIONS, TAGS.NOTIFICATION_STATS],
-    }),
-
-    updateNotificationStatus: builder.mutation<
-      ApiResponse<AdminNotificationResponse>,
-      { id: number; data: UpdateNotificationStatusRequest }
-    >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.NOTIFICATION_STATUS(id),
-        method: "PATCH",
-        body: data,
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: TAGS.NOTIFICATIONS, id },
-        TAGS.NOTIFICATIONS,
-        TAGS.NOTIFICATION_STATS,
-      ],
+      invalidatesTags: [TAGS.NOTIFICATIONS],
     }),
 
     deleteNotification: builder.mutation<ApiResponse<void>, number>({
@@ -85,16 +64,7 @@ export const notificationManagementApi = baseApi.injectEndpoints({
         url: ADMIN_ENDPOINTS.NOTIFICATION_BY_ID(id),
         method: "DELETE",
       }),
-      invalidatesTags: [TAGS.NOTIFICATIONS, TAGS.NOTIFICATION_STATS],
-    }),
-
-    bulkDeleteNotifications: builder.mutation<ApiResponse<void>, number[]>({
-      query: (ids) => ({
-        url: ADMIN_ENDPOINTS.NOTIFICATION_BULK_DELETE,
-        method: "DELETE",
-        body: { ids },
-      }),
-      invalidatesTags: [TAGS.NOTIFICATIONS, TAGS.NOTIFICATION_STATS],
+      invalidatesTags: [TAGS.NOTIFICATIONS],
     }),
 
     broadcastNotification: builder.mutation<
@@ -106,37 +76,7 @@ export const notificationManagementApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: [TAGS.NOTIFICATIONS, TAGS.NOTIFICATION_STATS],
-    }),
-
-    getNotificationStats: builder.query<
-      ApiResponse<NotificationStatsResponse>,
-      void
-    >({
-      query: () => ADMIN_ENDPOINTS.NOTIFICATION_STATS,
-      providesTags: [TAGS.NOTIFICATION_STATS],
-    }),
-
-    getNotificationTemplates: builder.query<
-      ApiResponse<NotificationTemplateResponse[]>,
-      void
-    >({
-      query: () => ADMIN_ENDPOINTS.NOTIFICATION_TEMPLATES,
-      providesTags: [TAGS.NOTIFICATION_TEMPLATES],
-    }),
-
-    resendNotification: builder.mutation<
-      ApiResponse<AdminNotificationResponse>,
-      number
-    >({
-      query: (id) => ({
-        url: ADMIN_ENDPOINTS.NOTIFICATION_RESEND(id),
-        method: "POST",
-      }),
-      invalidatesTags: (result, error, id) => [
-        { type: TAGS.NOTIFICATIONS, id },
-        TAGS.NOTIFICATIONS,
-      ],
+      invalidatesTags: [TAGS.NOTIFICATIONS],
     }),
   }),
 });
@@ -145,11 +85,6 @@ export const {
   useGetAllNotificationsQuery,
   useGetNotificationByIdQuery,
   useCreateNotificationMutation,
-  useUpdateNotificationStatusMutation,
   useDeleteNotificationMutation,
-  useBulkDeleteNotificationsMutation,
   useBroadcastNotificationMutation,
-  useGetNotificationStatsQuery,
-  useGetNotificationTemplatesQuery,
-  useResendNotificationMutation,
 } = notificationManagementApi;

@@ -19,7 +19,7 @@ export function StarRow({ rating }: { rating: number }) {
           key={i}
           size={13}
           className={
-            i <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-200"
+            i <= rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30"
           }
         />
       ))}
@@ -63,25 +63,16 @@ export const REPORT_STATUS_META: Record<
   string,
   { label: string; cls: string }
 > = {
-  OPEN: { label: "Mới", cls: "bg-red-100 text-red-700 border-red-200" },
-  IN_PROGRESS: {
-    label: "Đang xử lý",
-    cls: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  PENDING: {
+    label: "Chờ xử lý",
+    cls: "bg-red-100 text-red-700 border-red-200",
   },
   RESOLVED: {
     label: "Đã giải quyết",
     cls: "bg-green-100 text-green-700 border-green-200",
   },
-  CLOSED: {
-    label: "Đóng",
-    cls: "bg-gray-100 text-gray-500 border-gray-200",
+  REJECTED: {
+    label: "Từ chối",
+    cls: "bg-muted/50 text-muted-foreground border-border/50",
   },
-};
-
-export const CATEGORY_META: Record<string, { label: string; cls: string }> = {
-  DAMAGED: { label: "Hư hỏng", cls: "bg-red-100 text-red-700" },
-  LOST: { label: "Thất lạc", cls: "bg-orange-100 text-orange-700" },
-  QUALITY: { label: "Chất lượng", cls: "bg-yellow-100 text-yellow-700" },
-  BILLING: { label: "Thanh toán", cls: "bg-blue-100 text-blue-700" },
-  OTHER: { label: "Khác", cls: "bg-gray-100 text-gray-600" },
 };

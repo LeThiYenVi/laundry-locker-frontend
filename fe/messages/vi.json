@@ -207,11 +207,58 @@
     },
     "scheduler": {
       "title": "Lập lịch",
-      "description": "Quản lý lịch tự động"
+      "description": "Quản lý các tác vụ tự động và trigger thủ công",
+      "statusTitle": "Trạng thái Scheduler",
+      "systemStatus": "Trạng thái hệ thống",
+      "loading": "Đang tải...",
+      "cannotConnect": "Không thể kết nối",
+      "running": "Đang hoạt động",
+      "stopped": "Đã tắt",
+      "autoJobs": "Các job tự động",
+      "historyTitle": "Lịch sử chạy job",
+      "noResults": "Chưa có job nào được chạy",
+      "noResultsDesc": "Các kết quả sẽ hiển thị ở đây",
+      "frequencyLabel": "Tần suất:",
+      "lastRunLabel": "Chạy gần nhất:",
+      "runNow": "Chạy ngay",
+      "runningNow": "Đang chạy...",
+      "auto": "Tự động",
+      "infoTitle": "Thông tin",
+      "info1": "Các scheduler job chạy tự động theo tần suất đã cấu hình",
+      "info2": "Admin có thể trigger thủ công để test hoặc xử lý gấp",
+      "info3": "Kết quả chạy job được lưu lại 10 lần gần nhất",
+      "jobs": {
+        "autoCancel": {
+          "title": "Auto-Cancel Orders",
+          "description": "Tự động hủy các đơn hàng INITIALIZED quá 30 phút không xác nhận. Giải phóng box và gửi notification cho khách.",
+          "frequency": "Mỗi 5 phút"
+        },
+        "releaseBoxes": {
+          "title": "Release Boxes",
+          "description": "Giải phóng các box từ đơn hàng COMPLETED sau 5 phút. Xóa PIN code để đảm bảo bảo mật.",
+          "frequency": "Mỗi 2 phút"
+        },
+        "pickupReminders": {
+          "title": "Pickup Reminders",
+          "description": "Gửi notification nhắc nhở khách đến lấy đồ cho các đơn hàng RETURNED quá 24 giờ.",
+          "frequency": "Mỗi 1 giờ"
+        }
+      }
     },
     "settings": {
       "title": "Cài đặt",
-      "subtitle": "Quản lý tùy chọn ứng dụng"
+      "subtitle": "Quản lý tùy chọn ứng dụng",
+      "language": "Ngôn ngữ",
+      "languageHelp": "Chọn ngôn ngữ hiển thị",
+      "theme": "Giao diện",
+      "themeHelp": "Chuyển đổi sáng / tối / hệ thống",
+      "analytics": "Phân tích",
+      "analyticsHelp": "Gửi dữ liệu ẩn danh để cải thiện ứng dụng",
+      "devMode": "Chế độ dev",
+      "devModeHelp": "Hiện thêm thông tin debug",
+      "reset": "Đặt lại",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu..."
     },
     "notifications": {
       "title": "Quản lý thông báo",
