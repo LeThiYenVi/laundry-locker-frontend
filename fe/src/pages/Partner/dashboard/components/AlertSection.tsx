@@ -25,15 +25,15 @@ export function AlertSection({ pendingCollections, overdueOrders }: AlertSection
             <div className="flex items-center gap-3">
               <AlertCircle className="text-yellow-600" size={24} />
               <div>
-                <p className="font-semibold text-gray-900">
+                <p className="font-semibold text-foreground">
                   {pendingCollections} đơn chờ chấp nhận
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Cần tạo mã cho Staff lấy đồ
                 </p>
               </div>
             </div>
-            <ArrowRight className="text-gray-400" size={20} />
+            <ArrowRight className="text-muted-foreground/70" size={20} />
           </CardContent>
         </Card>
       )}
@@ -43,10 +43,10 @@ export function AlertSection({ pendingCollections, overdueOrders }: AlertSection
           <CardContent className="flex items-center gap-3 p-4">
             <Clock className="text-red-600" size={24} />
             <div>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-foreground">
                 {overdueOrders} đơn quá hạn
               </p>
-              <p className="text-sm text-gray-600">Cần xử lý gấp</p>
+              <p className="text-sm text-muted-foreground">Cần xử lý gấp</p>
             </div>
           </CardContent>
         </Card>

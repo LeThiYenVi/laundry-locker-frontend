@@ -82,7 +82,7 @@ export function FeedbackTab() {
           </SelectContent>
         </Select>
 
-        <span className="text-sm text-gray-500 ml-auto">
+        <span className="text-sm text-muted-foreground ml-auto">
           {isLoading ? "..." : `${total.toLocaleString("vi-VN")} phản hồi`}
         </span>
       </div>
@@ -113,7 +113,7 @@ export function FeedbackTab() {
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    className="text-center py-10 text-gray-400"
+                    className="text-center py-10 text-muted-foreground/70"
                   >
                     Không có phản hồi nào
                   </TableCell>
@@ -122,29 +122,29 @@ export function FeedbackTab() {
               {list.map((fb) => (
                 <TableRow
                   key={fb.id}
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-muted/50"
                   onClick={() => navigate(`/admin/feedback/${fb.id}`)}
                 >
                   <TableCell>
                     <div>
-                      <p className="font-medium text-gray-900">{fb.userName}</p>
-                      <p className="text-xs text-gray-400">{fb.email}</p>
+                      <p className="font-medium text-foreground">{fb.userName}</p>
+                      <p className="text-xs text-muted-foreground/70">{fb.email}</p>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <StarRow rating={fb.rating} />
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {fb.rating}/5
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p className="text-sm text-foreground/80 line-clamp-2">
                       {fb.comment}
                     </p>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-muted-foreground">
                     {fb.relatedOrderId ? `#${fb.relatedOrderId}` : "—"}
                   </TableCell>
                   <TableCell className="text-center">
@@ -158,7 +158,7 @@ export function FeedbackTab() {
                       {fb.isResolved ? "Đã xử lý" : "Chờ xử lý"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                     {fmtDate(fb.createdAt)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -189,7 +189,7 @@ export function FeedbackTab() {
           >
             Trước
           </Button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             Trang {page + 1} / {Math.ceil(total / 20)}
           </span>
           <Button

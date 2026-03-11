@@ -49,7 +49,7 @@ const IconWrapper = ({
 }) => {
   const colorClasses = {
     blue: "bg-blue-50 text-blue-600",
-    gray: "bg-gray-100 text-gray-600",
+    gray: "bg-muted/50 text-muted-foreground",
   };
   return (
     <div
@@ -101,9 +101,9 @@ const getStatusBadge = (status: OrderStatus) => {
     }
   > = {
     [OrderStatus.INITIALIZED]: {
-      bg: "bg-gray-50",
-      text: "text-gray-700",
-      border: "border-gray-200",
+      bg: "bg-muted/30",
+      text: "text-foreground/80",
+      border: "border-border/50",
       label: "Khởi tạo",
       icon: Clock,
     },
@@ -198,10 +198,10 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
             <Package size={18} />
           </IconWrapper>
           <div className="min-w-0">
-            <span className="font-semibold text-gray-900 font-mono text-sm">
+            <span className="font-semibold text-foreground font-mono text-sm">
               #{row.original.id}
             </span>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {row.original.orderDetails?.length || 0} dịch vụ
             </p>
           </div>
@@ -216,9 +216,9 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
           <TruncatedText
             text={row.original.senderName || "N/A"}
             maxLength={18}
-            className="font-medium text-gray-900"
+            className="font-medium text-foreground"
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {row.original.senderPhone || ""}
           </p>
         </div>
@@ -233,14 +233,14 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
             <Badge
               key={item.id}
               variant="outline"
-              className="bg-gray-50 text-gray-700 font-normal w-fit text-xs"
+              className="bg-muted/30 text-foreground/80 font-normal w-fit text-xs"
             >
               {item.serviceName} × {item.quantity}
             </Badge>
           ))}
           {row.original.orderDetails &&
             row.original.orderDetails.length > 2 && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 +{row.original.orderDetails.length - 2} dịch vụ khác
               </span>
             )}
@@ -267,7 +267,7 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
     columnHelper.accessor("createdAt", {
       header: t("common.createdAt"),
       cell: ({ row }) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-muted-foreground">
           {row.original.createdAt
             ? new Date(row.original.createdAt).toLocaleDateString("vi-VN", {
                 day: "2-digit",
@@ -297,14 +297,14 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:bg-gray-100"
+                  className="h-8 w-8 hover:bg-muted"
                 >
-                  <MoreHorizontal size={16} className="text-gray-500" />
+                  <MoreHorizontal size={16} className="text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-48 bg-white border border-gray-200"
+                className="w-48 bg-white border border-border/50"
               >
                 <DropdownMenuItem
                   onClick={() => navigate(`/admin/orders/${order.id}`)}

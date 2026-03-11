@@ -53,8 +53,8 @@ export function ServiceTable({
             {getServiceIcon(row.original.name)}
           </div>
           <div>
-            <p className="font-semibold text-gray-900">{row.original.name}</p>
-            <p className="text-sm text-gray-500 line-clamp-1">
+            <p className="font-semibold text-foreground">{row.original.name}</p>
+            <p className="text-sm text-muted-foreground line-clamp-1">
               {row.original.description}
             </p>
           </div>
@@ -78,7 +78,7 @@ export function ServiceTable({
       cell: ({ row }) => (
         <Badge
           variant="outline"
-          className="bg-gray-50 text-gray-700 font-medium px-3"
+          className="bg-muted/30 text-foreground/80 font-medium px-3"
         >
           /{row.original.unit}
         </Badge>
@@ -88,7 +88,7 @@ export function ServiceTable({
     columnHelper.accessor("estimatedMinutes", {
       header: "Thời gian",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
             <Clock size={16} className="text-orange-500" />
           </div>
@@ -115,7 +115,7 @@ export function ServiceTable({
             className={
               row.original.active
                 ? "bg-green-50 text-green-700 border-green-200 font-medium"
-                : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
+                : "bg-muted/50 text-muted-foreground border-border/50 font-medium"
             }
             variant="outline"
           >
@@ -144,9 +144,9 @@ export function ServiceTable({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-gray-100"
+              className="h-8 w-8 hover:bg-muted"
             >
-              <MoreHorizontal size={16} className="text-gray-500" />
+              <MoreHorizontal size={16} className="text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">

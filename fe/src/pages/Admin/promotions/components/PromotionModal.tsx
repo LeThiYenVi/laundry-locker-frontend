@@ -197,7 +197,7 @@ export function PromotionModal({
                 className="font-mono uppercase"
                 required
               />
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground/70">
                 {t("admin.promotions.modal.codeHint")}
               </p>
             </div>
@@ -275,7 +275,7 @@ export function PromotionModal({
             <div className="space-y-1.5">
               <Label>
                 {t("admin.promotions.modal.maxDiscount")}{" "}
-                <span className="text-gray-400 font-normal text-xs">
+                <span className="text-muted-foreground/70 font-normal text-xs">
                   ({t("admin.promotions.modal.discountTypePercent")})
                 </span>
               </Label>
@@ -361,7 +361,7 @@ export function PromotionModal({
                 checked={form.isActive}
                 onChange={(e) => set("isActive", e.target.checked)}
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-foreground/80">
                 {t("admin.promotions.modal.isActive")}
               </span>
             </label>
@@ -372,7 +372,7 @@ export function PromotionModal({
                 checked={form.stackable}
                 onChange={(e) => set("stackable", e.target.checked)}
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-foreground/80">
                 {t("admin.promotions.modal.stackable")}
               </span>
             </label>

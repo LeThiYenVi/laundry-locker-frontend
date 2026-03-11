@@ -11,7 +11,7 @@ export function NotificationList({ notifications, onMarkAsRead }: NotificationLi
   if (notifications.length === 0) {
     return (
       <Card>
-        <CardContent className="p-8 text-center text-gray-500">
+        <CardContent className="p-8 text-center text-muted-foreground">
           Không có thông báo nào
         </CardContent>
       </Card>
@@ -28,8 +28,8 @@ export function NotificationList({ notifications, onMarkAsRead }: NotificationLi
             </div>
             <div className="flex-1">
               <h3 className="font-semibold">{notification.title}</h3>
-              <p className="text-gray-600 text-sm">{notification.message}</p>
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="text-muted-foreground text-sm">{notification.message}</p>
+              <p className="text-muted-foreground/70 text-xs mt-1">
                 {new Date(notification.createdAt).toLocaleString("vi-VN")}
               </p>
             </div>

@@ -64,8 +64,8 @@ const getStatusBadge = (status: PaymentStatus) => {
       label: "Thất bại",
     },
     [PaymentStatus.REFUNDED]: {
-      bg: "bg-gray-50",
-      text: "text-gray-700",
+      bg: "bg-muted/30",
+      text: "text-foreground/80",
       icon: Undo2,
       label: "Đã hoàn tiền",
     },
@@ -99,7 +99,7 @@ const getMethodIcon = (method: PaymentMethod) => {
     case PaymentMethod.WALLET:
       return <Wallet size={18} className="text-purple-500" />;
     default:
-      return <Banknote size={18} className="text-gray-500" />;
+      return <Banknote size={18} className="text-muted-foreground" />;
   }
 };
 
@@ -136,10 +136,10 @@ export function PaymentTable({
             <CreditCard size={20} className="text-green-600" />
           </div>
           <div>
-            <p className="font-mono font-semibold text-gray-900 text-sm">
+            <p className="font-mono font-semibold text-foreground text-sm">
               #{row.original.id}
             </p>
-            <p className="text-xs text-gray-500">#{row.original.orderId}</p>
+            <p className="text-xs text-muted-foreground">#{row.original.orderId}</p>
           </div>
         </div>
       ),
@@ -148,7 +148,7 @@ export function PaymentTable({
     columnHelper.accessor("customerName", {
       header: "Khách hàng",
       cell: ({ row }) => (
-        <span className="font-medium text-gray-900">
+        <span className="font-medium text-foreground">
           {row.original.customerName}
         </span>
       ),
@@ -168,7 +168,7 @@ export function PaymentTable({
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           {getMethodIcon(row.original.method)}
-          <Badge variant="outline" className="bg-gray-50 font-medium">
+          <Badge variant="outline" className="bg-muted/30 font-medium">
             {getMethodLabel(row.original.method)}
           </Badge>
         </div>
@@ -183,7 +183,7 @@ export function PaymentTable({
     columnHelper.accessor("createdAt", {
       header: "Thời gian",
       cell: ({ row }) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-muted-foreground">
           {row.original.createdAt
             ? new Date(row.original.createdAt).toLocaleString("vi-VN", {
                 day: "2-digit",
@@ -206,9 +206,9 @@ export function PaymentTable({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-gray-100"
+              className="h-8 w-8 hover:bg-muted"
             >
-              <MoreHorizontal size={16} className="text-gray-500" />
+              <MoreHorizontal size={16} className="text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">

@@ -7,17 +7,10 @@ import type {
   UpdateFeedbackStatusRequest,
   ReplyFeedbackRequest,
   ReportDTO,
-  ReportDetailDTO,
-  ReportStatsDTO,
-  UpdateReportStatusRequest,
-  AssignReportRequest,
-  AddNoteRequest,
   ResolveReportRequest,
   FeedbackAnalyticsDTO,
   SatisfactionMetricsDTO,
 } from "../../../types/admin/feedback";
-
-const TAG = "Loyalty" as const; // reuse allowed tag; swap to 'Orders' if preferred
 
 export const feedbackManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -50,7 +43,7 @@ export const feedbackManagementApi = baseApi.injectEndpoints({
           ...(isResolved !== undefined && { isResolved }),
         },
       }),
-      providesTags: ["Notifications"], // using an allowed tag
+      providesTags: ["Notifications"],
     }),
 
     // 2. GET /api/admin/feedback/{id}
@@ -88,99 +81,41 @@ export const feedbackManagementApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // ── REPORTS ────────────────────────────────────────────────────────────
+    // ── LOCKER REPORTS ─────────────────────────────────────────────────────
+    // BE: GET /api/admin/lockers/reports  |  PUT /api/admin/lockers/reports/{id}/resolve
 
-    // 5. GET /api/admin/reports
+    // 5. GET /api/admin/lockers/reports
     getAllReports: builder.query<
       ApiResponse<Page<ReportDTO>>,
-      {
-        page?: number;
-        size?: number;
-        status?: string;
-        category?: string;
-        userId?: number;
-      }
+      { page?: number; size?: number; status?: string }
     >({
-      query: ({ page = 0, size = 20, status, category, userId } = {}) => ({
+      query: ({ page = 0, size = 20, status } = {}) => ({
         url: ADMIN_ENDPOINTS.REPORTS,
         params: {
           page,
           size,
           ...(status && { status }),
-          ...(category && { category }),
-          ...(userId && { userId }),
         },
       }),
       providesTags: ["NotificationStats"],
     }),
 
-    // 6. GET /api/admin/reports/{id}
-    getReportById: builder.query<ApiResponse<ReportDetailDTO>, number>({
-      query: (id) => ADMIN_ENDPOINTS.REPORT_BY_ID(id),
-      providesTags: (_, __, id) => [{ type: "NotificationStats", id }],
-    }),
-
-    // 7. PATCH /api/admin/reports/{id}/status
-    updateReportStatus: builder.mutation<
-      ApiResponse<ReportDTO>,
-      { id: number; data: UpdateReportStatusRequest }
-    >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.REPORT_STATUS(id),
-        method: "PATCH",
-        body: data,
-      }),
-      invalidatesTags: ["NotificationStats"],
-    }),
-
-    // 8. PATCH /api/admin/reports/{id}/assign
-    assignReport: builder.mutation<
-      ApiResponse<ReportDTO>,
-      { id: number; data: AssignReportRequest }
-    >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.REPORT_ASSIGN(id),
-        method: "PATCH",
-        body: data,
-      }),
-      invalidatesTags: ["NotificationStats"],
-    }),
-
-    // 9. POST /api/admin/reports/{id}/notes
-    addReportNote: builder.mutation<
-      ApiResponse<ReportDetailDTO>,
-      { id: number; data: AddNoteRequest }
-    >({
-      query: ({ id, data }) => ({
-        url: ADMIN_ENDPOINTS.REPORT_NOTES(id),
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: (_, __, { id }) => [{ type: "NotificationStats", id }],
-    }),
-
-    // 10. POST /api/admin/reports/{id}/resolve
+    // 6. PUT /api/admin/lockers/reports/{id}/resolve
     resolveReport: builder.mutation<
       ApiResponse<ReportDTO>,
       { id: number; data: ResolveReportRequest }
     >({
       query: ({ id, data }) => ({
         url: ADMIN_ENDPOINTS.REPORT_RESOLVE(id),
-        method: "POST",
+        method: "PUT",
         body: data,
       }),
       invalidatesTags: ["NotificationStats"],
     }),
 
-    // 11. GET /api/admin/reports/stats
-    getReportStats: builder.query<ApiResponse<ReportStatsDTO>, void>({
-      query: () => ADMIN_ENDPOINTS.REPORTS_STATS,
-      providesTags: ["NotificationStats"],
-    }),
-
     // ── ANALYTICS ──────────────────────────────────────────────────────────
 
-    // 12. GET /api/admin/analytics/feedback
+    // 7. GET /api/admin/analytics/feedback
     getFeedbackAnalytics: builder.query<
       ApiResponse<FeedbackAnalyticsDTO>,
       { period?: "day" | "week" | "month" }
@@ -192,7 +127,7 @@ export const feedbackManagementApi = baseApi.injectEndpoints({
       providesTags: ["Notifications"],
     }),
 
-    // 13. GET /api/admin/analytics/satisfaction
+    // 8. GET /api/admin/analytics/satisfaction
     getSatisfactionMetrics: builder.query<
       ApiResponse<SatisfactionMetricsDTO>,
       void
@@ -209,12 +144,7 @@ export const {
   useUpdateFeedbackStatusMutation,
   useReplyToFeedbackMutation,
   useGetAllReportsQuery,
-  useGetReportByIdQuery,
-  useUpdateReportStatusMutation,
-  useAssignReportMutation,
-  useAddReportNoteMutation,
   useResolveReportMutation,
-  useGetReportStatsQuery,
   useGetFeedbackAnalyticsQuery,
   useGetSatisfactionMetricsQuery,
 } = feedbackManagementApi;

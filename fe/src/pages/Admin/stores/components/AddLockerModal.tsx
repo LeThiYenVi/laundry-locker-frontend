@@ -50,7 +50,7 @@ export function AddLockerModal({ storeId, onClose, onCreated }: Props) {
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-muted-foreground mb-1 block">
               Mã thiết bị <span className="text-red-500">*</span>
             </label>
             <Input
@@ -61,7 +61,7 @@ export function AddLockerModal({ storeId, onClose, onCreated }: Props) {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-muted-foreground mb-1 block">
               Tên tủ <span className="text-red-500">*</span>
             </label>
             <Input
@@ -71,7 +71,7 @@ export function AddLockerModal({ storeId, onClose, onCreated }: Props) {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-muted-foreground mb-1 block">
               Vị trí (tùy chọn)
             </label>
             <Input

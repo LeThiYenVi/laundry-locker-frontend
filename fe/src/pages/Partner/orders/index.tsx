@@ -104,7 +104,7 @@ export default function PartnerOrders() {
             className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border ${
               wsConnected
                 ? "bg-green-50 text-green-700 border-green-200"
-                : "bg-gray-50 text-gray-500 border-gray-200"
+                : "bg-muted/30 text-muted-foreground border-border/50"
             }`}
             title={
               wsConnected
@@ -115,7 +115,7 @@ export default function PartnerOrders() {
             {wsConnected ? (
               <Wifi size={12} className="text-green-600" />
             ) : (
-              <WifiOff size={12} className="text-gray-400" />
+              <WifiOff size={12} className="text-muted-foreground/70" />
             )}
             <span className="hidden sm:inline">
               {wsConnected ? "Live" : "Offline"}

@@ -45,7 +45,7 @@ function StarRow({ rating, size = 16 }: { rating: number; size?: number }) {
           key={i}
           size={size}
           className={
-            i <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-200"
+            i <= rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30"
           }
         />
       ))}
@@ -62,8 +62,8 @@ function LabelValue({
 }) {
   return (
     <div>
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <div className="text-sm font-medium text-gray-900">{children}</div>
+      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+      <div className="text-sm font-medium text-foreground">{children}</div>
     </div>
   );
 }
@@ -124,8 +124,8 @@ export default function FeedbackDetailPage() {
           <h1 className="text-xl font-bold">Chi tiết phản hồi</h1>
         </div>
         <div className="flex flex-col items-center gap-4 py-16">
-          <AlertCircle size={44} className="text-gray-300" />
-          <p className="text-gray-500">Không tìm thấy phản hồi.</p>
+          <AlertCircle size={44} className="text-muted-foreground/50" />
+          <p className="text-muted-foreground">Không tìm thấy phản hồi.</p>
           <Button variant="outline" size="sm" onClick={refetch}>
             Thử lại
           </Button>
@@ -169,10 +169,10 @@ export default function FeedbackDetailPage() {
             <ArrowLeft size={16} />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-foreground">
               Chi tiết phản hồi #{fb.id}
             </h1>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-muted-foreground/70">
               Tạo lúc {fmtDate(fb.createdAt)}
             </p>
           </div>
@@ -238,8 +238,8 @@ export default function FeedbackDetailPage() {
 
               {fb.comment && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1.5">Nhận xét</p>
-                  <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl text-gray-800 leading-relaxed whitespace-pre-wrap text-sm">
+                  <p className="text-xs text-muted-foreground mb-1.5">Nhận xét</p>
+                  <div className="bg-muted/30 border border-border/30 p-4 rounded-xl text-foreground leading-relaxed whitespace-pre-wrap text-sm">
                     {fb.comment}
                   </div>
                 </div>
@@ -249,8 +249,8 @@ export default function FeedbackDetailPage() {
                 <>
                   <Separator />
                   <div className="flex items-center gap-2">
-                    <ShoppingBag size={14} className="text-gray-400" />
-                    <span className="text-sm text-gray-500">
+                    <ShoppingBag size={14} className="text-muted-foreground/70" />
+                    <span className="text-sm text-muted-foreground">
                       Đơn hàng liên quan:
                     </span>
                     <Badge variant="outline">#{fb.relatedOrderId}</Badge>
@@ -260,7 +260,7 @@ export default function FeedbackDetailPage() {
                       </Badge>
                     )}
                     {fb.orderAmount != null && (
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         —{" "}
                         {fb.orderAmount.toLocaleString("vi-VN", {
                           style: "currency",
@@ -284,7 +284,7 @@ export default function FeedbackDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="bg-white border border-green-100 p-4 rounded-xl text-gray-800 leading-relaxed whitespace-pre-wrap text-sm">
+                <div className="bg-white border border-green-100 p-4 rounded-xl text-foreground leading-relaxed whitespace-pre-wrap text-sm">
                   {fb.adminReply}
                 </div>
                 {fb.repliedAt && (
@@ -369,8 +369,8 @@ export default function FeedbackDetailPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold text-gray-900">{fb.userName}</p>
-                  <p className="text-xs text-gray-400">ID #{fb.userId}</p>
+                  <p className="font-semibold text-foreground">{fb.userName}</p>
+                  <p className="text-xs text-muted-foreground/70">ID #{fb.userId}</p>
                 </div>
               </div>
 
@@ -379,16 +379,16 @@ export default function FeedbackDetailPage() {
               <div className="space-y-3">
                 {fb.userEmail && (
                   <div className="flex items-start gap-2.5">
-                    <Mail size={14} className="text-gray-400 mt-0.5 shrink-0" />
-                    <span className="text-sm text-gray-700 break-all">
+                    <Mail size={14} className="text-muted-foreground/70 mt-0.5 shrink-0" />
+                    <span className="text-sm text-foreground/80 break-all">
                       {fb.userEmail}
                     </span>
                   </div>
                 )}
                 {fb.userPhone && (
                   <div className="flex items-center gap-2.5">
-                    <Phone size={14} className="text-gray-400 shrink-0" />
-                    <span className="text-sm text-gray-700">
+                    <Phone size={14} className="text-muted-foreground/70 shrink-0" />
+                    <span className="text-sm text-foreground/80">
                       {fb.userPhone}
                     </span>
                   </div>
@@ -406,16 +406,16 @@ export default function FeedbackDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ol className="relative border-l border-gray-200 ml-2 space-y-5">
+              <ol className="relative border-l border-border/50 ml-2 space-y-5">
                 <li className="ml-4">
                   <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white" />
-                  <p className="text-xs text-gray-500">Tạo đánh giá</p>
+                  <p className="text-xs text-muted-foreground">Tạo đánh giá</p>
                   <p className="text-sm font-medium">{fmtDate(fb.createdAt)}</p>
                 </li>
                 {fb.repliedAt && (
                   <li className="ml-4">
                     <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-green-500 border-2 border-white" />
-                    <p className="text-xs text-gray-500">Admin phản hồi</p>
+                    <p className="text-xs text-muted-foreground">Admin phản hồi</p>
                     <p className="text-sm font-medium">
                       {fmtDate(fb.repliedAt)}
                     </p>
@@ -424,7 +424,7 @@ export default function FeedbackDetailPage() {
                 {fb.resolvedAt && (
                   <li className="ml-4">
                     <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-purple-500 border-2 border-white" />
-                    <p className="text-xs text-gray-500">Đã giải quyết</p>
+                    <p className="text-xs text-muted-foreground">Đã giải quyết</p>
                     <p className="text-sm font-medium">
                       {fmtDate(fb.resolvedAt)}
                     </p>
@@ -432,8 +432,8 @@ export default function FeedbackDetailPage() {
                 )}
                 {fb.updatedAt !== fb.createdAt && (
                   <li className="ml-4">
-                    <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-gray-300 border-2 border-white" />
-                    <p className="text-xs text-gray-500">Cập nhật gần nhất</p>
+                    <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full bg-muted border-2 border-white" />
+                    <p className="text-xs text-muted-foreground">Cập nhật gần nhất</p>
                     <p className="text-sm font-medium">
                       {fmtDate(fb.updatedAt)}
                     </p>

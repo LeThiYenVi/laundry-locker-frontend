@@ -47,7 +47,7 @@ const STATUS_TABS: {
     value: PromotionStatus.EXPIRED,
     labelKey: "admin.promotions.status.expired",
     icon: Calendar,
-    activeClass: "bg-gray-500 text-white",
+    activeClass: "bg-muted/300 text-white",
   },
   {
     value: PromotionStatus.DEPLETED,
@@ -119,7 +119,7 @@ export default function PromotionsPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
                 isActive
                   ? `${tab.activeClass} border-transparent shadow-sm`
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  : "bg-white text-muted-foreground border-border/50 hover:border-border/70"
               }`}
             >
               <Icon size={12} />
@@ -128,7 +128,7 @@ export default function PromotionsPage() {
                 className={`ml-1 h-4 px-1.5 text-xs border-0 ${
                   isActive
                     ? "bg-white/20 text-white"
-                    : "bg-gray-100 text-gray-600"
+                    : "bg-muted/50 text-muted-foreground"
                 }`}
               >
                 {count}

@@ -32,8 +32,8 @@ const statusConfig: Record<
 > = {
   [OrderStatus.INITIALIZED]: {
     label: "Khởi tạo",
-    color: "text-gray-700",
-    bg: "bg-gray-100",
+    color: "text-foreground/80",
+    bg: "bg-muted/50",
     icon: Clock,
   },
   [OrderStatus.RESERVED]: {
@@ -126,15 +126,15 @@ export default function OrderDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <div className="h-64 bg-gray-200 rounded animate-pulse" />
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-64 bg-muted rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
           </div>
           <div className="space-y-4">
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -144,7 +144,7 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/70" />
         <h3 className="mt-4 text-lg font-medium">Không tìm thấy đơn hàng</h3>
         <Button onClick={() => navigate(-1)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -171,7 +171,7 @@ export default function OrderDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
-            <p className="text-sm text-gray-500">{order.id}</p>
+            <p className="text-sm text-muted-foreground">{order.id}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -217,11 +217,11 @@ export default function OrderDetailPage() {
                 {order.orderDetails?.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                   >
                     <div>
                       <p className="font-medium">{item.serviceName}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Số lượng: {item.quantity}
                       </p>
                     </div>
@@ -267,16 +267,16 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Họ tên</p>
+                <p className="text-sm text-muted-foreground">Họ tên</p>
                 <p className="font-medium">{order.senderName}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Mã khách hàng</p>
+                <p className="text-sm text-muted-foreground">Mã khách hàng</p>
                 <p className="font-mono text-sm">{order.senderId}</p>
               </div>
               {order.customerNote && (
                 <div>
-                  <p className="text-sm text-gray-500">Ghi chú</p>
+                  <p className="text-sm text-muted-foreground">Ghi chú</p>
                   <p className="text-sm">{order.customerNote}</p>
                 </div>
               )}
@@ -293,19 +293,19 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Tủ</p>
+                <p className="text-sm text-muted-foreground">Tủ</p>
                 <p className="font-medium">{order.lockerName || "N/A"}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Ngăn gửi</p>
+                  <p className="text-sm text-muted-foreground">Ngăn gửi</p>
                   <Badge variant="outline">
                     <Box className="mr-1 h-3 w-3" />
                     {order.sendBoxNumber || "N/A"}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Ngăn nhận</p>
+                  <p className="text-sm text-muted-foreground">Ngăn nhận</p>
                   <Badge variant="outline">
                     <Box className="mr-1 h-3 w-3" />
                     {order.receiveBoxNumber || "N/A"}
@@ -314,7 +314,7 @@ export default function OrderDetailPage() {
               </div>
               {order.pinCode && (
                 <div>
-                  <p className="text-sm text-gray-500">Mã PIN</p>
+                  <p className="text-sm text-muted-foreground">Mã PIN</p>
                   <p className="font-mono text-lg font-bold tracking-wider">
                     {order.pinCode}
                   </p>
@@ -333,7 +333,7 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-500">Trạng thái</span>
+                <span className="text-muted-foreground">Trạng thái</span>
                 <Badge
                   variant={
                     order.status === "COMPLETED" ? "default" : "secondary"
@@ -350,7 +350,7 @@ export default function OrderDetailPage() {
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Phương thức</span>
+                <span className="text-muted-foreground">Phương thức</span>
                 <span>N/A</span>
               </div>
               <Separator />

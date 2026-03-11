@@ -181,7 +181,7 @@ export default function NotFoundPage(): React.JSX.Element {
               </h2>
               
               <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                Đường dẫn <code className="bg-gray-100 px-2 py-1 rounded text-foreground">{currentPath}</code> không tồn tại.
+                Đường dẫn <code className="bg-muted/50 px-2 py-1 rounded text-foreground">{currentPath}</code> không tồn tại.
               </p>
 
               {/* Gợi ý các trang gần nhất */}

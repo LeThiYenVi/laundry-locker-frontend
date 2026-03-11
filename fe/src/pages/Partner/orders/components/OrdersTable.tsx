@@ -120,7 +120,7 @@ export function OrdersTable({
         </TableHeader>
         <TableBody>
           {orders.map((order) => (
-            <TableRow key={order.id} className="hover:bg-gray-50">
+            <TableRow key={order.id} className="hover:bg-muted/50">
               <TableCell
                 className="font-mono font-semibold text-blue-600 cursor-pointer hover:underline"
                 onClick={() => handleViewDetail(order)}
@@ -130,13 +130,13 @@ export function OrdersTable({
               <TableCell>
                 <div>
                   <p className="font-medium">{order.customerName}</p>
-                  <p className="text-sm text-gray-500">{order.customerPhone}</p>
+                  <p className="text-sm text-muted-foreground">{order.customerPhone}</p>
                 </div>
               </TableCell>
               <TableCell>
                 <div>
                   <p className="font-medium">{order.lockerName}</p>
-                  <p className="text-sm text-gray-500">Box {order.boxNumber}</p>
+                  <p className="text-sm text-muted-foreground">Box {order.boxNumber}</p>
                 </div>
               </TableCell>
               <TableCell>
@@ -177,7 +177,7 @@ export function OrdersTable({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 border-t">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {t("table.showing")} {startIndex} - {endIndex} / {totalElements}{" "}
             {t("partner.orders.results")}
           </p>

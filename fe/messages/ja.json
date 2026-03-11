@@ -106,8 +106,7 @@
       "searchPlaceholder": "ユーザーを検索...",
       "status": {
         "active": "アクティブ",
-        "inactive": "非アクティブ",
-        "pending": "保留中"
+        "inactive": "非アクティブ"
       },
       "columns": {
         "user": "ユーザー",
@@ -116,10 +115,6 @@
         "provider": "プロバイダ",
         "verified": "認証済み",
         "createdAt": "作成日"
-      },
-      "status": {
-        "active": "アクティブ",
-        "inactive": "非アクティブ"
       },
       "verified": {
         "yes": "認証済み",
@@ -209,8 +204,44 @@
       "empty": "まだフィードバックはありません"
     },
     "scheduler": {
-      "title": "スケジューラ",
-      "description": "自動スケジュールの管理"
+      "title": "スケジューラー",
+      "description": "自動タスクと手動トリガーの管理",
+      "statusTitle": "スケジューラーの状態",
+      "systemStatus": "システム状態",
+      "loading": "読み込み中...",
+      "cannotConnect": "接続できません",
+      "running": "稼働中",
+      "stopped": "停止中",
+      "autoJobs": "自動ジョブ",
+      "historyTitle": "ジョブ履歴",
+      "noResults": "実行されたジョブはありません",
+      "noResultsDesc": "結果はここに表示されます",
+      "frequencyLabel": "頻度:",
+      "lastRunLabel": "最終実行:",
+      "runNow": "今すぐ実行",
+      "runningNow": "実行中...",
+      "auto": "自動",
+      "infoTitle": "情報",
+      "info1": "スケジューラージョブは設定された間隔で自動実行されます",
+      "info2": "管理者はテストや緊急処理のために手動でトリガーできます",
+      "info3": "ジョブ結果は直近10回分が保存されます",
+      "jobs": {
+        "autoCancel": {
+          "title": "注文自動キャンセル",
+          "description": "30分以内に確認されなかったINITIALIZED注文を自動キャンセルします。ボックスを解放し顧客に通知します。",
+          "frequency": "5分ごと"
+        },
+        "releaseBoxes": {
+          "title": "ボックス解放",
+          "description": "COMPLETED注文から5分後にボックスを解放します。セキュリティのためPINコードをクリアします。",
+          "frequency": "2分ごと"
+        },
+        "pickupReminders": {
+          "title": "受取リマインダー",
+          "description": "24時間以上経過したRETURNED注文の顧客に受取リマインダーを送信します。",
+          "frequency": "1時間ごと"
+        }
+      }
     },
     "settings": {
       "title": "設定",

@@ -56,8 +56,8 @@ const getStatusBadge = (
       labelKey: "admin.promotions.status.upcoming",
     },
     [PromotionStatus.EXPIRED]: {
-      bg: "bg-gray-50",
-      text: "text-gray-500",
+      bg: "bg-muted/30",
+      text: "text-muted-foreground",
       icon: Calendar,
       labelKey: "admin.promotions.status.expired",
     },
@@ -97,7 +97,7 @@ const formatDiscount = (
         <Percent size={13} />
         {promotion.discountValue}%
         {promotion.maxDiscountAmount && (
-          <span className="text-xs font-normal text-gray-400">
+          <span className="text-xs font-normal text-muted-foreground/70">
             (max {(promotion.maxDiscountAmount / 1000).toFixed(0)}K)
           </span>
         )}
@@ -113,7 +113,7 @@ const formatDiscount = (
     );
   }
   return (
-    <span className="text-xs text-gray-500">
+    <span className="text-xs text-muted-foreground">
       {t("admin.promotions.discount.freeService")}
     </span>
   );
@@ -132,7 +132,7 @@ export function PromotionTable({
       cell: (info) => (
         <div className="flex items-center gap-1.5">
           <Tag size={13} className="text-orange-500 shrink-0" />
-          <span className="font-mono font-semibold text-xs text-gray-800 tracking-wide">
+          <span className="font-mono font-semibold text-xs text-foreground tracking-wide">
             {info.getValue()}
           </span>
         </div>
@@ -146,11 +146,11 @@ export function PromotionTable({
         const row = info.row.original;
         return (
           <div className="max-w-48">
-            <p className="font-medium text-sm text-gray-900 truncate">
+            <p className="font-medium text-sm text-foreground truncate">
               {info.getValue()}
             </p>
             {row.description && (
-              <p className="text-xs text-gray-400 truncate">
+              <p className="text-xs text-muted-foreground/70 truncate">
                 {row.description}
               </p>
             )}
@@ -169,11 +169,11 @@ export function PromotionTable({
       cell: (info) => {
         const val = info.getValue();
         return val ? (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {(val / 1000).toFixed(0)}K
           </span>
         ) : (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-muted-foreground/70">
             {t("admin.promotions.discount.noLimit")}
           </span>
         );
@@ -187,9 +187,9 @@ export function PromotionTable({
         const start = new Date(row.startDate).toLocaleDateString("vi-VN");
         const end = new Date(row.endDate).toLocaleDateString("vi-VN");
         return (
-          <div className="text-xs text-gray-500 space-y-0.5">
+          <div className="text-xs text-muted-foreground space-y-0.5">
             <p>{start}</p>
-            <p className="text-gray-400">→ {end}</p>
+            <p className="text-muted-foreground/70">→ {end}</p>
           </div>
         );
       },
@@ -204,12 +204,12 @@ export function PromotionTable({
         const pct = total ? Math.min((current / total) * 100, 100) : null;
         return (
           <div className="space-y-1 min-w-20">
-            <div className="flex items-center justify-between gap-2 text-xs text-gray-600">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span className="font-medium">{current}</span>
-              <span className="text-gray-400">/ {total ?? "∞"}</span>
+              <span className="text-muted-foreground/70">/ {total ?? "∞"}</span>
             </div>
             {pct !== null && (
-              <div className="h-1.5 w-full rounded-full bg-gray-100">
+              <div className="h-1.5 w-full rounded-full bg-muted/50">
                 <div
                   className={`h-1.5 rounded-full transition-all ${
                     pct >= 100

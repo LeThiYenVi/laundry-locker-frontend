@@ -70,12 +70,12 @@ export function StatCards({ stats }: StatCardsProps) {
               <div className={`p-2.5 rounded-xl ${c.iconBg}`}>
                 <Icon className={c.iconColor} size={20} />
               </div>
-              <span className="text-sm font-medium text-gray-600">
+              <span className="text-sm font-medium text-muted-foreground">
                 {c.label}
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">{c.value}</p>
-            <p className="text-xs text-gray-500">{c.sub}</p>
+            <p className="text-3xl font-bold text-foreground mb-1">{c.value}</p>
+            <p className="text-xs text-muted-foreground">{c.sub}</p>
           </Card>
         );
       })}

@@ -35,8 +35,8 @@ const lockerStatusConfig: Record<
   },
   [LockerStatus.INACTIVE]: {
     label: "Vô hiệu",
-    color: "text-gray-700",
-    bg: "bg-gray-100",
+    color: "text-foreground/80",
+    bg: "bg-muted/50",
     icon: XCircle,
   },
   [LockerStatus.MAINTENANCE]: {
@@ -106,10 +106,10 @@ export default function LockerDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="h-48 bg-gray-200 rounded animate-pulse" />
-          <div className="lg:col-span-2 h-96 bg-gray-200 rounded animate-pulse" />
+          <div className="h-48 bg-muted rounded animate-pulse" />
+          <div className="lg:col-span-2 h-96 bg-muted rounded animate-pulse" />
         </div>
       </div>
     );
@@ -118,7 +118,7 @@ export default function LockerDetailPage() {
   if (!locker) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/70" />
         <h3 className="mt-4 text-lg font-medium">Không tìm thấy tủ đồ</h3>
         <Button onClick={() => navigate(-1)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -145,7 +145,7 @@ export default function LockerDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Chi tiết tủ đồ</h1>
-            <p className="text-sm text-gray-500">{locker.code}</p>
+            <p className="text-sm text-muted-foreground">{locker.code}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -179,25 +179,25 @@ export default function LockerDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Tên tủ</p>
+                <p className="text-sm text-muted-foreground">Tên tủ</p>
                 <p className="font-medium">{locker.name}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Mã thiết bị</p>
+                <p className="text-sm text-muted-foreground">Mã thiết bị</p>
                 <p className="font-mono text-sm">{locker.code}</p>
               </div>
               <Separator />
               <div className="flex items-start gap-2">
-                <Store className="h-4 w-4 text-gray-400 mt-1" />
+                <Store className="h-4 w-4 text-muted-foreground/70 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500">Cửa hàng</p>
+                  <p className="text-sm text-muted-foreground">Cửa hàng</p>
                   <p className="font-medium">{locker.storeName}</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-gray-400 mt-1" />
+                <MapPin className="h-4 w-4 text-muted-foreground/70 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500">Địa chỉ</p>
+                  <p className="text-sm text-muted-foreground">Địa chỉ</p>
                   <p className="text-sm">{locker.address}</p>
                 </div>
               </div>
@@ -226,9 +226,9 @@ export default function LockerDetailPage() {
                   <p className="text-2xl font-bold text-blue-700">{reservedBoxes}</p>
                   <p className="text-sm text-blue-600">Đã đặt</p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-700">{boxes.length}</p>
-                  <p className="text-sm text-gray-600">Tổng số</p>
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-2xl font-bold text-foreground/80">{boxes.length}</p>
+                  <p className="text-sm text-muted-foreground">Tổng số</p>
                 </div>
               </div>
             </CardContent>
@@ -264,7 +264,7 @@ export default function LockerDetailPage() {
                         </div>
                       )}
                       {box.orderId && (
-                        <p className="text-xs text-gray-500 mt-1 truncate">
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
                           {box.orderId}
                         </p>
                       )}

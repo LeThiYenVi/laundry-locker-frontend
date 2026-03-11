@@ -59,9 +59,9 @@ export function PaymentStats({ statistics }: PaymentStatsProps) {
       label: "Hoàn tiền",
       value: statistics.refunded,
       icon: RefreshCcw,
-      color: "bg-gray-500",
-      textColor: "text-gray-600",
-      bgColor: "bg-gray-50",
+      color: "bg-muted/300",
+      textColor: "text-muted-foreground",
+      bgColor: "bg-muted/30",
     },
     {
       label: "Tổng doanh thu",
@@ -84,10 +84,10 @@ export function PaymentStats({ statistics }: PaymentStatsProps) {
                 <stat.icon size={20} className={stat.textColor} />
               </div>
               <div className="min-w-0">
-                <p className={`text-lg font-bold text-gray-900 truncate ${stat.isCurrency ? 'text-sm' : ''}`}>
+                <p className={`text-lg font-bold text-foreground truncate ${stat.isCurrency ? 'text-sm' : ''}`}>
                   {stat.value}
                 </p>
-                <p className="text-sm text-gray-500 truncate">{stat.label}</p>
+                <p className="text-sm text-muted-foreground truncate">{stat.label}</p>
               </div>
             </div>
           </CardContent>

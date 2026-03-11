@@ -146,14 +146,11 @@ export const ADMIN_ENDPOINTS = {
   FEEDBACK_STATUS: (id: number) => `${ROOT_URI.ADMIN}/feedback/${id}/status`,
   FEEDBACK_REPLY: (id: number) => `${ROOT_URI.ADMIN}/feedback/${id}/reply`,
 
-  // Report Management
-  REPORTS: `${ROOT_URI.ADMIN}/reports`,
-  REPORT_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}`,
-  REPORT_STATUS: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/status`,
-  REPORT_ASSIGN: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/assign`,
-  REPORT_NOTES: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/notes`,
-  REPORT_RESOLVE: (id: number) => `${ROOT_URI.ADMIN}/reports/${id}/resolve`,
-  REPORTS_STATS: `${ROOT_URI.ADMIN}/reports/stats`,
+  // Report Management (LockerReport)
+  REPORTS: `${ROOT_URI.ADMIN}/lockers/reports`,
+  REPORT_BY_ID: (id: number) => `${ROOT_URI.ADMIN}/lockers/reports/${id}`,
+  REPORT_RESOLVE: (id: number) =>
+    `${ROOT_URI.ADMIN}/lockers/reports/${id}/resolve`,
 
   // Analytics
   ANALYTICS_FEEDBACK: `${ROOT_URI.ADMIN}/analytics/feedback`,
@@ -203,6 +200,7 @@ export const PARTNER_ENDPOINTS = {
     `${ROOT_URI.PARTNER}/lockers/${lockerId}/boxes/available`,
   LOCKER_BOXES: (lockerId: number) => `/api/lockers/${lockerId}/boxes`,
   REVENUE: `${ROOT_URI.PARTNER}/revenue`,
+  ORDER_COMPLAINTS: (orderId: number) => `/api/orders/${orderId}/complaints`,
 } as const;
 
 // Combined API Paths

@@ -37,7 +37,7 @@ const TIER_META: Record<LoyaltyTier, { label: string; cls: string }> = {
     label: "Đồng",
     cls: "bg-orange-100 text-orange-700 border-orange-200",
   },
-  SILVER: { label: "Bạc", cls: "bg-gray-100  text-gray-700  border-gray-200" },
+  SILVER: { label: "Bạc", cls: "bg-muted/50  text-foreground/80  border-border/50" },
   GOLD: {
     label: "Vàng",
     cls: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -78,10 +78,10 @@ function StatCard({
             {loading ? (
               <Skeleton className="h-6 w-20 mb-1" />
             ) : (
-              <p className="text-xl font-bold text-gray-900">{value}</p>
+              <p className="text-xl font-bold text-foreground">{value}</p>
             )}
-            <p className="text-sm text-gray-500">{label}</p>
-            {sub && !loading && <p className="text-xs text-gray-400">{sub}</p>}
+            <p className="text-sm text-muted-foreground">{label}</p>
+            {sub && !loading && <p className="text-xs text-muted-foreground/70">{sub}</p>}
           </div>
         </div>
       </CardContent>
@@ -178,7 +178,7 @@ export default function LoyaltyPage() {
                         >
                           {meta.label}
                         </Badge>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2">
+                        <div className="flex-1 bg-muted/50 rounded-full h-2">
                           <div
                             className="h-2 rounded-full bg-current opacity-50"
                             style={{
@@ -197,7 +197,7 @@ export default function LoyaltyPage() {
                         <span className="text-sm font-medium w-12 text-right">
                           {fmtNum(stat?.count)}
                         </span>
-                        <span className="text-xs text-gray-400 w-12">
+                        <span className="text-xs text-muted-foreground/70 w-12">
                           {stat?.percentage?.toFixed(1) ?? 0}%
                         </span>
                       </div>
@@ -240,10 +240,10 @@ export default function LoyaltyPage() {
                 ].map(({ label, value }) => (
                   <div
                     key={label}
-                    className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                    className="flex items-center justify-between py-2 border-b border-border/20 last:border-0"
                   >
-                    <span className="text-sm text-gray-600">{label}</span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm text-muted-foreground">{label}</span>
+                    <span className="text-sm font-semibold text-foreground">
                       {value}
                     </span>
                   </div>
@@ -281,10 +281,10 @@ export default function LoyaltyPage() {
                 ].map(({ label, value }) => (
                   <div
                     key={label}
-                    className="flex items-center justify-between py-2 border-b border-gray-50"
+                    className="flex items-center justify-between py-2 border-b border-border/20"
                   >
-                    <span className="text-sm text-gray-600">{label}</span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm text-muted-foreground">{label}</span>
+                    <span className="text-sm font-semibold text-foreground">
                       {value}
                     </span>
                   </div>
@@ -346,10 +346,10 @@ export default function LoyaltyPage() {
                   ].map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                      className="flex items-center justify-between py-2 border-b border-border/20 last:border-0"
                     >
-                      <span className="text-sm text-gray-600">{label}</span>
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm text-muted-foreground">{label}</span>
+                      <span className="text-sm font-semibold text-foreground">
                         {value}
                       </span>
                     </div>
@@ -388,12 +388,12 @@ export default function LoyaltyPage() {
                   ].map(({ label, value }) => (
                     <div
                       key={label}
-                      className="text-center p-2 bg-gray-50 rounded-lg"
+                      className="text-center p-2 bg-muted/30 rounded-lg"
                     >
-                      <p className="text-base font-bold text-gray-900">
+                      <p className="text-base font-bold text-foreground">
                         {value}
                       </p>
-                      <p className="text-xs text-gray-500">{label}</p>
+                      <p className="text-xs text-muted-foreground">{label}</p>
                     </div>
                   ))}
             </CardContent>
@@ -402,7 +402,7 @@ export default function LoyaltyPage() {
       </div>
 
       {s?.lastUpdated && (
-        <p className="text-xs text-gray-400 text-right">
+        <p className="text-xs text-muted-foreground/70 text-right">
           Cập nhật lần cuối: {fmtDate(s.lastUpdated)}
         </p>
       )}

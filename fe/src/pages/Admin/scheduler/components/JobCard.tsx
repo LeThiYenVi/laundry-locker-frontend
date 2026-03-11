@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, Button } from "~/components/ui";
 import { Play, Clock, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface JobCardProps {
   title: string;
@@ -20,26 +21,27 @@ export function JobCard({
   isLoading,
   lastRun,
 }: JobCardProps) {
+  const { t } = useTranslation();
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-lg">
-          <div className="p-2 bg-blue-100 rounded-lg">{icon}</div>
+          <div className="p-2 bg-primary/10 rounded-lg">{icon}</div>
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
 
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock size={14} />
-          <span>Tần suất: {frequency}</span>
+          <span>{t("admin.scheduler.frequencyLabel")} {frequency}</span>
         </div>
 
         {lastRun && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <AlertCircle size={14} />
-            <span>Chạy gần nhất: {lastRun}</span>
+            <span>{t("admin.scheduler.lastRunLabel")} {lastRun}</span>
           </div>
         )}
 
@@ -50,7 +52,7 @@ export function JobCard({
           variant="outline"
         >
           <Play size={16} className="mr-2" />
-          {isLoading ? "Đang chạy..." : "Chạy ngay"}
+          {isLoading ? t("admin.scheduler.runningNow") : t("admin.scheduler.runNow")}
         </Button>
       </CardContent>
     </Card>

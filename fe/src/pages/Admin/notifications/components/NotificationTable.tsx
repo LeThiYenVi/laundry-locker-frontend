@@ -63,8 +63,8 @@ const getStatusBadge = (
       labelKey: "admin.notifications.status.read",
     },
     [NotificationStatus.ARCHIVED]: {
-      bg: "bg-gray-50",
-      text: "text-gray-600",
+      bg: "bg-muted/30",
+      text: "text-muted-foreground",
       icon: Archive,
       labelKey: "admin.notifications.status.archived",
     },
@@ -81,7 +81,15 @@ const getStatusBadge = (
   );
 };
 
-const getChannelBadge = (channel: NotificationChannel) => {
+const getChannelBadge = (channel: NotificationChannel | undefined) => {
+  if (!channel) {
+    return (
+      <Badge className="bg-blue-50 text-blue-700 border-0 font-medium text-xs">
+        <MonitorSmartphone className="mr-1 h-3 w-3" />
+        In-App
+      </Badge>
+    );
+  }
   const variants: Record<
     NotificationChannel,
     { bg: string; text: string; icon: React.ElementType; label: string }
@@ -112,6 +120,9 @@ const getChannelBadge = (channel: NotificationChannel) => {
     },
   };
   const variant = variants[channel];
+  if (!variant) {
+    return <Badge className="bg-muted/30 text-muted-foreground border-0 text-xs">{channel}</Badge>;
+  }
   const Icon = variant.icon;
   return (
     <Badge
@@ -140,8 +151,8 @@ const getTypeBadge = (type: NotificationType, t: (key: string) => string) => {
     NotificationType.LOYALTY_REWARD_UNLOCKED,
   ];
 
-  let bg = "bg-gray-50",
-    text = "text-gray-600";
+  let bg = "bg-muted/30",
+    text = "text-muted-foreground";
   if (orderTypes.includes(type as (typeof orderTypes)[number])) {
     bg = "bg-blue-50";
     text = "text-blue-700";
@@ -208,24 +219,25 @@ export function NotificationTable({
     columnHelper.accessor("id", {
       header: "ID",
       cell: (info) => (
-        <span className="text-xs font-mono text-gray-500">
+        <span className="text-xs font-mono text-muted-foreground">
           #{info.getValue()}
         </span>
       ),
       size: 60,
     }),
 
-    columnHelper.accessor("recipientName", {
+    columnHelper.display({
+      id: "recipient",
       header: t("admin.notifications.columns.recipient"),
       cell: (info) => {
         const row = info.row.original;
         return (
           <div className="min-w-0">
-            <p className="font-medium text-sm text-gray-900 truncate">
-              {info.getValue()}
+            <p className="font-medium text-sm text-foreground truncate">
+              {row.recipientName ?? `#${row.recipientId ?? "—"}`}
             </p>
             {row.recipientEmail && (
-              <p className="text-xs text-gray-400 truncate">
+              <p className="text-xs text-muted-foreground/70 truncate">
                 {row.recipientEmail}
               </p>
             )}
@@ -240,10 +252,10 @@ export function NotificationTable({
         const row = info.row.original;
         return (
           <div className="max-w-50">
-            <p className="font-medium text-sm text-gray-900 truncate">
+            <p className="font-medium text-sm text-foreground truncate">
               {info.getValue()}
             </p>
-            <p className="text-xs text-gray-400 truncate">{row.message}</p>
+            <p className="text-xs text-muted-foreground/70 truncate">{row.message}</p>
           </div>
         );
       },
@@ -269,7 +281,7 @@ export function NotificationTable({
       cell: (info) => {
         const date = new Date(info.getValue());
         return (
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-foreground">
             <p>{date.toLocaleDateString("vi-VN")}</p>
             <p>
               {date.toLocaleTimeString("vi-VN", {

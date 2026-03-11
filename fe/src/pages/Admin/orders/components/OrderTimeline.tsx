@@ -147,13 +147,13 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
                     ? "bg-blue-600 text-white"
                     : isCanceled && isLast
                     ? "bg-red-100 text-red-600"
-                    : "bg-gray-100 text-gray-600"
+                    : "bg-muted/50 text-muted-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" />
               </div>
               {!isLast && (
-                <div className="w-0.5 h-full bg-gray-200 my-2" />
+                <div className="w-0.5 h-full bg-muted my-2" />
               )}
             </div>
 
@@ -166,7 +166,7 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
                       ? "text-blue-600"
                       : isCanceled && isLast
                       ? "text-red-600"
-                      : "text-gray-900"
+                      : "text-foreground"
                   }`}
                 >
                   {config.label}
@@ -177,12 +177,12 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500">{config.description}</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-sm text-muted-foreground">{config.description}</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
                 {formatDate(event.timestamp)}
               </p>
               {event.note && (
-                <p className="text-sm text-gray-600 mt-1 italic">
+                <p className="text-sm text-muted-foreground mt-1 italic">
                   "{event.note}"
                 </p>
               )}
@@ -207,16 +207,16 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
               return (
                 <div key={`future-${index}`} className="flex gap-4 opacity-50">
                   <div className="flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <div className="w-10 h-10 rounded-full bg-muted/50 text-muted-foreground/70 flex items-center justify-center border-2 border-dashed border-border/70">
                       <Icon className="h-5 w-5" />
                     </div>
                     {!isLastFuture && (
-                      <div className="w-0.5 h-full bg-gray-200 my-2" />
+                      <div className="w-0.5 h-full bg-muted my-2" />
                     )}
                   </div>
                   <div className="pb-8">
-                    <h4 className="font-medium text-gray-400">{config.label}</h4>
-                    <p className="text-sm text-gray-400">{config.description}</p>
+                    <h4 className="font-medium text-muted-foreground/70">{config.label}</h4>
+                    <p className="text-sm text-muted-foreground/70">{config.description}</p>
                   </div>
                 </div>
               );

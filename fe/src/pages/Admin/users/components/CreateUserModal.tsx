@@ -18,7 +18,7 @@ const ALL_ROLES = ["USER", "STAFF", "ADMIN", "MODERATOR", "PARTNER"] as const;
 const ROLE_STYLES: Record<string, string> = {
   ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
   STAFF: "bg-blue-50 text-blue-700 border-blue-200",
-  USER: "bg-gray-50 text-gray-700 border-gray-200",
+  USER: "bg-muted/30 text-foreground/80 border-border/50",
   PARTNER: "bg-orange-50 text-orange-700 border-orange-200",
   MODERATOR: "bg-teal-50 text-teal-700 border-teal-200",
 };
@@ -99,7 +99,7 @@ export function CreateUserModal({ open, onClose }: Props) {
           {/* Name row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
                 Tên <span className="text-red-400">*</span>
               </label>
               <Input
@@ -109,7 +109,7 @@ export function CreateUserModal({ open, onClose }: Props) {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
                 Họ
               </label>
               <Input
@@ -122,7 +122,7 @@ export function CreateUserModal({ open, onClose }: Props) {
 
           {/* Email */}
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">
               Email <span className="text-red-400">*</span>
             </label>
             <Input
@@ -135,7 +135,7 @@ export function CreateUserModal({ open, onClose }: Props) {
 
           {/* Password */}
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">
               Mật khẩu
             </label>
             <div className="relative">
@@ -149,7 +149,7 @@ export function CreateUserModal({ open, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-muted-foreground"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -158,7 +158,7 @@ export function CreateUserModal({ open, onClose }: Props) {
 
           {/* Phone */}
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">
               Số điện thoại
             </label>
             <Input
@@ -170,7 +170,7 @@ export function CreateUserModal({ open, onClose }: Props) {
 
           {/* Roles */}
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-2 block">
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
               Vai trò
             </label>
             <div className="flex flex-wrap gap-2">
@@ -183,8 +183,8 @@ export function CreateUserModal({ open, onClose }: Props) {
                     onClick={() => toggleRole(role)}
                     className={`transition-all rounded-md border px-2 py-1 text-xs font-medium ${
                       selected
-                        ? (ROLE_STYLES[role] ?? "bg-gray-100 text-gray-700")
-                        : "bg-white text-gray-400 border-gray-200 hover:border-gray-400"
+                        ? (ROLE_STYLES[role] ?? "bg-muted/50 text-foreground/80")
+                        : "bg-white text-muted-foreground/70 border-border/50 hover:border-gray-400"
                     }`}
                   >
                     {role}
@@ -195,12 +195,12 @@ export function CreateUserModal({ open, onClose }: Props) {
           </div>
 
           {/* Enabled */}
-          <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between py-2 px-3 bg-muted/30 rounded-lg">
             <div>
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-foreground/80">
                 Kích hoạt tài khoản
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground/70">
                 Tài khoản sẽ đăng nhập được ngay
               </p>
             </div>

@@ -110,7 +110,7 @@ export function StoreTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="font-semibold text-gray-900 truncate max-w-[180px] cursor-help">
+                  <p className="font-semibold text-foreground truncate max-w-[180px] cursor-help">
                     {row.original.name}
                   </p>
                 </TooltipTrigger>
@@ -119,8 +119,8 @@ export function StoreTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
-              <MapPin size={14} className="text-gray-400 flex-shrink-0" />
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <MapPin size={14} className="text-muted-foreground/70 flex-shrink-0" />
               <span className="truncate max-w-[150px]">
                 {row.original.description || "—"}
               </span>
@@ -138,7 +138,7 @@ export function StoreTable({
             <Phone size={16} />
           </IconWrapper>
           <div className="min-w-0">
-            <p className="font-medium text-gray-700">{row.original.phone}</p>
+            <p className="font-medium text-foreground/80">{row.original.phone}</p>
           </div>
         </div>
       ),
@@ -155,7 +155,7 @@ export function StoreTable({
             <TruncatedText
               text={row.original.address}
               maxLength={35}
-              className="text-sm text-gray-600"
+              className="text-sm text-muted-foreground"
             />
           </div>
         </div>
@@ -169,7 +169,7 @@ export function StoreTable({
           <IconWrapper color="amber">
             <Clock size={16} />
           </IconWrapper>
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-foreground/80">
             {row.original.openTime && row.original.closeTime
               ? `${row.original.openTime} - ${row.original.closeTime}`
               : "—"}
@@ -182,10 +182,10 @@ export function StoreTable({
       header: t("admin.stores.columns.lockers"),
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-sm font-semibold text-foreground/80">
             {row.original.lockerCount ?? 0}
           </span>
-          <span className="text-xs text-gray-400">tủ</span>
+          <span className="text-xs text-muted-foreground/70">tủ</span>
         </div>
       ),
     }),
@@ -197,7 +197,7 @@ export function StoreTable({
           className={
             row.original.active
               ? "bg-green-50 text-green-700 border-green-200 font-medium"
-              : "bg-gray-100 text-gray-600 border-gray-200 font-medium"
+              : "bg-muted/50 text-muted-foreground border-border/50 font-medium"
           }
           variant="outline"
         >
@@ -225,14 +225,14 @@ export function StoreTable({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-gray-100"
+              className="h-8 w-8 hover:bg-muted"
             >
-              <MoreHorizontal size={16} className="text-gray-500" />
+              <MoreHorizontal size={16} className="text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-40 bg-white border border-gray-200"
+            className="w-40 bg-white border border-border/50"
           >
             <DropdownMenuItem
               onClick={() => navigate(`/admin/stores/${row.original.id}`)}
