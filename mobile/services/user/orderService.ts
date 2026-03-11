@@ -17,7 +17,7 @@ export const getOrders = async (
     size: number = 10
 ): Promise<ApiResponse<PaginatedResponse<Order>>> => {
     const response = await api.get<ApiResponse<PaginatedResponse<Order>>>(
-        `/orders/my-orders?page=${page}&size=${size}`
+        `/orders/my-orders?page=${page}&size=${size}&sort=createdAt,desc`
     );
     return response.data;
 };
@@ -151,6 +151,15 @@ export const getOrderRating = async (orderId: number): Promise<ApiResponse<Order
 };
 
 /**
+ * Get all ratings by current user
+ * API: GET /api/v1/orders/my-ratings
+ */
+export const getMyRatings = async (): Promise<ApiResponse<OrderRatingResponse[]>> => {
+    const response = await api.get<ApiResponse<OrderRatingResponse[]>>('/orders/my-ratings');
+    return response.data;
+};
+
+/**
  * Get order timeline
  * API: GET /api/v1/orders/{orderId}/timeline
  */
@@ -197,6 +206,14 @@ export const getMyComplaints = async (): Promise<ApiResponse<OrderComplaintRespo
     const response = await api.get<ApiResponse<OrderComplaintResponse[]>>('/orders/my-complaints');
     return response.data;
 };
+/**
+ * Reorder — Clone from existing completed/canceled order
+ * API: POST /api/v1/orders/{orderId}/reorder
+ */
+export const reorderFromExisting = async (orderId: number): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(`/orders/${orderId}/reorder`);
+    return response.data;
+};
 
 export const orderService = {
     createOrder,
@@ -216,9 +233,11 @@ export const orderService = {
     resetOrderPin,
     rateOrder,
     getOrderRating,
+    getMyRatings,
     createComplaint,
     getOrderComplaints,
     getMyComplaints,
+    reorderFromExisting,
 };
 
 export default orderService;

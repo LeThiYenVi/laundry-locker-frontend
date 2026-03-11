@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { promotionService, loyaltyService } from "@/services/user";
 import type { PromotionValidateResponse } from "@/services/user/promotionService";
-import type { RewardItem, StampCard } from "@/services/user/loyaltyService";
+import type { RewardItem, StampCard, PointTransaction, ExpiringPoints } from "@/services/user/loyaltyService";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -36,6 +36,10 @@ export default function VouchersScreen() {
 
   // Stamp cards data
   const [stampCards, setStampCards] = useState<StampCard[]>([]);
+
+  // Points history & expiring
+  const [pointsHistory, setPointsHistory] = useState<PointTransaction[]>([]);
+  const [expiringPoints, setExpiringPoints] = useState<ExpiringPoints | null>(null);
 
   // Promotions data
   const [promotions, setPromotions] = useState<PromotionValidateResponse[]>([]);
@@ -78,11 +82,34 @@ export default function VouchersScreen() {
     }
   }, []);
 
+  const fetchPointsHistory = useCallback(async () => {
+    try {
+      const res = await loyaltyService.getPointsHistory(0, 10);
+      if (res.success && res.data) {
+        const items = res.data.content || res.data;
+        setPointsHistory(Array.isArray(items) ? items : []);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch points history:", error?.message);
+    }
+  }, []);
+
+  const fetchExpiringPoints = useCallback(async () => {
+    try {
+      const res = await loyaltyService.getExpiringPoints();
+      if (res.success && res.data && res.data.expiringPoints > 0) {
+        setExpiringPoints(res.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch expiring points:", error?.message);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    await Promise.all([fetchVouchers(), fetchStampCards(), fetchPromotions()]);
+    await Promise.all([fetchVouchers(), fetchStampCards(), fetchPromotions(), fetchPointsHistory(), fetchExpiringPoints()]);
     setIsLoading(false);
-  }, [fetchVouchers, fetchStampCards, fetchPromotions]);
+  }, [fetchVouchers, fetchStampCards, fetchPromotions, fetchPointsHistory, fetchExpiringPoints]);
 
   useEffect(() => {
     loadData();
@@ -90,9 +117,9 @@ export default function VouchersScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchVouchers(), fetchStampCards(), fetchPromotions()]);
+    await Promise.all([fetchVouchers(), fetchStampCards(), fetchPromotions(), fetchPointsHistory(), fetchExpiringPoints()]);
     setRefreshing(false);
-  }, [fetchVouchers, fetchStampCards, fetchPromotions]);
+  }, [fetchVouchers, fetchStampCards, fetchPromotions, fetchPointsHistory, fetchExpiringPoints]);
 
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("vi-VN", {
@@ -347,6 +374,71 @@ export default function VouchersScreen() {
                   </TouchableOpacity>
                 )}
               </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Expiring Points Warning */}
+      {expiringPoints && (
+        <View style={[styles.sectionContainer, { marginTop: 0 }]}>
+          <View style={{ backgroundColor: '#FFF3E0', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#FFE0B2' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <Icon name="schedule" type="material" size={20} color="#FF9800" />
+              <ThemedText style={{ fontSize: 14, fontWeight: '700', color: '#E65100' }}>
+                {expiringPoints.expiringPoints.toLocaleString()} điểm sắp hết hạn
+              </ThemedText>
+            </View>
+            <ThemedText style={{ fontSize: 12, color: '#FF8F00' }}>
+              Hết hạn: {new Date(expiringPoints.expiringDate).toLocaleDateString('vi-VN')}
+            </ThemedText>
+            {expiringPoints.recommendations?.length > 0 && (
+              <ThemedText style={{ fontSize: 12, color: '#795548', marginTop: 4 }}>
+                💡 {expiringPoints.recommendations[0]}
+              </ThemedText>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Points History */}
+      {pointsHistory.length > 0 && (
+        <View style={styles.sectionContainer}>
+          <ThemedText style={styles.sectionTitle}>
+            Lịch sử điểm ({pointsHistory.length})
+          </ThemedText>
+
+          {pointsHistory.map((tx) => (
+            <View key={tx.id} style={{
+              flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
+              borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
+            }}>
+              <View style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: tx.points > 0 ? '#E8F5E9' : '#FFEBEE',
+                justifyContent: 'center', alignItems: 'center', marginRight: 12,
+              }}>
+                <Icon
+                  name={tx.points > 0 ? "add" : "remove"}
+                  type="material"
+                  size={20}
+                  color={tx.points > 0 ? "#4CAF50" : "#F44336"}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <ThemedText style={{ fontSize: 13, color: '#333', fontWeight: '600' }}>
+                  {tx.description || (tx.type === 'EARN' ? 'Tích điểm' : 'Đổi điểm')}
+                </ThemedText>
+                <ThemedText style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+                  {new Date(tx.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </ThemedText>
+              </View>
+              <ThemedText style={{
+                fontSize: 15, fontWeight: '800',
+                color: tx.points > 0 ? '#4CAF50' : '#F44336',
+              }}>
+                {tx.points > 0 ? '+' : ''}{tx.points}
+              </ThemedText>
             </View>
           ))}
         </View>

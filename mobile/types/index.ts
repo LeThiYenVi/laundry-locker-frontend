@@ -322,8 +322,11 @@ export interface Order {
 
   // Items & Services
   items?: OrderItem[];
+  orderDetails?: OrderItem[]; // From backend OrderResponse
   services?: LaundryService[];
   customerNote?: string;
+  staffNote?: string;
+  deliveryAddress?: string;
 
   // Timestamps
   expiresAt?: string;        // Order expiration
@@ -478,6 +481,8 @@ export interface User {
   phoneNumber?: string;
   avatarUrl?: string; // Keeping alias
   imageUrl?: string; // New API field
+  image?: string; // Might be used by backend
+
   joinDate?: string; // New
   emailVerified?: boolean; // New
   phoneVerified?: boolean; // New

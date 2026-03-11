@@ -1,0 +1,18 @@
+# Precision Landing - Raspberry Pi 5 + GS Camera
+# Cài đặt trên Pi: pip install -r requirements.txt
+
+# ── Computer Vision ─────────────────────────────
+opencv-contrib-python>=4.8.0   # ArUco module nằm trong contrib
+numpy>=1.24.0
+
+# ── Camera (Raspberry Pi) ────────────────────────
+# picamera2 thường được cài sẵn từ Raspberry Pi OS
+# Nếu thiếu: sudo apt install -y python3-picamera2
+# picamera2>=0.3.12             # bỏ comment nếu pip install được
+
+# ── MAVLink ─────────────────────────────────────
+pymavlink>=2.4.37
+
+# ── Tuỳ chọn: stream/debug ──────────────────────
+# flask>=3.0.0                  # nếu cần web stream
+# imutils>=0.5.4
