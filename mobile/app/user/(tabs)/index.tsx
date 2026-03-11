@@ -65,8 +65,8 @@ export default function HomeScreen() {
     ? `${displayUser.lastName} ${displayUser.firstName}`
     : displayUser?.fullName || "Người dùng";
 
-  // Avatar source
-  const avatarSource = displayUser?.imageUrl || displayUser?.avatarUrl;
+  // Avatar source with robust fallback for broken URLs
+  const avatarSource = displayUser?.imageUrl || displayUser?.image || displayUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser?.firstName || 'User')}&background=003D5B&color=fff&size=128`;
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -193,8 +193,7 @@ export default function HomeScreen() {
                     <Avatar
                       size={52}
                       rounded
-                      source={avatarSource ? { uri: avatarSource } : undefined}
-                      icon={!avatarSource ? { name: "person", type: "material" } : undefined}
+                      source={{ uri: avatarSource }}
                       containerStyle={styles.avatarContainer}
                     />
                   </View>
