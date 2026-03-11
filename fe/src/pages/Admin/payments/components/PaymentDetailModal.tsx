@@ -83,8 +83,8 @@ const STATUS_CONFIG: Record<
     label: "Thất bại",
   },
   [PaymentStatus.REFUNDED]: {
-    bg: "bg-gray-50",
-    text: "text-gray-700",
+    bg: "bg-muted/30",
+    text: "text-foreground/80",
     icon: Undo2,
     label: "Đã hoàn tiền",
   },
@@ -128,7 +128,7 @@ const METHOD_CONFIG: Record<
   [PaymentMethod.CASH]: {
     icon: Banknote,
     label: "Tiền mặt",
-    color: "text-gray-500",
+    color: "text-muted-foreground",
   },
 };
 
@@ -141,8 +141,8 @@ function LabelValue({
 }) {
   return (
     <div>
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <div className="text-sm font-medium text-gray-900">{children}</div>
+      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+      <div className="text-sm font-medium text-foreground">{children}</div>
     </div>
   );
 }
@@ -206,8 +206,8 @@ export function PaymentDetailModal({
 
         {isError && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <AlertCircle size={36} className="text-gray-300" />
-            <p className="text-sm text-gray-500">Không tìm thấy thanh toán.</p>
+            <AlertCircle size={36} className="text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">Không tìm thấy thanh toán.</p>
           </div>
         )}
 
@@ -216,7 +216,7 @@ export function PaymentDetailModal({
             {/* Amount highlight */}
             <div className="rounded-xl bg-linear-to-r from-green-50 to-emerald-50 border border-green-100 p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Số tiền</p>
+                <p className="text-xs text-muted-foreground mb-0.5">Số tiền</p>
                 <p className="text-2xl font-bold text-green-600">
                   {fmtCurrency(payment.amount)}
                 </p>
@@ -258,7 +258,7 @@ export function PaymentDetailModal({
 
             {payment.description && (
               <LabelValue label="Mô tả">
-                <span className="text-gray-700 font-normal">
+                <span className="text-foreground/80 font-normal">
                   {payment.description}
                 </span>
               </LabelValue>
@@ -268,7 +268,7 @@ export function PaymentDetailModal({
 
             {/* Status update */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Cập nhật trạng thái
               </p>
               <div className="flex items-center gap-3">

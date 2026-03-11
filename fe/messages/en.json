@@ -207,11 +207,58 @@
     },
     "scheduler": {
       "title": "Scheduler",
-      "description": "Manage automated schedules"
+      "description": "Manage automated tasks and manual triggers",
+      "statusTitle": "Scheduler Status",
+      "systemStatus": "System Status",
+      "loading": "Loading...",
+      "cannotConnect": "Cannot connect",
+      "running": "Running",
+      "stopped": "Stopped",
+      "autoJobs": "Automated jobs",
+      "historyTitle": "Job history",
+      "noResults": "No jobs have been run",
+      "noResultsDesc": "Results will appear here",
+      "frequencyLabel": "Frequency:",
+      "lastRunLabel": "Last run:",
+      "runNow": "Run now",
+      "runningNow": "Running...",
+      "auto": "Automatic",
+      "infoTitle": "Information",
+      "info1": "Scheduler jobs run automatically at configured intervals",
+      "info2": "Admin can trigger manually for testing or urgent processing",
+      "info3": "Job results are kept for the last 10 runs",
+      "jobs": {
+        "autoCancel": {
+          "title": "Auto-Cancel Orders",
+          "description": "Automatically cancel INITIALIZED orders not confirmed within 30 minutes. Releases box and sends notification to customer.",
+          "frequency": "Every 5 minutes"
+        },
+        "releaseBoxes": {
+          "title": "Release Boxes",
+          "description": "Release boxes from COMPLETED orders after 5 minutes. Clears PIN code for security.",
+          "frequency": "Every 2 minutes"
+        },
+        "pickupReminders": {
+          "title": "Pickup Reminders",
+          "description": "Send pickup reminder notifications to customers with RETURNED orders over 24 hours.",
+          "frequency": "Every 1 hour"
+        }
+      }
     },
     "settings": {
       "title": "Settings",
-      "subtitle": "Manage application preferences"
+      "subtitle": "Manage application preferences",
+      "language": "Language",
+      "languageHelp": "Choose display language",
+      "theme": "Theme",
+      "themeHelp": "Switch between light / dark / system",
+      "analytics": "Analytics",
+      "analyticsHelp": "Send anonymous usage data to help improve the app",
+      "devMode": "Developer mode",
+      "devModeHelp": "Show additional debug information",
+      "reset": "Reset",
+      "save": "Save changes",
+      "saving": "Saving..."
     },
     "notifications": {
       "title": "Notification Management",

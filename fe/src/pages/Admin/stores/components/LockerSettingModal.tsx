@@ -79,7 +79,7 @@ export function LockerSettingModal({ locker, onClose, onRefresh }: Props) {
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-gray-600" />
+            <Settings className="h-4 w-4 text-muted-foreground" />
             Cài đặt tủ đồ
           </DialogTitle>
           <DialogDescription>
@@ -90,7 +90,7 @@ export function LockerSettingModal({ locker, onClose, onRefresh }: Props) {
         <div className="space-y-4 py-1">
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Tên tủ <span className="text-red-500">*</span>
               </label>
               <Input
@@ -102,7 +102,7 @@ export function LockerSettingModal({ locker, onClose, onRefresh }: Props) {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Mã thiết bị <span className="text-red-500">*</span>
               </label>
               <Input
@@ -115,7 +115,7 @@ export function LockerSettingModal({ locker, onClose, onRefresh }: Props) {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Vị trí (tùy chọn)
               </label>
               <Input
@@ -129,13 +129,13 @@ export function LockerSettingModal({ locker, onClose, onRefresh }: Props) {
           </div>
 
           <div className="border-t pt-3">
-            <p className="text-xs text-gray-500 mb-2 font-medium">
+            <p className="text-xs text-muted-foreground mb-2 font-medium">
               Chế độ bảo trì
             </p>
-            <div className="flex items-center justify-between rounded-lg border p-3 bg-gray-50">
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
               <div>
-                <p className="text-sm font-medium text-gray-700">Bảo trì</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-sm font-medium text-foreground/80">Bảo trì</p>
+                <p className="text-xs text-muted-foreground/70">
                   Tủ sẽ khóa toàn bộ ngăn khi bật
                 </p>
               </div>
@@ -143,7 +143,7 @@ export function LockerSettingModal({ locker, onClose, onRefresh }: Props) {
                 disabled={savingMaintenance}
                 onClick={() => handleToggleMaintenance(!maintenance)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  maintenance ? "bg-yellow-400" : "bg-gray-200"
+                  maintenance ? "bg-yellow-400" : "bg-muted"
                 } ${savingMaintenance ? "opacity-50" : ""}`}
               >
                 <span

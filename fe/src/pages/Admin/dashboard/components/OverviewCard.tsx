@@ -1,46 +1,14 @@
 import { Card, CardContent } from "~/components/ui/card";
 
 const colorMap = {
-  blue: {
-    bg: "from-blue-600 to-blue-700",
-    label: "text-blue-100",
-    iconBg: "bg-blue-500/30",
-  },
-  indigo: {
-    bg: "from-indigo-600 to-indigo-700",
-    label: "text-indigo-100",
-    iconBg: "bg-indigo-500/30",
-  },
-  emerald: {
-    bg: "from-emerald-600 to-emerald-700",
-    label: "text-emerald-100",
-    iconBg: "bg-emerald-500/30",
-  },
-  green: {
-    bg: "from-green-500 to-green-600",
-    label: "text-green-100",
-    iconBg: "bg-green-500/30",
-  },
-  amber: {
-    bg: "from-amber-500 to-amber-600",
-    label: "text-amber-100",
-    iconBg: "bg-amber-500/30",
-  },
-  red: {
-    bg: "from-red-500 to-red-600",
-    label: "text-red-100",
-    iconBg: "bg-red-500/30",
-  },
-  purple: {
-    bg: "from-purple-600 to-purple-700",
-    label: "text-purple-100",
-    iconBg: "bg-purple-500/30",
-  },
-  gray: {
-    bg: "from-gray-600 to-gray-700",
-    label: "text-gray-100",
-    iconBg: "bg-gray-500/30",
-  },
+  blue:    { icon: "text-primary",          bg: "bg-primary/10" },
+  indigo:  { icon: "text-violet-500",       bg: "bg-violet-500/10" },
+  emerald: { icon: "text-emerald-500",      bg: "bg-emerald-500/10" },
+  green:   { icon: "text-emerald-500",      bg: "bg-emerald-500/10" },
+  amber:   { icon: "text-amber-500",        bg: "bg-amber-500/10" },
+  red:     { icon: "text-red-500",          bg: "bg-red-500/10" },
+  purple:  { icon: "text-violet-500",       bg: "bg-violet-500/10" },
+  gray:    { icon: "text-muted-foreground", bg: "bg-muted" },
 } as const;
 
 interface OverviewCardProps {
@@ -60,24 +28,20 @@ export function OverviewCard({
 }: OverviewCardProps) {
   const c = colorMap[color];
   return (
-    <Card
-      className={`overflow-hidden bg-gradient-to-br ${c.bg} border-0 shadow-md`}
-    >
+    <Card className="border border-border/50 shadow-sm bg-card">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p
-              className={`text-xs font-medium uppercase tracking-wider mb-2 ${c.label}`}
-            >
+            <p className="text-xs font-medium uppercase tracking-wider mb-2 text-muted-foreground">
               {label}
             </p>
-            <p className="text-2xl sm:text-3xl font-bold text-white">{value}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-foreground">{value}</p>
             {sublabel && (
-              <p className={`text-xs mt-1 ${c.label} opacity-75`}>{sublabel}</p>
+              <p className="text-xs mt-1 text-muted-foreground">{sublabel}</p>
             )}
           </div>
-          <div className={`p-2.5 rounded-xl ${c.iconBg} shrink-0`}>
-            <Icon size={22} className="text-white" />
+          <div className={`p-2.5 rounded-xl ${c.bg} shrink-0`}>
+            <Icon size={22} className={c.icon} />
           </div>
         </div>
       </CardContent>

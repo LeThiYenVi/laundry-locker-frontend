@@ -40,7 +40,7 @@ export function StatsGrid({ stats }: StatsGridProps) {
       {/* Order Breakdown */}
       <Card className="col-span-1">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Phân bổ đơn hàng
           </CardTitle>
         </CardHeader>
@@ -48,18 +48,18 @@ export function StatsGrid({ stats }: StatsGridProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm text-gray-600">Hoàn thành</span>
+              <span className="text-sm text-muted-foreground">Hoàn thành</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-800">
+              <span className="text-sm font-bold text-foreground">
                 {stats.completedOrders}
               </span>
-              <span className="text-xs text-gray-400 w-8 text-right">
+              <span className="text-xs text-muted-foreground/70 w-8 text-right">
                 {completedPct}%
               </span>
             </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
+          <div className="w-full bg-muted/50 rounded-full h-1.5">
             <div
               className="bg-green-500 h-1.5 rounded-full"
               style={{ width: `${completedPct}%` }}
@@ -69,18 +69,18 @@ export function StatsGrid({ stats }: StatsGridProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-orange-500" />
-              <span className="text-sm text-gray-600">Đang xử lý</span>
+              <span className="text-sm text-muted-foreground">Đang xử lý</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-800">
+              <span className="text-sm font-bold text-foreground">
                 {stats.pendingOrders}
               </span>
-              <span className="text-xs text-gray-400 w-8 text-right">
+              <span className="text-xs text-muted-foreground/70 w-8 text-right">
                 {pendingPct}%
               </span>
             </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
+          <div className="w-full bg-muted/50 rounded-full h-1.5">
             <div
               className="bg-orange-500 h-1.5 rounded-full"
               style={{ width: `${pendingPct}%` }}
@@ -90,18 +90,18 @@ export function StatsGrid({ stats }: StatsGridProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-red-400" />
-              <span className="text-sm text-gray-600">Đã hủy</span>
+              <span className="text-sm text-muted-foreground">Đã hủy</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-800">
+              <span className="text-sm font-bold text-foreground">
                 {stats.canceledOrders}
               </span>
-              <span className="text-xs text-gray-400 w-8 text-right">
+              <span className="text-xs text-muted-foreground/70 w-8 text-right">
                 {canceledPct}%
               </span>
             </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
+          <div className="w-full bg-muted/50 rounded-full h-1.5">
             <div
               className="bg-red-400 h-1.5 rounded-full"
               style={{ width: `${canceledPct}%` }}
@@ -113,7 +113,7 @@ export function StatsGrid({ stats }: StatsGridProps) {
       {/* Completion Rate */}
       <Card className="col-span-1">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4" />
             Tỷ lệ hoàn thành
           </CardTitle>
@@ -125,13 +125,13 @@ export function StatsGrid({ stats }: StatsGridProps) {
             </span>
             <span className="text-2xl text-green-500 mb-1">%</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
+          <div className="w-full bg-muted/50 rounded-full h-2 mb-3">
             <div
               className="bg-green-500 h-2 rounded-full transition-all"
               style={{ width: `${stats.completionRate}%` }}
             />
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {stats.completedOrders} / {stats.totalOrders} đơn hoàn thành
           </p>
         </CardContent>
@@ -140,7 +140,7 @@ export function StatsGrid({ stats }: StatsGridProps) {
       {/* Quick Actions */}
       <Card className="col-span-1">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Hành động nhanh
           </CardTitle>
         </CardHeader>

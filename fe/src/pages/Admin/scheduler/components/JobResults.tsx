@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { JobResult } from "../hooks/useScheduler";
 
 interface JobResultsProps {
@@ -7,22 +8,24 @@ interface JobResultsProps {
 }
 
 export function JobResults({ results }: JobResultsProps) {
+  const { t } = useTranslation();
+
   if (results.length === 0) {
     return (
-      <Card className="bg-gray-50">
-        <CardContent className="p-8 text-center text-gray-500">
-          <Clock size={32} className="mx-auto mb-2 text-gray-400" />
-          <p>Chưa có job nào được chạy</p>
-          <p className="text-sm text-gray-400">Các kết quả sẽ hiển thị ở đây</p>
+      <Card className="border border-border/50 bg-muted/30">
+        <CardContent className="p-8 text-center text-muted-foreground">
+          <Clock size={32} className="mx-auto mb-2 text-muted-foreground/70" />
+          <p>{t("admin.scheduler.noResults")}</p>
+          <p className="text-sm text-muted-foreground/70">{t("admin.scheduler.noResultsDesc")}</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="border border-border/50 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg">Lịch sử chạy job</CardTitle>
+        <CardTitle className="text-lg">{t("admin.scheduler.historyTitle")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -30,7 +33,7 @@ export function JobResults({ results }: JobResultsProps) {
             <div
               key={index}
               className={`flex items-start gap-3 p-3 rounded-lg ${
-                result.success ? "bg-green-50" : "bg-red-50"
+                result.success ? "bg-green-500/10" : "bg-red-500/10"
               }`}
             >
               {result.success ? (
@@ -41,15 +44,11 @@ export function JobResults({ results }: JobResultsProps) {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{result.jobName}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {result.timestamp.toLocaleTimeString("vi-VN")}
                   </span>
                 </div>
-                <p
-                  className={`text-sm ${
-                    result.success ? "text-green-700" : "text-red-700"
-                  }`}
-                >
+                <p className={`text-sm ${result.success ? "text-green-700" : "text-red-700"}`}>
                   {result.message}
                 </p>
               </div>

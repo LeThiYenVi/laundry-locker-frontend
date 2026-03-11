@@ -33,7 +33,7 @@ export function OrderActions({
     <Button
       size="sm"
       variant="ghost"
-      className="text-gray-500 hover:text-blue-600"
+      className="text-muted-foreground hover:text-blue-600"
       onClick={() => onViewDetail(order)}
     >
       <Eye size={14} />
@@ -82,7 +82,6 @@ export function OrderActions({
       );
 
     case OrderStatus.PROCESSING:
-    case OrderStatus.PROCESSED:
       return (
         <div className="flex items-center gap-1 justify-end">
           <Button

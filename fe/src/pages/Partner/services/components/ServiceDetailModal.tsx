@@ -77,9 +77,9 @@ export function ServiceDetailModal({
 
           {/* Name + Description */}
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{service.name}</h2>
+            <h2 className="text-xl font-bold text-foreground">{service.name}</h2>
             {service.description && (
-              <p className="text-gray-500 mt-1 text-sm">
+              <p className="text-muted-foreground mt-1 text-sm">
                 {service.description}
               </p>
             )}
@@ -122,13 +122,13 @@ export function ServiceDetailModal({
 
           {/* Estimated time */}
           {service.estimatedHours !== undefined && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Clock size={18} className="text-gray-400" />
+            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+              <Clock size={18} className="text-muted-foreground/70" />
               <div>
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-foreground/80">
                   Thời gian ước tính
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {formatEstimatedTime(service.estimatedHours)}
                 </p>
               </div>
@@ -137,21 +137,21 @@ export function ServiceDetailModal({
 
           {/* Store info */}
           {service.storeName && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Store size={18} className="text-gray-400" />
+            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+              <Store size={18} className="text-muted-foreground/70" />
               <div>
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-foreground/80">
                   Cửa hàng cung cấp
                 </p>
-                <p className="text-sm text-gray-500">{service.storeName}</p>
+                <p className="text-sm text-muted-foreground">{service.storeName}</p>
               </div>
             </div>
           )}
 
           {/* Service type */}
           {service.serviceType && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm text-gray-600">Loại dịch vụ</span>
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <span className="text-sm text-muted-foreground">Loại dịch vụ</span>
               <Badge variant="outline">{service.serviceType}</Badge>
             </div>
           )}
@@ -161,7 +161,7 @@ export function ServiceDetailModal({
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground/80 transition-colors"
             >
               <X size={14} />
               Đóng

@@ -26,20 +26,20 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
       {/* Revenue Breakdown */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <DollarSign className="h-4 w-4" /> Phân chia doanh thu
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Total GTV */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
                 Tổng doanh thu (GTV)
               </span>
             </div>
-            <span className="text-sm font-bold text-gray-800">
+            <span className="text-sm font-bold text-foreground">
               {fmt(stats.totalRevenue)}
             </span>
           </div>
@@ -49,7 +49,7 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Doanh thu của bạn ({partnerPct}%)
                 </span>
               </div>
@@ -57,7 +57,7 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
                 {fmt(stats.partnerRevenue)}
               </span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="w-full bg-muted/50 rounded-full h-2">
               <div
                 className="bg-green-500 h-2 rounded-full"
                 style={{ width: `${partnerPct}%` }}
@@ -70,7 +70,7 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-400" />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Phí nền tảng ({feePct}%)
                 </span>
               </div>
@@ -78,7 +78,7 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
                 {fmt(stats.platformFee)}
               </span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="w-full bg-muted/50 rounded-full h-2">
               <div
                 className="bg-blue-400 h-2 rounded-full"
                 style={{ width: `${feePct}%` }}
@@ -91,7 +91,7 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
       {/* Period Revenue */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-600 uppercase tracking-wide flex items-center gap-1.5">
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <Calendar className="h-4 w-4" /> Doanh thu theo kỳ
           </CardTitle>
         </CardHeader>
@@ -99,32 +99,32 @@ export function ChartsSection({ stats }: ChartsSectionProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-blue-50 rounded-xl p-4 text-center">
               <Landmark className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-              <p className="text-xs text-gray-500 mb-1">Hôm nay</p>
+              <p className="text-xs text-muted-foreground mb-1">Hôm nay</p>
               <p className="text-lg font-bold text-blue-600">
                 {stats.todayRevenue != null ? fmt(stats.todayRevenue) : "—"}
               </p>
             </div>
             <div className="bg-green-50 rounded-xl p-4 text-center">
               <TrendingUp className="h-5 w-5 text-green-500 mx-auto mb-1" />
-              <p className="text-xs text-gray-500 mb-1">Tháng này</p>
+              <p className="text-xs text-muted-foreground mb-1">Tháng này</p>
               <p className="text-lg font-bold text-green-600">
                 {stats.monthRevenue != null ? fmt(stats.monthRevenue) : "—"}
               </p>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
-            <span className="text-xs text-gray-500">
+          <div className="bg-muted/30 rounded-xl p-3 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
               Doanh thu trung bình / đơn
             </span>
-            <span className="text-sm font-bold text-gray-700">
+            <span className="text-sm font-bold text-foreground/80">
               {stats.totalOrders > 0
                 ? fmt(Math.round(stats.partnerRevenue / stats.totalOrders))
                 : "—"}
             </span>
           </div>
-          <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
-            <span className="text-xs text-gray-500">Tổng đơn hoàn thành</span>
-            <span className="text-sm font-bold text-gray-700">
+          <div className="bg-muted/30 rounded-xl p-3 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Tổng đơn hoàn thành</span>
+            <span className="text-sm font-bold text-foreground/80">
               {stats.completedOrders}
             </span>
           </div>

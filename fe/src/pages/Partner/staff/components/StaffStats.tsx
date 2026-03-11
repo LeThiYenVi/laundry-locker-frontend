@@ -15,7 +15,7 @@ export function StaffStats({ total, active }: StaffStatsProps) {
             <Users className="text-blue-600" size={24} />
           </div>
           <div>
-            <div className="text-sm text-gray-500">Tổng nhân viên</div>
+            <div className="text-sm text-muted-foreground">Tổng nhân viên</div>
             <div className="text-2xl font-bold">{total}</div>
           </div>
         </CardContent>
@@ -27,7 +27,7 @@ export function StaffStats({ total, active }: StaffStatsProps) {
             <UserCheck className="text-green-600" size={24} />
           </div>
           <div>
-            <div className="text-sm text-gray-500">Đang hoạt động</div>
+            <div className="text-sm text-muted-foreground">Đang hoạt động</div>
             <div className="text-2xl font-bold">{active}</div>
           </div>
         </CardContent>

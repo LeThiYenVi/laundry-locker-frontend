@@ -12,15 +12,17 @@ export interface AdminNotificationResponse {
   id: number;
   type: NotificationType;
   status: NotificationStatus;
-  channel: NotificationChannel;
-  recipientId: number;
-  recipientName: string;
+  channel?: NotificationChannel;
+  recipientId?: number;
+  recipientName?: string;
   recipientEmail?: string;
   title: string;
   message: string;
+  referenceId?: number;
+  referenceType?: string;
   metadata?: Record<string, unknown>;
   readAt?: string;
-  sentAt: string;
+  sentAt?: string;
   createdAt: string;
   relatedOrderId?: number;
 }

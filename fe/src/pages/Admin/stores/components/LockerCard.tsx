@@ -76,7 +76,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
     <>
       <div
         className={`flex flex-col rounded-xl border bg-white transition-all hover:shadow-md ${
-          isActive ? "border-green-200" : "border-gray-200"
+          isActive ? "border-green-200" : "border-border/50"
         } ${actionLoading ? "opacity-60 pointer-events-none" : ""}`}
       >
         {/* Card header */}
@@ -86,7 +86,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
               <span
                 className={`h-2 w-2 rounded-full shrink-0 mt-0.5 ${statusCfg.dot}`}
               />
-              <p className="text-sm font-semibold text-gray-800 truncate leading-tight">
+              <p className="text-sm font-semibold text-foreground truncate leading-tight">
                 {locker.name}
               </p>
             </div>
@@ -97,7 +97,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
               {statusCfg.label}
             </Badge>
           </div>
-          <p className="text-[10px] font-mono text-gray-400 truncate pl-3.5">
+          <p className="text-[10px] font-mono text-muted-foreground/70 truncate pl-3.5">
             {locker.code}
             {locker.address ? ` · ${locker.address}` : ""}
           </p>
@@ -106,13 +106,13 @@ export function LockerCard({ locker, onRefresh }: Props) {
         {/* Stats row */}
         <div className="px-4 pb-2">
           <div className="flex items-center justify-between text-[11px] mb-1">
-            <span className="text-gray-500">
+            <span className="text-muted-foreground">
               <span className="text-green-600 font-bold">{available}</span>/
               {total} trống
             </span>
-            <span className="text-gray-400">{usagePercent}%</span>
+            <span className="text-muted-foreground/70">{usagePercent}%</span>
           </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 usagePercent > 80
@@ -134,7 +134,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
             className={`rounded p-1.5 transition-colors ${
               isActive
                 ? "text-green-600 hover:bg-green-50"
-                : "text-gray-400 hover:bg-gray-100"
+                : "text-muted-foreground/70 hover:bg-muted"
             }`}
           >
             <Power className="h-3.5 w-3.5" />
@@ -145,7 +145,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
             className={`rounded p-1.5 transition-colors ${
               isMaintenance
                 ? "text-yellow-500 hover:bg-yellow-50"
-                : "text-gray-400 hover:bg-gray-100"
+                : "text-muted-foreground/70 hover:bg-muted"
             }`}
           >
             <Wrench className="h-3.5 w-3.5" />
@@ -153,13 +153,13 @@ export function LockerCard({ locker, onRefresh }: Props) {
           <button
             title="Cài đặt tủ"
             onClick={() => setShowLockerSetting(true)}
-            className="rounded p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="rounded p-1.5 text-muted-foreground/70 hover:text-foreground/80 hover:bg-muted transition-colors"
           >
             <Settings className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="ml-auto flex items-center gap-1 text-[11px] text-gray-500 hover:text-blue-600 rounded px-1.5 py-1 hover:bg-blue-50 transition-colors"
+            className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-blue-600 rounded px-1.5 py-1 hover:bg-blue-50 transition-colors"
           >
             {expanded ? "Thu gọn" : "Xem ngăn"}
             {expanded ? (
@@ -185,7 +185,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
           <div className="px-3 pb-3 border-t pt-3">
             {boxes.length === 0 ? (
               <>
-                <p className="text-xs text-gray-400 italic py-2 text-center">
+                <p className="text-xs text-muted-foreground/70 italic py-2 text-center">
                   Chưa có ngăn tủ nào
                 </p>
                 <button
@@ -204,7 +204,7 @@ export function LockerCard({ locker, onRefresh }: Props) {
                       <div
                         className={`w-2 h-2 rounded-sm border ${c.bg} ${c.border}`}
                       />
-                      <span className="text-[10px] text-gray-500">
+                      <span className="text-[10px] text-muted-foreground">
                         {c.label}
                       </span>
                     </div>

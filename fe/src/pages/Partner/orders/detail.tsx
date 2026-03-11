@@ -14,6 +14,7 @@ import {
   Play,
   CheckCircle,
   RefreshCw,
+  MessageCircleWarning,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -21,6 +22,7 @@ import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import { PageLoading, ErrorState } from "~/components/ui";
 import { useOrderDetail } from "./hooks/useOrderDetail";
+import { useGetOrderComplaintsQuery } from "@/stores/apis/partnerApi";
 import { AccessCodeModal } from "./components/AccessCodeModal";
 import { WeightUpdateModal } from "./components/WeightUpdateModal";
 import { ErrorToast } from "./components/ErrorToast";
@@ -79,6 +81,11 @@ export default function PartnerOrderDetail() {
     weight: string;
   }>({ open: false, weight: "" });
 
+  const { data: complaints = [] } = useGetOrderComplaintsQuery(
+    Number(orderId),
+    { skip: !orderId },
+  );
+
   const onAccept = async () => {
     const code = await handleAcceptOrder();
     if (code) setAccessCodeModal({ open: true, code, action: "COLLECT" });
@@ -120,9 +127,7 @@ export default function PartnerOrderDetail() {
     order.status === OrderStatus.COLLECTED ||
     order.status === OrderStatus.PROCESSING;
   const canProcess = order.status === OrderStatus.COLLECTED;
-  const canMarkReady =
-    order.status === OrderStatus.PROCESSING ||
-    order.status === ("PROCESSED" as string);
+  const canMarkReady = order.status === OrderStatus.PROCESSING;
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-8">
@@ -135,10 +140,10 @@ export default function PartnerOrderDetail() {
             <ArrowLeft size={16} />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               Chi tiết đơn hàng
             </h1>
-            <p className="text-sm text-gray-500 font-mono">{order.orderCode}</p>
+            <p className="text-sm text-muted-foreground font-mono">{order.orderCode}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -236,16 +241,16 @@ export default function PartnerOrderDetail() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Tên</span>
+                <span className="text-sm text-muted-foreground">Tên</span>
                 <span className="font-medium">{order.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Số điện thoại</span>
+                <span className="text-sm text-muted-foreground">Số điện thoại</span>
                 <span className="font-medium">{order.customerPhone}</span>
               </div>
               {order.notes && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Ghi chú KH</span>
+                  <span className="text-sm text-muted-foreground">Ghi chú KH</span>
                   <span className="text-sm max-w-xs text-right">
                     {order.notes}
                   </span>
@@ -264,16 +269,16 @@ export default function PartnerOrderDetail() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Tên tủ</span>
+                <span className="text-sm text-muted-foreground">Tên tủ</span>
                 <span className="font-medium">{order.lockerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Số ngăn</span>
+                <span className="text-sm text-muted-foreground">Số ngăn</span>
                 <Badge variant="outline">Box {order.boxNumber}</Badge>
               </div>
               {order.deliveryAddress && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Địa chỉ giao</span>
+                  <span className="text-sm text-muted-foreground">Địa chỉ giao</span>
                   <span className="text-sm max-w-xs text-right">
                     {order.deliveryAddress}
                   </span>
@@ -292,26 +297,26 @@ export default function PartnerOrderDetail() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Loại dịch vụ</span>
+                <span className="text-sm text-muted-foreground">Loại dịch vụ</span>
                 <Badge variant="outline">{order.serviceType}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Phương thức trả</span>
+                <span className="text-sm text-muted-foreground">Phương thức trả</span>
                 <span className="font-medium">{order.returnMethod}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Cân nặng thực tế</span>
+                <span className="text-sm text-muted-foreground">Cân nặng thực tế</span>
                 <span className="font-medium">
                   {order.weight ? (
                     `${order.weight} kg`
                   ) : (
-                    <span className="text-gray-400 italic">Chưa cân</span>
+                    <span className="text-muted-foreground/70 italic">Chưa cân</span>
                   )}
                 </span>
               </div>
               {order.assignedStaffName && (
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     Nhân viên phụ trách
                   </span>
                   <span className="font-medium">{order.assignedStaffName}</span>
@@ -333,7 +338,7 @@ export default function PartnerOrderDetail() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Tổng tiền</span>
+                <span className="text-sm text-muted-foreground">Tổng tiền</span>
                 <span className="text-lg font-bold text-blue-600">
                   {formatCurrency(order.totalPrice)}
                 </span>
@@ -342,13 +347,13 @@ export default function PartnerOrderDetail() {
                 <>
                   <Separator />
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Phí nền tảng</span>
+                    <span className="text-sm text-muted-foreground">Phí nền tảng</span>
                     <span className="text-sm">
                       {formatCurrency(order.platformFee)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted-foreground">
                       Doanh thu partner
                     </span>
                     <span className="text-sm font-medium text-green-600">
@@ -395,15 +400,15 @@ export default function PartnerOrderDetail() {
           <Card>
             <CardContent className="p-4 space-y-2">
               <div className="flex justify-between">
-                <span className="text-xs text-gray-400">Mã đơn</span>
+                <span className="text-xs text-muted-foreground/70">Mã đơn</span>
                 <span className="text-xs font-mono">{order.orderCode}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-400">ID đơn</span>
+                <span className="text-xs text-muted-foreground/70">ID đơn</span>
                 <span className="text-xs font-mono">{order.id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-gray-400">Trạng thái</span>
+                <span className="text-xs text-muted-foreground/70">Trạng thái</span>
                 <Badge
                   className={`text-xs ${getStatusBadgeClass(order.status)}`}
                 >
@@ -414,6 +419,55 @@ export default function PartnerOrderDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Complaints */}
+      {complaints.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MessageCircleWarning size={18} className="text-orange-500" />
+              Khiếu nại ({complaints.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {complaints.map((c) => (
+              <div
+                key={c.id}
+                className="border rounded-lg p-3 space-y-1.5 bg-orange-50/50"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-foreground">
+                    {c.type}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={
+                      c.status === "RESOLVED"
+                        ? "text-green-700 border-green-300"
+                        : c.status === "REJECTED"
+                          ? "text-muted-foreground border-border/70"
+                          : c.status === "INVESTIGATING"
+                            ? "text-yellow-700 border-yellow-300"
+                            : "text-red-700 border-red-300"
+                    }
+                  >
+                    {c.status}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{c.description}</p>
+                {c.resolution && (
+                  <p className="text-xs text-green-700 bg-green-50 rounded px-2 py-1">
+                    Giải quyết: {c.resolution}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground/70">
+                  {new Date(c.createdAt).toLocaleString("vi-VN")}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modals */}
       <AccessCodeModal
@@ -455,11 +509,11 @@ function TimelineItem({
       />
       <div>
         <p
-          className={`text-sm font-medium ${highlight ? "text-green-700" : "text-gray-700"}`}
+          className={`text-sm font-medium ${highlight ? "text-green-700" : "text-foreground/80"}`}
         >
           {label}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted-foreground/70">
           {new Date(date).toLocaleString("vi-VN")}
         </p>
       </div>

@@ -50,7 +50,7 @@ function ForceOpenModal({
                 Ngăn #{box.boxNumber} — {lockerName}
               </p>
               {box.description && (
-                <p className="text-sm text-gray-500">{box.description}</p>
+                <p className="text-sm text-muted-foreground">{box.description}</p>
               )}
             </div>
           </div>
@@ -166,7 +166,7 @@ export function BoxSettingModal({
             </div>
 
             <div>
-              <label className="text-xs text-gray-500 mb-1.5 block font-medium">
+              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
                 Đổi trạng thái
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -180,7 +180,7 @@ export function BoxSettingModal({
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
                         isSelected
                           ? `${optCfg.bg} ${optCfg.border} ${optCfg.text} ring-2 ring-offset-1 ring-current`
-                          : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+                          : "bg-white border-border/50 text-muted-foreground hover:border-border/70"
                       }`}
                     >
                       {optCfg.label}
@@ -192,7 +192,7 @@ export function BoxSettingModal({
 
             {box.status === BoxStatus.OCCUPIED && (
               <div className="pt-1 border-t">
-                <p className="text-xs text-gray-500 mb-2">Thao tác khẩn cấp</p>
+                <p className="text-xs text-muted-foreground mb-2">Thao tác khẩn cấp</p>
                 <Button
                   variant="outline"
                   size="sm"

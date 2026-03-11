@@ -20,7 +20,7 @@ export function DashboardHeader({
   return (
     <div className="mb-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
           Dashboard
         </h1>
 
@@ -46,9 +46,9 @@ export function DashboardHeader({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border">
         <Tabs value={activeTab} onValueChange={onTabChange}>
-          <TabsList className="bg-gray-100 p-1">
+          <TabsList className="bg-muted/50 p-1">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab}

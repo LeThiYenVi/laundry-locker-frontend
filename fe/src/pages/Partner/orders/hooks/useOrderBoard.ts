@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   useGetPartnerOrdersQuery,
   useAcceptOrderMutation,
+  useForceCollectOrderMutation,
   useUpdateOrderWeightMutation,
   useProcessOrderMutation,
   useMarkOrderReadyMutation,
@@ -23,6 +24,7 @@ type AccessCodeModalState = {
   open: boolean;
   code: StaffAccessCode | null;
   action: "COLLECT" | "RETURN";
+  orderId: number | null;
 };
 
 type WeightModalState = {
@@ -54,6 +56,7 @@ export function useOrderBoard() {
     open: false,
     code: null,
     action: "COLLECT",
+    orderId: null,
   });
 
   const [weightModal, setWeightModal] = useState<WeightModalState>({
@@ -106,11 +109,30 @@ export function useOrderBoard() {
 
   // Mutations
   const [acceptOrder, { isLoading: isAccepting }] = useAcceptOrderMutation();
+  const [forceCollect] = useForceCollectOrderMutation();
   const [updateWeight, { isLoading: isUpdatingWeight }] =
     useUpdateOrderWeightMutation();
   const [processOrder, { isLoading: isProcessing }] = useProcessOrderMutation();
   const [markReady, { isLoading: isMarkingReady }] =
     useMarkOrderReadyMutation();
+
+  // Clean up pendingMoves once the refetched API data catches up
+  useEffect(() => {
+    const raw = data?.content;
+    if (!raw || Object.keys(pendingMoves).length === 0) return;
+    setPendingMoves((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const [idStr, pendingStatus] of Object.entries(next)) {
+        const order = raw.find((o) => o.id === Number(idStr));
+        if (order && order.status === pendingStatus) {
+          delete next[Number(idStr)];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [data]);
 
   // Apply optimistic overrides on top of API data
   const allOrders = useMemo(() => {
@@ -160,21 +182,14 @@ export function useOrderBoard() {
         ) {
           const result = await acceptOrder(order.id).unwrap();
           code = result.staffAccessCode;
-          setAccessCodeModal({ open: true, code, action: "COLLECT" });
+          setAccessCodeModal({ open: true, code, action: "COLLECT", orderId: order.id });
         } else if (newStatus === OrderStatus.PROCESSING) {
           await processOrder(order.id).unwrap();
         } else if (newStatus === OrderStatus.READY) {
           const result = await markReady(order.id).unwrap();
           code = result.staffAccessCode;
-          setAccessCodeModal({ open: true, code, action: "RETURN" });
+          setAccessCodeModal({ open: true, code, action: "RETURN", orderId: order.id });
         }
-
-        // Clear the optimistic override after success (RTK cache will update)
-        setPendingMoves((prev) => {
-          const next = { ...prev };
-          delete next[order.id];
-          return next;
-        });
 
         return code;
       } catch (err) {
@@ -190,6 +205,20 @@ export function useOrderBoard() {
     },
     [acceptOrder, processOrder, markReady],
   );
+
+  // ============================================
+  // Access code modal close
+  // When partner closes the COLLECT code modal, silently sync BE to COLLECTED.
+  // The order is already shown as COLLECTED optimistically — this just confirms it.
+  // ============================================
+
+  const handleAccessCodeModalClose = useCallback(() => {
+    const { action, orderId } = accessCodeModal;
+    setAccessCodeModal((prev) => ({ ...prev, open: false }));
+    if (action === "COLLECT" && orderId !== null) {
+      forceCollect(orderId).catch(() => {});
+    }
+  }, [accessCodeModal, forceCollect]);
 
   // ============================================
   // Weight update
@@ -249,6 +278,7 @@ export function useOrderBoard() {
     // Access code modal
     accessCodeModal,
     setAccessCodeModal,
+    handleAccessCodeModalClose,
 
     // Error
     errorToast,

@@ -123,13 +123,13 @@ export default function StoreDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
-        <div className="h-48 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+        <div className="h-48 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 h-64 bg-gray-200 rounded animate-pulse" />
-          <div className="h-64 bg-gray-200 rounded animate-pulse" />
+          <div className="col-span-2 h-64 bg-muted rounded animate-pulse" />
+          <div className="h-64 bg-muted rounded animate-pulse" />
         </div>
-        <div className="h-48 bg-gray-200 rounded animate-pulse" />
+        <div className="h-48 bg-muted rounded animate-pulse" />
       </div>
     );
   }
@@ -137,7 +137,7 @@ export default function StoreDetailPage() {
   if (!store) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/70" />
         <h3 className="mt-4 text-lg font-medium">Không tìm thấy cửa hàng</h3>
         <Button onClick={() => navigate(-1)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -193,7 +193,7 @@ export default function StoreDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{store.name}</h1>
-            <p className="text-sm text-gray-500">ID: {store.id}</p>
+            <p className="text-sm text-muted-foreground">ID: {store.id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function StoreDetailPage() {
             className={
               store.active
                 ? "bg-green-50 text-green-700 border-green-200"
-                : "bg-gray-50 text-gray-600 border-gray-200"
+                : "bg-muted/30 text-muted-foreground border-border/50"
             }
           >
             {store.active ? "Đang hoạt động" : "Đóng cửa"}
@@ -234,7 +234,7 @@ export default function StoreDetailPage() {
       <Card className="overflow-hidden">
         <div className="flex flex-col md:flex-row gap-0">
           {/* Image Panel */}
-          <div className="relative md:w-72 shrink-0 bg-gray-100 min-h-56 md:min-h-0">
+          <div className="relative md:w-72 shrink-0 bg-muted/50 min-h-56 md:min-h-0">
             <img
               src={store.imageUrl}
               alt={store.name}
@@ -245,7 +245,7 @@ export default function StoreDetailPage() {
               }}
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
-            <button className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-white/90 hover:bg-white text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg shadow transition-all">
+            <button className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-white/90 hover:bg-white text-foreground/80 text-xs font-medium px-3 py-1.5 rounded-lg shadow transition-all">
               <Camera className="h-3.5 w-3.5" />
               Đổi ảnh
             </button>
@@ -254,7 +254,7 @@ export default function StoreDetailPage() {
                 className={`text-xs font-medium px-2 py-1 rounded-full ${
                   store.active
                     ? "bg-green-500 text-white"
-                    : "bg-gray-500 text-white"
+                    : "bg-muted/300 text-white"
                 }`}
               >
                 {store.active ? "● Đang hoạt động" : "● Đóng cửa"}
@@ -266,7 +266,7 @@ export default function StoreDetailPage() {
           <div className="flex-1 p-5 space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                   Tên cửa hàng
                 </label>
                 <Input
@@ -277,7 +277,7 @@ export default function StoreDetailPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> Địa chỉ
                 </label>
                 <Input
@@ -289,7 +289,7 @@ export default function StoreDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                   <Phone className="h-3 w-3" /> Điện thoại
                 </label>
                 <Input
@@ -299,7 +299,7 @@ export default function StoreDetailPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                   <Mail className="h-3 w-3" /> Email
                 </label>
                 <Input
@@ -312,7 +312,7 @@ export default function StoreDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Giờ mở cửa
                 </label>
                 <Input
@@ -324,7 +324,7 @@ export default function StoreDetailPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Giờ đóng cửa
                 </label>
                 <Input
@@ -336,13 +336,13 @@ export default function StoreDetailPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-4 pt-1 text-xs text-gray-400 font-mono border-t">
-              <span className="text-gray-400">Lat:</span>
-              <span className="text-gray-600 font-semibold">
+            <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground/70 font-mono border-t">
+              <span className="text-muted-foreground/70">Lat:</span>
+              <span className="text-muted-foreground font-semibold">
                 {store.latitude}
               </span>
-              <span className="text-gray-400 ml-3">Lng:</span>
-              <span className="text-gray-600 font-semibold">
+              <span className="text-muted-foreground/70 ml-3">Lng:</span>
+              <span className="text-muted-foreground font-semibold">
                 {store.longitude}
               </span>
             </div>
@@ -355,11 +355,11 @@ export default function StoreDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
           {/* Manager */}
           <div className="p-5 space-y-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" /> Quản lý cửa hàng
             </p>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Họ tên</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Họ tên</label>
               <Input
                 value={formData.manager}
                 onChange={(e) => handleInputChange("manager", e.target.value)}
@@ -368,7 +368,7 @@ export default function StoreDetailPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">
+              <label className="text-xs text-muted-foreground mb-1 block">
                 Điện thoại
               </label>
               <Input
@@ -384,35 +384,35 @@ export default function StoreDetailPage() {
 
           {/* Stats */}
           <div className="p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider flex items-center gap-1.5 mb-3">
               <TrendingUp className="h-3.5 w-3.5" /> Thống kê
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-gray-800">
+              <div className="bg-muted/30 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-foreground">
                   {store.lockerCount ?? lockersList.length}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Tổng tủ</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Tổng tủ</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-gray-800">{totalBoxes}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Tổng box</p>
+              <div className="bg-muted/30 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-foreground">{totalBoxes}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Tổng box</p>
               </div>
               <div className="bg-green-50 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-green-600">
                   {availableBoxes}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Box trống</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Box trống</p>
               </div>
               <div className="bg-blue-50 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-blue-600">
                   {store.orderCount ?? 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">Đơn hàng</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Đơn hàng</p>
               </div>
             </div>
             <div className="mt-3">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span>Tỉ lệ sử dụng</span>
                 <span className="font-medium">
                   {totalBoxes > 0
@@ -423,7 +423,7 @@ export default function StoreDetailPage() {
                   %
                 </span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5">
+              <div className="w-full bg-muted/50 rounded-full h-1.5">
                 <div
                   className="bg-blue-500 h-1.5 rounded-full transition-all"
                   style={{
@@ -436,25 +436,25 @@ export default function StoreDetailPage() {
 
           {/* History */}
           <div className="p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider flex items-center gap-1.5 mb-3">
               <Calendar className="h-3.5 w-3.5" /> Lịch sử
             </p>
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-400">Ngày tạo</p>
-                <p className="text-sm font-semibold text-gray-700 mt-0.5">
+                <p className="text-xs text-muted-foreground/70">Ngày tạo</p>
+                <p className="text-sm font-semibold text-foreground/80 mt-0.5">
                   {formatDate(store.createdAt)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Cập nhật cuối</p>
-                <p className="text-sm font-semibold text-gray-700 mt-0.5">
+                <p className="text-xs text-muted-foreground/70">Cập nhật cuối</p>
+                <p className="text-sm font-semibold text-foreground/80 mt-0.5">
                   {formatDate(store.updatedAt)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Mã cửa hàng</p>
-                <p className="text-sm font-mono font-semibold text-gray-700 mt-0.5">
+                <p className="text-xs text-muted-foreground/70">Mã cửa hàng</p>
+                <p className="text-sm font-mono font-semibold text-foreground/80 mt-0.5">
                   #{store.id}
                 </p>
               </div>
@@ -466,7 +466,7 @@ export default function StoreDetailPage() {
       {/* Lockers Section */}
       <Card>
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b">
-          <h2 className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-foreground/80">
             <Package className="h-4 w-4" />
             Danh sách tủ đồ
             <Badge variant="secondary" className="ml-1">
@@ -477,7 +477,7 @@ export default function StoreDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs text-gray-500"
+              className="h-7 text-xs text-muted-foreground"
               onClick={() => refetch?.()}
             >
               <RefreshCw className="h-3 w-3 mr-1" />
@@ -495,7 +495,7 @@ export default function StoreDetailPage() {
         </div>
         <div className="p-4">
           {lockersList.length === 0 ? (
-            <div className="py-10 text-center text-gray-400">
+            <div className="py-10 text-center text-muted-foreground/70">
               <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Chưa có tủ đồ nào trong cửa hàng này</p>
               <Button

@@ -12,7 +12,7 @@ export function RecommendationsSection({
 }: RecommendationsSectionProps) {
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <h2 className="text-lg font-semibold text-foreground mb-4">
         Đề xuất cho bạn
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

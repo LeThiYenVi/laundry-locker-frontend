@@ -31,12 +31,12 @@ const BOX_CFG: Record<string, { label: string; bg: string; border: string; text:
   AVAILABLE:   { label: "Trống",   bg: "bg-green-50",  border: "border-green-300",  text: "text-green-700" },
   OCCUPIED:    { label: "Có đồ",   bg: "bg-orange-50", border: "border-orange-300", text: "text-orange-700" },
   RESERVED:    { label: "Đã đặt",  bg: "bg-blue-50",   border: "border-blue-300",   text: "text-blue-700" },
-  MAINTENANCE: { label: "Bảo trì", bg: "bg-gray-100",  border: "border-gray-300",   text: "text-gray-500" },
+  MAINTENANCE: { label: "Bảo trì", bg: "bg-muted/50",  border: "border-border/70",   text: "text-muted-foreground" },
 };
 
 const LOCKER_STATUS_CFG: Record<string, { label: string; dot: string; badge: string }> = {
   ACTIVE:       { label: "Hoạt động",    dot: "bg-green-500",  badge: "bg-green-50  text-green-700  border-green-200"  },
-  INACTIVE:     { label: "Tắt",          dot: "bg-gray-400",   badge: "bg-gray-50   text-gray-600   border-gray-200"   },
+  INACTIVE:     { label: "Tắt",          dot: "bg-muted-foreground/50",   badge: "bg-muted/30   text-muted-foreground   border-border/50"   },
   MAINTENANCE:  { label: "Bảo trì",      dot: "bg-yellow-400", badge: "bg-yellow-50 text-yellow-700 border-yellow-200" },
   DISCONNECTED: { label: "Mất kết nối",  dot: "bg-red-500",    badge: "bg-red-50    text-red-700    border-red-200"    },
 };
@@ -70,7 +70,7 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
   return (
     <div
       className={`flex flex-col rounded-xl border bg-white transition-all hover:shadow-md ${
-        isActive ? "border-green-200" : "border-gray-200"
+        isActive ? "border-green-200" : "border-border/50"
       }`}
     >
       {/* Header */}
@@ -78,7 +78,7 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className={`h-2 w-2 rounded-full shrink-0 mt-0.5 ${statusCfg.dot}`} />
-            <p className="text-sm font-semibold text-gray-800 truncate leading-tight">
+            <p className="text-sm font-semibold text-foreground truncate leading-tight">
               {locker.name}
             </p>
           </div>
@@ -86,7 +86,7 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
             {statusCfg.label}
           </Badge>
         </div>
-        <p className="text-[10px] font-mono text-gray-400 truncate pl-3.5">
+        <p className="text-[10px] font-mono text-muted-foreground/70 truncate pl-3.5">
           {locker.code}
           {locker.address ? ` · ${locker.address}` : ""}
         </p>
@@ -95,12 +95,12 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
       {/* Stats row */}
       <div className="px-4 pb-2">
         <div className="flex items-center justify-between text-[11px] mb-1">
-          <span className="text-gray-500">
+          <span className="text-muted-foreground">
             <span className="text-green-600 font-bold">{available}</span>/{total} trống
           </span>
-          <span className="text-gray-400">{usagePercent}%</span>
+          <span className="text-muted-foreground/70">{usagePercent}%</span>
         </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${
               usagePercent > 80 ? "bg-red-400" : usagePercent > 50 ? "bg-orange-400" : "bg-green-400"
@@ -114,7 +114,7 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
       <div className="flex items-center border-t px-3 py-1.5 mt-auto">
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="ml-auto flex items-center gap-1 text-[11px] text-gray-500 hover:text-blue-600 rounded px-1.5 py-1 hover:bg-blue-50 transition-colors"
+          className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground hover:text-blue-600 rounded px-1.5 py-1 hover:bg-blue-50 transition-colors"
         >
           {expanded ? "Thu gọn" : "Xem ngăn"}
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -125,12 +125,12 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
       {expanded && (
         <div className="px-3 pb-3 border-t pt-3">
           {boxesLoading ? (
-            <div className="flex items-center justify-center gap-2 py-4 text-xs text-gray-400">
+            <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground/70">
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
               Đang tải...
             </div>
           ) : boxes.length === 0 ? (
-            <p className="text-xs text-gray-400 italic py-2 text-center">Chưa có ngăn tủ nào</p>
+            <p className="text-xs text-muted-foreground/70 italic py-2 text-center">Chưa có ngăn tủ nào</p>
           ) : (
             <>
               {/* Legend */}
@@ -138,7 +138,7 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
                 {Object.entries(BOX_CFG).map(([s, c]) => (
                   <div key={s} className="flex items-center gap-1">
                     <div className={`w-2 h-2 rounded-sm border ${c.bg} ${c.border}`} />
-                    <span className="text-[10px] text-gray-500">{c.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{c.label}</span>
                   </div>
                 ))}
               </div>
@@ -177,13 +177,13 @@ function PartnerLockerCard({ locker }: { locker: PartnerLocker }) {
             className="bg-white rounded-xl shadow-xl p-5 min-w-56 space-y-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-semibold text-gray-800">Ngăn #{selectedBox.boxNumber}</p>
+            <p className="font-semibold text-foreground">Ngăn #{selectedBox.boxNumber}</p>
             <div className="flex items-center gap-2">
               <span className={`text-xs px-2 py-0.5 rounded-full border ${BOX_CFG[selectedBox.status]?.bg} ${BOX_CFG[selectedBox.status]?.border} ${BOX_CFG[selectedBox.status]?.text}`}>
                 {BOX_CFG[selectedBox.status]?.label ?? selectedBox.status}
               </span>
             </div>
-            {selectedBox.description && <p className="text-xs text-gray-500">{selectedBox.description}</p>}
+            {selectedBox.description && <p className="text-xs text-muted-foreground">{selectedBox.description}</p>}
             <Button size="sm" variant="outline" className="w-full mt-2" onClick={() => setSelectedBox(null)}>
               Đóng
             </Button>
@@ -221,13 +221,13 @@ export default function StoreDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
-        <div className="h-48 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+        <div className="h-48 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 h-64 bg-gray-200 rounded animate-pulse" />
-          <div className="h-64 bg-gray-200 rounded animate-pulse" />
+          <div className="col-span-2 h-64 bg-muted rounded animate-pulse" />
+          <div className="h-64 bg-muted rounded animate-pulse" />
         </div>
-        <div className="h-48 bg-gray-200 rounded animate-pulse" />
+        <div className="h-48 bg-muted rounded animate-pulse" />
       </div>
     );
   }
@@ -235,7 +235,7 @@ export default function StoreDetailPage() {
   if (error || (!isLoading && !store)) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/70" />
         <h3 className="mt-4 text-lg font-medium">Không tìm thấy cửa hàng</h3>
         <Button onClick={() => navigate(-1)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -261,14 +261,14 @@ export default function StoreDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{store?.name}</h1>
-            <p className="text-sm text-gray-500">ID: {store?.id}</p>
+            <p className="text-sm text-muted-foreground">ID: {store?.id}</p>
           </div>
         </div>
         <Badge
           variant="outline"
           className={isActive
             ? "bg-green-50 text-green-700 border-green-200"
-            : "bg-gray-50 text-gray-600 border-gray-200"
+            : "bg-muted/30 text-muted-foreground border-border/50"
           }
         >
           {isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
@@ -280,7 +280,7 @@ export default function StoreDetailPage() {
         {/* Info row */}
         <div className="flex flex-col md:flex-row gap-0">
           {/* Store image / icon panel */}
-          <div className="relative md:w-64 shrink-0 bg-gray-50 min-h-44 md:min-h-0 flex items-center justify-center">
+          <div className="relative md:w-64 shrink-0 bg-muted/30 min-h-44 md:min-h-0 flex items-center justify-center">
             {store?.image ? (
               <img
                 src={store.image}
@@ -288,14 +288,14 @@ export default function StoreDetailPage() {
                 className="w-full h-full object-cover absolute inset-0"
               />
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 text-gray-300 w-full h-44">
+              <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground/50 w-full h-44">
                 <StoreIcon className="h-12 w-12" />
                 <span className="text-xs">Chưa có ảnh</span>
               </div>
             )}
             <div className="absolute top-3 left-3">
               <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                isActive ? "bg-green-500 text-white" : "bg-gray-500 text-white"
+                isActive ? "bg-green-500 text-white" : "bg-muted/300 text-white"
               }`}>
                 {isActive ? "● Đang hoạt động" : "● Ngừng hoạt động"}
               </span>
@@ -305,32 +305,32 @@ export default function StoreDetailPage() {
           {/* Info fields */}
           <div className="flex-1 p-5 space-y-3">
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">Tên cửa hàng</label>
-              <p className="text-base font-semibold text-gray-800">{store?.name}</p>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Tên cửa hàng</label>
+              <p className="text-base font-semibold text-foreground">{store?.name}</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
                 <MapPin className="h-3 w-3" /> Địa chỉ
               </label>
-              <p className="text-sm text-gray-700">{store?.address || "—"}</p>
+              <p className="text-sm text-foreground/80">{store?.address || "—"}</p>
             </div>
             {store?.contactPhone && (
               <div>
-                <label className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
                   <Phone className="h-3 w-3" /> Điện thoại
                 </label>
-                <p className="text-sm text-gray-700">{store.contactPhone}</p>
+                <p className="text-sm text-foreground/80">{store.contactPhone}</p>
               </div>
             )}
             {store?.description && (
-              <p className="text-sm text-gray-500 mt-1">{store.description}</p>
+              <p className="text-sm text-muted-foreground mt-1">{store.description}</p>
             )}
             {(store?.longitude || store?.latitude) && (
-              <div className="flex items-center gap-4 pt-1 text-xs text-gray-400 font-mono border-t">
-                <span className="text-gray-400">Lat:</span>
-                <span className="text-gray-600 font-semibold">{store?.latitude}</span>
-                <span className="text-gray-400 ml-3">Lng:</span>
-                <span className="text-gray-600 font-semibold">{store?.longitude}</span>
+              <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground/70 font-mono border-t">
+                <span className="text-muted-foreground/70">Lat:</span>
+                <span className="text-muted-foreground font-semibold">{store?.latitude}</span>
+                <span className="text-muted-foreground/70 ml-3">Lng:</span>
+                <span className="text-muted-foreground font-semibold">{store?.longitude}</span>
               </div>
             )}
           </div>
@@ -342,50 +342,50 @@ export default function StoreDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
           {/* Placeholder col for manager info alignment */}
           <div className="p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider flex items-center gap-1.5 mb-3">
               <StoreIcon className="h-3.5 w-3.5" /> Thông tin liên hệ
             </p>
-            <div className="space-y-2 text-sm text-gray-600">
+            <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                {store?.contactPhone || <span className="text-gray-300">—</span>}
+                <Phone className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                {store?.contactPhone || <span className="text-muted-foreground/50">—</span>}
               </div>
               <div className="flex items-start gap-2">
-                <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0 mt-0.5" />
-                <span>{store?.address || <span className="text-gray-300">—</span>}</span>
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0 mt-0.5" />
+                <span>{store?.address || <span className="text-muted-foreground/50">—</span>}</span>
               </div>
             </div>
           </div>
 
           {/* Stats */}
           <div className="p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider flex items-center gap-1.5 mb-3">
               <TrendingUp className="h-3.5 w-3.5" /> Thống kê
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-gray-800">{lockers.length}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Tổng tủ</p>
+              <div className="bg-muted/30 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-foreground">{lockers.length}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Tổng tủ</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-gray-800">{totalBoxes}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Tổng box</p>
+              <div className="bg-muted/30 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-foreground">{totalBoxes}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Tổng box</p>
               </div>
               <div className="bg-green-50 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-green-600">{availableBoxes}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Box trống</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Box trống</p>
               </div>
               <div className="bg-orange-50 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-orange-600">{totalBoxes - availableBoxes}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Đang dùng</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Đang dùng</p>
               </div>
             </div>
             <div className="mt-3">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span>Tỉ lệ sử dụng</span>
                 <span className="font-medium">{usagePercent}%</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5">
+              <div className="w-full bg-muted/50 rounded-full h-1.5">
                 <div
                   className="bg-blue-500 h-1.5 rounded-full transition-all"
                   style={{ width: `${usagePercent}%` }}
@@ -396,25 +396,25 @@ export default function StoreDetailPage() {
 
           {/* History */}
           <div className="p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider flex items-center gap-1.5 mb-3">
               <Calendar className="h-3.5 w-3.5" /> Lịch sử
             </p>
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-400">Ngày tạo</p>
-                <p className="text-sm font-semibold text-gray-700 mt-0.5">
+                <p className="text-xs text-muted-foreground/70">Ngày tạo</p>
+                <p className="text-sm font-semibold text-foreground/80 mt-0.5">
                   {store ? formatDate(store.createdAt) : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Cập nhật cuối</p>
-                <p className="text-sm font-semibold text-gray-700 mt-0.5">
+                <p className="text-xs text-muted-foreground/70">Cập nhật cuối</p>
+                <p className="text-sm font-semibold text-foreground/80 mt-0.5">
                   {store ? formatDate(store.updatedAt) : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Mã cửa hàng</p>
-                <p className="text-sm font-mono font-semibold text-gray-700 mt-0.5">#{store?.id}</p>
+                <p className="text-xs text-muted-foreground/70">Mã cửa hàng</p>
+                <p className="text-sm font-mono font-semibold text-foreground/80 mt-0.5">#{store?.id}</p>
               </div>
             </div>
           </div>
@@ -424,7 +424,7 @@ export default function StoreDetailPage() {
       {/* Lockers Section */}
       <Card>
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b">
-          <h2 className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-foreground/80">
             <Package className="h-4 w-4" />
             Danh sách tủ đồ
             <Badge variant="secondary" className="ml-1">{lockers.length}</Badge>
@@ -432,7 +432,7 @@ export default function StoreDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-gray-500"
+            className="h-7 text-xs text-muted-foreground"
             onClick={() => refetch()}
             disabled={isLockersFetching}
           >
@@ -447,7 +447,7 @@ export default function StoreDetailPage() {
               <p className="text-sm">Không thể tải danh sách tủ đồ</p>
             </div>
           ) : lockers.length === 0 ? (
-            <div className="py-10 text-center text-gray-400">
+            <div className="py-10 text-center text-muted-foreground/70">
               <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Chưa có tủ đồ nào trong cửa hàng này</p>
             </div>

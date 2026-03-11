@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Ban,
   Edit3,
+  MessageCircleWarning,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -25,6 +26,7 @@ import { useOrderDetail } from "./hooks/useOrderDetail";
 import { OrderTimeline } from "./components/OrderTimeline";
 import { OrderStatusUpdateModal } from "./components/OrderStatusUpdateModal";
 import { useState } from "react";
+import { useGetOrderComplaintsQuery } from "~/stores/apis/partnerApi";
 
 const statusConfig: Record<
   OrderStatus,
@@ -32,8 +34,8 @@ const statusConfig: Record<
 > = {
   [OrderStatus.INITIALIZED]: {
     label: "Khởi tạo",
-    color: "text-gray-700",
-    bg: "bg-gray-100",
+    color: "text-foreground/80",
+    bg: "bg-muted/50",
     icon: Clock,
   },
   [OrderStatus.RESERVED]: {
@@ -109,6 +111,10 @@ export default function OrderDetailPage() {
   const { order, isLoading, cancelOrder, updateStatus } =
     useOrderDetail(orderId);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const { data: complaints = [] } = useGetOrderComplaintsQuery(
+    Number(orderId),
+    { skip: !orderId },
+  );
 
   const handleCancel = () => {
     if (confirm("Bạn có chắc muốn hủy đơn hàng này?")) {
@@ -126,15 +132,15 @@ export default function OrderDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <div className="h-64 bg-gray-200 rounded animate-pulse" />
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-64 bg-muted rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
           </div>
           <div className="space-y-4">
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
+            <div className="h-48 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -144,7 +150,7 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/70" />
         <h3 className="mt-4 text-lg font-medium">Không tìm thấy đơn hàng</h3>
         <Button onClick={() => navigate(-1)} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -171,7 +177,7 @@ export default function OrderDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Chi tiết đơn hàng</h1>
-            <p className="text-sm text-gray-500">{order.id}</p>
+            <p className="text-sm text-muted-foreground">{order.id}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -201,9 +207,9 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
         {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="flex flex-col gap-6">
           {/* Items */}
           <Card>
             <CardHeader>
@@ -217,15 +223,15 @@ export default function OrderDetailPage() {
                 {order.orderDetails?.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                   >
                     <div>
                       <p className="font-medium">{item.serviceName}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Số lượng: {item.quantity}
                       </p>
                     </div>
-                    <p className="font-semibold text-blue-600">
+                    <p className="font-semibold text-primary">
                       {formatCurrency(item.price * item.quantity)}
                     </p>
                   </div>
@@ -233,7 +239,7 @@ export default function OrderDetailPage() {
                 <Separator />
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Tổng cộng</span>
-                  <span className="text-xl font-bold text-blue-600">
+                  <span className="text-xl font-bold text-primary">
                     {formatCurrency(order.totalPrice)}
                   </span>
                 </div>
@@ -253,10 +259,68 @@ export default function OrderDetailPage() {
               <OrderTimeline order={order} />
             </CardContent>
           </Card>
+
+          {/* Complaints */}
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircleWarning className="h-5 w-5" />
+                Khiếu nại
+                {complaints.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {complaints.length}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {complaints.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Không có khiếu nại
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {complaints.map((c) => (
+                    <div key={c.id} className="p-3 bg-muted/30 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge variant="outline" className="text-xs font-medium">
+                          {c.type}
+                        </Badge>
+                        <Badge
+                          className={`text-xs border-0 ${
+                            c.status === "RESOLVED"
+                              ? "bg-green-100 text-green-700"
+                              : c.status === "REJECTED"
+                                ? "bg-muted/50 text-muted-foreground"
+                                : "bg-orange-100 text-orange-700"
+                          }`}
+                        >
+                          {c.status === "RESOLVED"
+                            ? "Đã giải quyết"
+                            : c.status === "REJECTED"
+                              ? "Từ chối"
+                              : "Chờ xử lý"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {formatDate(c.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm">{c.description}</p>
+                      {c.resolution && (
+                        <p className="text-xs text-muted-foreground border-l-2 border-border pl-2">
+                          Phản hồi: {c.resolution}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column */}
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           {/* Customer Info */}
           <Card>
             <CardHeader>
@@ -267,16 +331,16 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Họ tên</p>
+                <p className="text-sm text-muted-foreground">Họ tên</p>
                 <p className="font-medium">{order.senderName}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Mã khách hàng</p>
+                <p className="text-sm text-muted-foreground">Mã khách hàng</p>
                 <p className="font-mono text-sm">{order.senderId}</p>
               </div>
               {order.customerNote && (
                 <div>
-                  <p className="text-sm text-gray-500">Ghi chú</p>
+                  <p className="text-sm text-muted-foreground">Ghi chú</p>
                   <p className="text-sm">{order.customerNote}</p>
                 </div>
               )}
@@ -293,19 +357,19 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Tủ</p>
+                <p className="text-sm text-muted-foreground">Tủ</p>
                 <p className="font-medium">{order.lockerName || "N/A"}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Ngăn gửi</p>
+                  <p className="text-sm text-muted-foreground">Ngăn gửi</p>
                   <Badge variant="outline">
                     <Box className="mr-1 h-3 w-3" />
                     {order.sendBoxNumber || "N/A"}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Ngăn nhận</p>
+                  <p className="text-sm text-muted-foreground">Ngăn nhận</p>
                   <Badge variant="outline">
                     <Box className="mr-1 h-3 w-3" />
                     {order.receiveBoxNumber || "N/A"}
@@ -314,7 +378,7 @@ export default function OrderDetailPage() {
               </div>
               {order.pinCode && (
                 <div>
-                  <p className="text-sm text-gray-500">Mã PIN</p>
+                  <p className="text-sm text-muted-foreground">Mã PIN</p>
                   <p className="font-mono text-lg font-bold tracking-wider">
                     {order.pinCode}
                   </p>
@@ -324,7 +388,7 @@ export default function OrderDetailPage() {
           </Card>
 
           {/* Payment Info */}
-          <Card>
+          <Card className="flex-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
@@ -333,7 +397,7 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-gray-500">Trạng thái</span>
+                <span className="text-muted-foreground">Trạng thái</span>
                 <Badge
                   variant={
                     order.status === "COMPLETED" ? "default" : "secondary"
@@ -350,13 +414,13 @@ export default function OrderDetailPage() {
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Phương thức</span>
+                <span className="text-muted-foreground">Phương thức</span>
                 <span>N/A</span>
               </div>
               <Separator />
               <div className="flex justify-between font-bold">
                 <span>Tổng tiền</span>
-                <span className="text-blue-600">
+                <span className="text-primary">
                   {formatCurrency(order.totalPrice)}
                 </span>
               </div>

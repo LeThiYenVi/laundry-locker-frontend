@@ -78,11 +78,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-50 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-muted/30 space-y-6">
       {/* Page title */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Tổng quan hoạt động hệ thống Laundry Locker
         </p>
       </div>

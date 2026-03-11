@@ -22,7 +22,7 @@ const getTypeBadge = (type: string) => {
     case "WITHDRAWAL":
       return "bg-blue-100 text-blue-700";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-muted/50 text-foreground/80";
   }
 };
 
@@ -46,7 +46,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
         <CardHeader>
           <CardTitle>Lịch sử giao dịch</CardTitle>
         </CardHeader>
-        <CardContent className="text-center text-gray-500 py-8">
+        <CardContent className="text-center text-muted-foreground py-8">
           Chưa có giao dịch nào
         </CardContent>
       </Card>

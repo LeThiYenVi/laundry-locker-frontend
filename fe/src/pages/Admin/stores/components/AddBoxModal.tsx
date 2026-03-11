@@ -62,7 +62,7 @@ export function AddBoxModal({
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-muted-foreground mb-1 block">
               Số ngăn <span className="text-red-500">*</span>
             </label>
             <Input
@@ -75,7 +75,7 @@ export function AddBoxModal({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-muted-foreground mb-1 block">
               Mô tả (tùy chọn)
             </label>
             <Input

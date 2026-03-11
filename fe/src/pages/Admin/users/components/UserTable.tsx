@@ -87,7 +87,7 @@ const ProviderIcon = ({ provider }: { provider: string }) => {
 
   const { icon, color } = iconMap[provider] || {
     icon: <UserIcon size={14} />,
-    color: "text-gray-600 bg-gray-100",
+    color: "text-muted-foreground bg-muted/50",
   };
 
   return (
@@ -104,7 +104,7 @@ const getRoleBadge = (role: string) => {
     ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
     SUPER_ADMIN: "bg-red-50 text-red-700 border-red-200",
     STAFF: "bg-blue-50 text-blue-700 border-blue-200",
-    USER: "bg-gray-50 text-gray-700 border-gray-200",
+    USER: "bg-muted/30 text-foreground/80 border-border/50",
     PARTNER: "bg-orange-50 text-orange-700 border-orange-200",
     MODERATOR: "bg-teal-50 text-teal-700 border-teal-200",
   };
@@ -161,10 +161,10 @@ export function UserTable({ users, isLoading }: UserTableProps) {
               <TruncatedText
                 text={user.name || t("admin.users.noName")}
                 maxLength={20}
-                className="font-semibold text-gray-900"
+                className="font-semibold text-foreground"
               />
-              <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
-                <Mail size={14} className="text-gray-400 flex-shrink-0" />
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                <Mail size={14} className="text-muted-foreground/70 flex-shrink-0" />
                 <span className="truncate max-w-[160px]">{user.email}</span>
               </p>
             </div>
@@ -183,7 +183,7 @@ export function UserTable({ users, isLoading }: UserTableProps) {
           {row.original.roles?.length > 2 && (
             <Badge
               variant="outline"
-              className="bg-gray-50 text-gray-600 text-xs"
+              className="bg-muted/30 text-muted-foreground text-xs"
             >
               +{row.original.roles.length - 2}
             </Badge>
@@ -199,7 +199,7 @@ export function UserTable({ users, isLoading }: UserTableProps) {
         return (
           <div className="flex items-center gap-2">
             <ProviderIcon provider={provider} />
-            <span className="text-sm text-gray-600">{provider}</span>
+            <span className="text-sm text-muted-foreground">{provider}</span>
           </div>
         );
       },
@@ -227,7 +227,7 @@ export function UserTable({ users, isLoading }: UserTableProps) {
     columnHelper.accessor("createdAt", {
       header: t("common.createdAt"),
       cell: ({ row }) => (
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-muted-foreground">
           {new Date(row.original.createdAt).toLocaleDateString("vi-VN", {
             day: "2-digit",
             month: "2-digit",
@@ -251,11 +251,11 @@ export function UserTable({ users, isLoading }: UserTableProps) {
               className="data-[state=checked]:bg-green-500"
             />
             {isPending ? (
-              <Loader2 size={12} className="animate-spin text-gray-400" />
+              <Loader2 size={12} className="animate-spin text-muted-foreground/70" />
             ) : (
               <span
                 className={`text-xs font-medium ${
-                  user.enabled ? "text-green-600" : "text-gray-400"
+                  user.enabled ? "text-green-600" : "text-muted-foreground/70"
                 }`}
               >
                 {user.enabled
@@ -277,14 +277,14 @@ export function UserTable({ users, isLoading }: UserTableProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 hover:bg-gray-100"
+              className="h-8 w-8 hover:bg-muted"
             >
-              <MoreHorizontal size={16} className="text-gray-500" />
+              <MoreHorizontal size={16} className="text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-40 bg-white border border-gray-200"
+            className="w-40 bg-white border border-border/50"
           >
             <DropdownMenuItem
               className="cursor-pointer"
