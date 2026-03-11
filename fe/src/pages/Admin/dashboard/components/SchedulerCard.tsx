@@ -100,7 +100,7 @@ export function SchedulerCard() {
         );
       default:
         return (
-          <Badge variant="outline" className="bg-gray-50 text-gray-600">
+          <Badge variant="outline" className="bg-muted/30 text-muted-foreground">
             <Clock className="mr-1 h-3 w-3" />
             Sẵn sàng
           </Badge>
@@ -123,7 +123,7 @@ export function SchedulerCard() {
             return (
               <div
                 key={job.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
               >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
@@ -134,8 +134,8 @@ export function SchedulerCard() {
                       <h4 className="font-medium">{job.name}</h4>
                       {getStatusBadge(job.status)}
                     </div>
-                    <p className="text-sm text-gray-500">{job.description}</p>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
+                    <p className="text-sm text-muted-foreground">{job.description}</p>
+                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground/70">
                       <span className="flex items-center gap-1">
                         <RotateCcw className="h-3 w-3" />
                         {job.frequency}

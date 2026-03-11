@@ -61,7 +61,7 @@ export function AnalyticsTab() {
         {/* Feedback overview */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <Star size={16} className="text-yellow-500" /> Tổng quan đánh giá
             </CardTitle>
           </CardHeader>
@@ -75,14 +75,14 @@ export function AnalyticsTab() {
             ) : (
               <>
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-xl">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     Điểm đánh giá trung bình
                   </span>
                   <div className="flex items-center gap-2">
                     <StarRow
                       rating={Math.round(analytics?.averageRating ?? 0)}
                     />
-                    <span className="font-bold text-lg text-gray-900">
+                    <span className="font-bold text-lg text-foreground">
                       {analytics?.averageRating?.toFixed(1) ?? "—"}
                     </span>
                   </div>
@@ -96,12 +96,12 @@ export function AnalyticsTab() {
                   ].map(({ label, value }) => (
                     <div
                       key={label}
-                      className="text-center p-2 bg-gray-50 rounded-lg"
+                      className="text-center p-2 bg-muted/30 rounded-lg"
                     >
-                      <p className="text-lg font-bold text-gray-900">
+                      <p className="text-lg font-bold text-foreground">
                         {value?.toLocaleString("vi-VN") ?? "—"}
                       </p>
-                      <p className="text-xs text-gray-500">{label}</p>
+                      <p className="text-xs text-muted-foreground">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -112,19 +112,19 @@ export function AnalyticsTab() {
                     const pct = ((count / totalForPct) * 100).toFixed(0);
                     return (
                       <div key={star} className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500 w-6 text-right">
+                        <span className="text-xs text-muted-foreground w-6 text-right">
                           {star}★
                         </span>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2">
+                        <div className="flex-1 bg-muted/50 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${star >= 4 ? "bg-green-400" : star === 3 ? "bg-yellow-400" : "bg-red-400"}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500 w-8">
+                        <span className="text-xs text-muted-foreground w-8">
                           {pct}%
                         </span>
-                        <span className="text-xs text-gray-400 w-12 text-right">
+                        <span className="text-xs text-muted-foreground/70 w-12 text-right">
                           {count.toLocaleString("vi-VN")}
                         </span>
                       </div>
@@ -148,7 +148,7 @@ export function AnalyticsTab() {
         {/* Satisfaction metrics */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <ThumbsUp size={16} className="text-blue-500" /> Chỉ số hài lòng
             </CardTitle>
           </CardHeader>
@@ -223,17 +223,17 @@ export function AnalyticsTab() {
                 {Object.keys(satisfaction?.departmentScores ?? {}).length >
                   0 && (
                   <div>
-                    <p className="text-xs text-gray-500 font-medium mb-2">
+                    <p className="text-xs text-muted-foreground font-medium mb-2">
                       Điểm theo dịch vụ
                     </p>
                     <div className="space-y-1.5">
                       {Object.entries(satisfaction!.departmentScores).map(
                         ([dept, score]) => (
                           <div key={dept} className="flex items-center gap-2">
-                            <span className="text-xs text-gray-600 w-24 truncate">
+                            <span className="text-xs text-muted-foreground w-24 truncate">
                               {dept}
                             </span>
-                            <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                            <div className="flex-1 bg-muted/50 rounded-full h-1.5">
                               <div
                                 className="h-1.5 rounded-full bg-blue-400"
                                 style={{
@@ -241,7 +241,7 @@ export function AnalyticsTab() {
                                 }}
                               />
                             </div>
-                            <span className="text-xs text-gray-500 w-8 text-right">
+                            <span className="text-xs text-muted-foreground w-8 text-right">
                               {score.toFixed(1)}
                             </span>
                           </div>

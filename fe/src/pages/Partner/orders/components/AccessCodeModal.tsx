@@ -34,7 +34,7 @@ export function AccessCodeModal({ isOpen, onClose, code, action }: AccessCodeMod
         {code && (
           <div className="space-y-4">
             {/* Large Code Display */}
-            <div className="bg-gray-100 rounded-lg p-6 text-center">
+            <div className="bg-muted/50 rounded-lg p-6 text-center">
               <p className="text-4xl font-mono font-bold tracking-widest text-blue-600">
                 {code.code}
               </p>
@@ -47,7 +47,7 @@ export function AccessCodeModal({ isOpen, onClose, code, action }: AccessCodeMod
             </Button>
 
             {/* Code Details */}
-            <div className="text-sm text-gray-600 space-y-2">
+            <div className="text-sm text-muted-foreground space-y-2">
               <div className="flex items-center gap-2">
                 <Clock size={14} />
                 <span>

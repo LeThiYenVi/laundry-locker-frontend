@@ -2,7 +2,7 @@ import {
   Home,
   Users,
   Package,
-  // ListOrdered, // feedback - tạm ẩn
+  ListOrdered,
   UserCog,
   Store,
   Sparkles,
@@ -62,13 +62,12 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: "admin.sidebar.partners",
     permission: "manage_partners",
   },
-  // TODO: feedback - tạm ẩn vì chưa có endpoint
-  // {
-  //   icon: ListOrdered,
-  //   path: "/admin/feedback",
-  //   label: "admin.sidebar.feedback",
-  //   permission: "manage_feedback",
-  // },
+  {
+    icon: ListOrdered,
+    path: "/admin/feedback",
+    label: "admin.sidebar.feedback",
+    permission: "manage_feedback",
+  },
   {
     icon: Clock,
     path: "/admin/scheduler",

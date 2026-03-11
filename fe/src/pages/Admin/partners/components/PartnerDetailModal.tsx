@@ -78,9 +78,9 @@ const STATUS_CONFIG: Record<
     label: "Đã từ chối",
   },
   [PartnerStatus.SUSPENDED]: {
-    bg: "bg-gray-50",
-    text: "text-gray-700",
-    border: "border-gray-200",
+    bg: "bg-muted/30",
+    text: "text-foreground/80",
+    border: "border-border/50",
     icon: AlertCircle,
     label: "Đã đình chỉ",
   },
@@ -97,10 +97,10 @@ function LabelValue({
 }) {
   return (
     <div className="flex items-start gap-2.5">
-      {Icon && <Icon size={15} className="text-gray-400 mt-0.5 shrink-0" />}
+      {Icon && <Icon size={15} className="text-muted-foreground/70 mt-0.5 shrink-0" />}
       <div className="min-w-0">
-        <p className="text-xs text-gray-500">{label}</p>
-        <div className="text-sm font-medium text-gray-900 wrap-break-word">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <div className="text-sm font-medium text-foreground wrap-break-word">
           {children}
         </div>
       </div>
@@ -177,8 +177,8 @@ export function PartnerDetailModal({
         {/* Error */}
         {isError && (
           <div className="flex flex-col items-center gap-3 py-10">
-            <AlertTriangle size={36} className="text-gray-300" />
-            <p className="text-sm text-gray-500">Không tìm thấy đối tác.</p>
+            <AlertTriangle size={36} className="text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">Không tìm thấy đối tác.</p>
           </div>
         )}
 
@@ -191,10 +191,10 @@ export function PartnerDetailModal({
                   <Building2 size={22} className="text-purple-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-gray-900 truncate">
+                  <p className="font-bold text-foreground truncate">
                     {partner.businessName}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     {partner.contactEmail}
                   </p>
                 </div>
@@ -232,11 +232,11 @@ export function PartnerDetailModal({
               ].map(({ icon: Icon, label, value, color }) => (
                 <div
                   key={label}
-                  className="rounded-lg border bg-gray-50/60 p-3 text-center"
+                  className="rounded-lg border bg-muted/30/60 p-3 text-center"
                 >
                   <Icon size={18} className={`${color} mx-auto mb-1`} />
-                  <p className="text-lg font-bold text-gray-900">{value}</p>
-                  <p className="text-xs text-gray-500">{label}</p>
+                  <p className="text-lg font-bold text-foreground">{value}</p>
+                  <p className="text-xs text-muted-foreground">{label}</p>
                 </div>
               ))}
             </div>
@@ -245,7 +245,7 @@ export function PartnerDetailModal({
 
             {/* Business info */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Thông tin doanh nghiệp
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -268,7 +268,7 @@ export function PartnerDetailModal({
 
             {/* Contact info */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Thông tin liên hệ
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -288,7 +288,7 @@ export function PartnerDetailModal({
 
             {/* Meta */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Thông tin hệ thống
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -312,7 +312,7 @@ export function PartnerDetailModal({
                 {partner.notes && (
                   <div className="col-span-2">
                     <LabelValue label="Ghi chú" icon={FileText}>
-                      <span className="text-gray-600 font-normal">
+                      <span className="text-muted-foreground font-normal">
                         {partner.notes}
                       </span>
                     </LabelValue>

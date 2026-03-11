@@ -11,7 +11,7 @@ export function SearchFilter({ searchQuery, onSearchChange }: SearchFilterProps)
     <div className="flex gap-4 mb-6">
       <div className="flex-1 relative">
         <Search
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70"
           size={20}
         />
         <Input

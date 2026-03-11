@@ -58,14 +58,14 @@ export function BoxForceOpenModal({
               </div>
               <div>
                 <p className="font-semibold text-lg">Ngăn #{box.number}</p>
-                <p className="text-sm text-gray-500">Kích thước: {box.size}</p>
+                <p className="text-sm text-muted-foreground">Kích thước: {box.size}</p>
               </div>
             </div>
           </div>
 
           {box.orderId && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">
                 <span className="font-medium">Đơn hàng:</span> {box.orderId}
               </p>
             </div>

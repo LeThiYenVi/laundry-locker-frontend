@@ -63,7 +63,7 @@ export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
             {orders.map((order) => (
               <TableRow
                 key={order.id}
-                className="hover:bg-gray-50 cursor-pointer"
+                className="hover:bg-muted/50 cursor-pointer"
                 onClick={() => navigate("/partner/orders")}
               >
                 <TableCell className="font-mono font-semibold">
@@ -72,7 +72,7 @@ export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
                 <TableCell>
                   <div>
                     <p className="font-medium">{order.customerName}</p>
-                    <p className="text-sm text-gray-500">{order.customerPhone}</p>
+                    <p className="text-sm text-muted-foreground">{order.customerPhone}</p>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -82,7 +82,7 @@ export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
                   <Badge
                     className={
                       ORDER_STATUS_COLORS[order.status as OrderStatus] ||
-                      "bg-gray-100 text-gray-700"
+                      "bg-muted/50 text-foreground/80"
                     }
                   >
                     {order.status}

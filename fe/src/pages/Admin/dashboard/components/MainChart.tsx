@@ -40,10 +40,10 @@ export function MainChart({
     <Card className="shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle className="text-base font-semibold text-gray-900">
+          <CardTitle className="text-base font-semibold text-foreground">
             Xu hướng đơn hàng & doanh thu
           </CardTitle>
-          <p className="text-xs text-gray-500 mt-0.5">Dữ liệu theo tháng</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Dữ liệu theo tháng</p>
         </div>
         <Select value={selectedYear} onValueChange={onYearChange}>
           <SelectTrigger className="w-25 h-8 text-sm">

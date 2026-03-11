@@ -17,6 +17,7 @@ import type {
   StaffContact,
   CreateStaffContactRequest,
   UpdatePartnerProfileRequest,
+  OrderComplaintResponse,
 } from "../../types/partner.type";
 import type { OrderStatus } from "../../types/partner.enum";
 
@@ -659,6 +660,20 @@ export const partnerApi = baseApi.injectEndpoints({
       transformResponse: (response: ApiResponse<PartnerRevenueResponse>) =>
         response.data,
     }),
+
+    // ============================================
+    // Order Complaint Endpoints
+    // BE: GET /api/orders/{orderId}/complaints
+    // ============================================
+
+    getOrderComplaints: builder.query<OrderComplaintResponse[], number>({
+      query: (orderId) => PARTNER_ENDPOINTS.ORDER_COMPLAINTS(orderId),
+      transformResponse: (response: ApiResponse<OrderComplaintResponse[]>) =>
+        response.data ?? [],
+      providesTags: (_result, _error, orderId) => [
+        { type: "Orders", id: orderId },
+      ],
+    }),
   }),
 });
 
@@ -702,4 +717,7 @@ export const {
 
   // Revenue
   useGetPartnerRevenueQuery,
+
+  // Complaints
+  useGetOrderComplaintsQuery,
 } = partnerApi;

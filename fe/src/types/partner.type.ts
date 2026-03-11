@@ -490,3 +490,22 @@ export interface StaffContact {
 export interface CreateStaffContactRequest {
   staffId: number;
 }
+
+// ============================================
+// Order Complaint Types
+// ============================================
+
+export interface OrderComplaintResponse {
+  id: number;
+  orderId: number;
+  orderCode: string;
+  userId: number;
+  userName: string;
+  type: string;
+  description: string;
+  imageUrls: string[];
+  status: string;
+  resolution: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}

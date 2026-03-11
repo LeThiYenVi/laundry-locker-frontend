@@ -119,7 +119,7 @@ export function OrderStatusUpdateModal({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Trạng thái hiện tại</Label>
-            <div className="p-3 bg-gray-100 rounded-md text-sm text-gray-600 flex items-center gap-2">
+            <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground flex items-center gap-2">
               {(() => {
                 const current = statusOptions.find(
                   (s) => s.value === currentStatus
@@ -160,7 +160,7 @@ export function OrderStatusUpdateModal({
                         <Icon className="h-4 w-4" />
                         <span>{status.label}</span>
                         {isCurrent && (
-                          <span className="text-xs text-gray-400 ml-2">
+                          <span className="text-xs text-muted-foreground/70 ml-2">
                             (hiện tại)
                           </span>
                         )}

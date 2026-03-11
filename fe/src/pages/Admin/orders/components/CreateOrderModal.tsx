@@ -125,7 +125,7 @@ export function CreateOrderModal({
         <div className="space-y-6 py-4">
           {/* Customer Info */}
           <div className="space-y-4">
-            <h4 className="font-medium text-sm text-gray-500 uppercase">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
               Thông tin khách hàng
             </h4>
             <div className="grid grid-cols-2 gap-4">
@@ -171,7 +171,7 @@ export function CreateOrderModal({
           {/* Items */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-sm text-gray-500 uppercase">
+              <h4 className="font-medium text-sm text-muted-foreground uppercase">
                 Sản phẩm
               </h4>
               <Button type="button" variant="outline" size="sm" onClick={addItem}>
@@ -229,7 +229,7 @@ export function CreateOrderModal({
             </div>
 
             {/* Total */}
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
               <span className="font-medium">Tổng cộng:</span>
               <span className="text-xl font-bold text-blue-600">
                 {new Intl.NumberFormat("vi-VN", {

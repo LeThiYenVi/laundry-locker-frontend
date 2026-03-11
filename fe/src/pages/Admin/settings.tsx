@@ -98,7 +98,7 @@ export default function SettingsModal({
                       className={`p-1.5 rounded-md transition-colors ${
                         theme === t_
                           ? "bg-blue-100 text-blue-700"
-                          : "text-muted-foreground hover:bg-gray-100"
+                          : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       {t_ === "light" && <Sun size={16} />}

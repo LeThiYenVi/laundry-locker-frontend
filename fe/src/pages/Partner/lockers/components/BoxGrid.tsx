@@ -42,7 +42,7 @@ export function BoxGrid({ boxes, totalBoxes, filterStatus, onBoxClick, onEmergen
                       ? "border-yellow-300 bg-yellow-50 hover:bg-yellow-100"
                       : box.status === "MAINTENANCE"
                       ? "border-orange-300 bg-orange-50 hover:bg-orange-100"
-                      : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                      : "border-border/70 bg-muted/30 hover:bg-muted"
                   }
                 `}
                 onClick={() => onBoxClick(box)}

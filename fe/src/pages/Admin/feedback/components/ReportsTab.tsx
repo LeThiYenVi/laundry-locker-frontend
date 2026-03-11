@@ -1,13 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-  ClipboardList,
-  Eye,
-} from "lucide-react";
-import { Card, CardContent } from "~/components/ui/card";
+import { CheckCircle2, Lock } from "lucide-react";
+import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -28,95 +21,29 @@ import {
 } from "~/components/ui/table";
 import {
   useGetAllReportsQuery,
-  useGetReportStatsQuery,
+  useResolveReportMutation,
 } from "~/stores/apis/admin";
-import {
-  fmtDate,
-  REPORT_STATUS_META,
-  CATEGORY_META,
-  ErrorBanner,
-} from "./shared";
+import { fmtDate, REPORT_STATUS_META, ErrorBanner } from "./shared";
 
 export function ReportsTab() {
-  const navigate = useNavigate();
   const [status, setStatus] = useState<string>("all");
-  const [category, setCategory] = useState<string>("all");
   const [page, setPage] = useState(0);
 
   const { data, isLoading, isError, refetch } = useGetAllReportsQuery({
     page,
     size: 20,
     ...(status !== "all" && { status }),
-    ...(category !== "all" && { category }),
   });
 
-  const { data: statsRes, isLoading: statsLoading } = useGetReportStatsQuery();
-  const stats = statsRes?.data;
+  const [resolveReport, { isLoading: isResolving }] =
+    useResolveReportMutation();
 
   const list = data?.data?.content ?? [];
   const total = data?.data?.totalElements ?? 0;
 
-  const STAT_CARDS = [
-    {
-      key: "totalReports" as const,
-      label: "Tổng báo cáo",
-      icon: ClipboardList,
-      bg: "bg-blue-50",
-      color: "text-blue-600",
-    },
-    {
-      key: "openReports" as const,
-      label: "Mới / Chờ xử lý",
-      icon: AlertCircle,
-      bg: "bg-red-50",
-      color: "text-red-600",
-    },
-    {
-      key: "inProgressReports" as const,
-      label: "Đang xử lý",
-      icon: Clock,
-      bg: "bg-yellow-50",
-      color: "text-yellow-600",
-    },
-    {
-      key: "resolvedReports" as const,
-      label: "Đã giải quyết",
-      icon: CheckCircle2,
-      bg: "bg-green-50",
-      color: "text-green-600",
-    },
-  ] as const;
-
   return (
     <div className="space-y-4">
       {isError && <ErrorBanner onRetry={refetch} />}
-
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {STAT_CARDS.map(({ key, label, icon: Icon, bg, color }) => (
-          <Card key={key} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0`}
-                >
-                  <Icon size={18} className={color} />
-                </div>
-                <div>
-                  {statsLoading ? (
-                    <Skeleton className="h-6 w-14" />
-                  ) : (
-                    <p className="text-xl font-bold text-gray-900">
-                      {(stats?.[key] ?? 0).toLocaleString("vi-VN")}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500">{label}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
@@ -127,39 +54,18 @@ export function ReportsTab() {
             setPage(0);
           }}
         >
-          <SelectTrigger className="w-40 h-9">
+          <SelectTrigger className="w-44 h-9">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            <SelectItem value="OPEN">Mới</SelectItem>
-            <SelectItem value="IN_PROGRESS">Đang xử lý</SelectItem>
+            <SelectItem value="PENDING">Chờ xử lý</SelectItem>
             <SelectItem value="RESOLVED">Đã giải quyết</SelectItem>
-            <SelectItem value="CLOSED">Đóng</SelectItem>
+            <SelectItem value="REJECTED">Từ chối</SelectItem>
           </SelectContent>
         </Select>
 
-        <Select
-          value={category}
-          onValueChange={(v) => {
-            setCategory(v);
-            setPage(0);
-          }}
-        >
-          <SelectTrigger className="w-40 h-9">
-            <SelectValue placeholder="Danh mục" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả danh mục</SelectItem>
-            <SelectItem value="DAMAGED">Hư hỏng</SelectItem>
-            <SelectItem value="LOST">Thất lạc</SelectItem>
-            <SelectItem value="QUALITY">Chất lượng</SelectItem>
-            <SelectItem value="BILLING">Thanh toán</SelectItem>
-            <SelectItem value="OTHER">Khác</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <span className="text-sm text-gray-500 ml-auto">
+        <span className="text-sm text-muted-foreground ml-auto">
           {isLoading ? "..." : `${total.toLocaleString("vi-VN")} báo cáo`}
         </span>
       </div>
@@ -177,11 +83,11 @@ export function ReportsTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Khách hàng</TableHead>
-                <TableHead>Tiêu đề</TableHead>
-                <TableHead>Danh mục</TableHead>
+                <TableHead>Locker</TableHead>
+                <TableHead>Mô tả</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead>Phụ trách</TableHead>
                 <TableHead>Ngày tạo</TableHead>
+                <TableHead>Giải quyết lúc</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -190,7 +96,7 @@ export function ReportsTab() {
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    className="text-center py-10 text-gray-400"
+                    className="text-center py-10 text-muted-foreground/70"
                   >
                     Không có báo cáo nào
                   </TableCell>
@@ -198,60 +104,52 @@ export function ReportsTab() {
               )}
               {list.map((r) => {
                 const statusMeta =
-                  REPORT_STATUS_META[r.status] ?? REPORT_STATUS_META.OPEN;
-                const catMeta =
-                  CATEGORY_META[r.category] ?? CATEGORY_META.OTHER;
+                  REPORT_STATUS_META[r.status] ?? REPORT_STATUS_META.PENDING;
                 return (
-                  <TableRow
-                    key={r.id}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => navigate(`/admin/reports/${r.id}`)}
-                  >
+                  <TableRow key={r.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-gray-900">
-                          {r.userName}
+                        <p className="font-medium text-foreground">
+                          {r.userFullName}
                         </p>
-                        <p className="text-xs text-gray-400">{r.email}</p>
+                        <p className="text-xs text-muted-foreground/70">{r.userEmail}</p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm font-medium text-gray-900 line-clamp-1">
-                        {r.title}
-                      </p>
-                      {r.relatedOrderId && (
-                        <p className="text-xs text-gray-400">
-                          #{r.relatedOrderId}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-1.5 text-sm text-foreground/80">
+                        <Lock size={13} className="text-muted-foreground/70 shrink-0" />
+                        {r.lockerName}
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge className={`text-xs ${catMeta.cls}`}>
-                        {catMeta.label}
-                      </Badge>
+                    <TableCell className="max-w-56">
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {r.description}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <Badge className={`text-xs ${statusMeta.cls}`}>
                         {statusMeta.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {r.assignedStaffName ?? (
-                        <span className="text-gray-300">Chưa phân công</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {fmtDate(r.createdAt)}
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => navigate(`/admin/reports/${r.id}`)}
-                      >
-                        <Eye size={15} />
-                      </Button>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {r.resolvedAt ? fmtDate(r.resolvedAt) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {r.status === "PENDING" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          disabled={isResolving}
+                          onClick={() => resolveReport({ id: r.id, data: {} })}
+                        >
+                          <CheckCircle2 size={13} />
+                          Giải quyết
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -272,7 +170,7 @@ export function ReportsTab() {
           >
             Trước
           </Button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             Trang {page + 1} / {Math.ceil(total / 20)}
           </span>
           <Button

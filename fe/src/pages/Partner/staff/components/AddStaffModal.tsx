@@ -85,7 +85,7 @@ export function AddStaffModal({
               required
               autoFocus
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Nhân viên phải có tài khoản trong hệ thống trước khi được thêm.
             </p>
           </div>
