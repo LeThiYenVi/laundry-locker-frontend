@@ -661,6 +661,18 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
+          {/* Forgot Password - only for email */}
+          {loginMethod === 'email' && !isOtpSent && (
+            <TouchableOpacity
+              onPress={() => router.push('/(auth)/forgot-password')}
+              style={{ alignItems: 'center', marginTop: 12, marginBottom: 4 }}
+            >
+              <ThemedText style={{ fontSize: 14, color: '#0077B6', fontWeight: '600' }}>
+                Quên mật khẩu?
+              </ThemedText>
+            </TouchableOpacity>
+          )}
+
           {/* OAuth Buttons */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />

@@ -1,10 +1,10 @@
 import { ThemedText } from "@/components/themed-text";
+import { Image } from "expo-image";
 import { useAuth } from "@/context/AuthContext";
-import { orderService, userService, loyaltyService } from "@/services/user";
+import { orderService, userService, loyaltyService, lockerService } from "@/services/user";
 import type { LoyaltySummary } from "@/services/user/loyaltyService";
 import { Order, OrderComplaintResponse, User, UserStatisticsResponse } from "@/types";
 import { Icon } from "@rneui/themed";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -86,6 +86,11 @@ export default function ProfileScreen() {
   const [complaintsModalVisible, setComplaintsModalVisible] = useState(false);
   const [myComplaints, setMyComplaints] = useState<OrderComplaintResponse[]>([]);
   const [loadingComplaints, setLoadingComplaints] = useState(false);
+
+  // Locker Reports state
+  const [reportsModalVisible, setReportsModalVisible] = useState(false);
+  const [myReports, setMyReports] = useState<any[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -322,6 +327,32 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleOpenReports = async () => {
+    setReportsModalVisible(true);
+    setLoadingReports(true);
+    try {
+      const response = await lockerService.getMyReports();
+      if (response.success && response.data) {
+        setMyReports(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch reports:", error);
+      setMyReports([]);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  const getReportStatusInfo = (status: string): { label: string; bg: string; color: string } => {
+    switch (status) {
+      case 'PENDING': return { label: 'Chờ xử lý', bg: '#FFF3E0', color: '#FF9800' };
+      case 'INVESTIGATING': return { label: 'Đang điều tra', bg: '#E3F2FD', color: '#1976D2' };
+      case 'RESOLVED': return { label: 'Đã xử lý', bg: '#E8F5E9', color: '#4CAF50' };
+      case 'DISMISSED': return { label: 'Đã bác bỏ', bg: '#FFEBEE', color: '#F44336' };
+      default: return { label: status, bg: '#F5F5F5', color: '#666' };
+    }
+  };
+
   const getComplaintTypeLabel = (type: string): string => {
     switch (type) {
       case 'DAMAGED': return '💔 Hư hỏng';
@@ -372,8 +403,8 @@ export default function ProfileScreen() {
     ? `${displayUser.lastName} ${displayUser.firstName}`
     : displayUser?.fullName || "Người dùng";
     
-  // Determine avatar source
-  const avatarSource = displayUser?.imageUrl || displayUser?.avatarUrl;
+  // Determine avatar source (API might return image, imageUrl, or avatarUrl)
+  const avatarSource = displayUser?.imageUrl || displayUser?.image || displayUser?.avatarUrl;
 
   if (isLoading && !displayUser) {
     return (
@@ -397,15 +428,12 @@ export default function ProfileScreen() {
         <View style={styles.headerContent}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              {avatarSource ? (
-                <Image 
-                    source={{ uri: avatarSource }} 
-                    style={{ width: 100, height: 100, borderRadius: 50 }} 
-                    contentFit="cover"
-                />
-              ) : (
-                <Icon name="person" type="material" size={60} color="#003D5B" />
-              )}
+              <Image 
+                  source={{ uri: avatarSource || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser?.firstName || 'User')}&background=003D5B&color=fff&size=128` }}
+                  style={{ width: 100, height: 100, borderRadius: 50 }} 
+                  contentFit="cover"
+                  transition={200}
+              />
             </View>
             <TouchableOpacity 
                 style={styles.editAvatarButton}
@@ -432,41 +460,62 @@ export default function ProfileScreen() {
       <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#003D5B"]} />
         }
       >
         {/* Statistics Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="local-laundry-service" type="material" size={24} color="#1976D2" />
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Hoạt động của tôi</ThemedText>
+          <View style={styles.statsGrid}>
+            <View style={[styles.statCardGrid, { backgroundColor: '#E3F2FD' }]}>
+              <View style={[styles.statIconContainerGrid, { backgroundColor: '#BBDEFB' }]}>
+                <Icon name="local-laundry-service" type="material" size={24} color="#1976D2" />
+              </View>
+              <View>
+                <ThemedText style={[styles.statValueGrid, { color: '#0D47A1' }]}>
+                  {userStats?.totalLaundryOrders ?? stats.completedOrders}
+                </ThemedText>
+                <ThemedText style={styles.statLabelGrid}>Giặt đồ</ThemedText>
+              </View>
             </View>
-            <ThemedText style={styles.statValue}>{userStats?.totalLaundryOrders ?? stats.completedOrders}</ThemedText>
-            <ThemedText style={styles.statLabel}>Giặt đồ</ThemedText>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="inventory-2" type="material" size={24} color="#E65100" />
+
+            <View style={[styles.statCardGrid, { backgroundColor: '#FFF3E0' }]}>
+              <View style={[styles.statIconContainerGrid, { backgroundColor: '#FFE0B2' }]}>
+                <Icon name="inventory-2" type="material" size={24} color="#E65100" />
+              </View>
+              <View>
+                <ThemedText style={[styles.statValueGrid, { color: '#BF360C' }]}>
+                  {userStats?.totalStorageOrders ?? stats.activeOrders}
+                </ThemedText>
+                <ThemedText style={styles.statLabelGrid}>Lưu trữ</ThemedText>
+              </View>
             </View>
-            <ThemedText style={styles.statValue}>{userStats?.totalStorageOrders ?? stats.activeOrders}</ThemedText>
-            <ThemedText style={styles.statLabel}>Lưu trữ</ThemedText>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="payments" type="material" size={24} color="#4CAF50" />
+
+            <View style={[styles.statCardGrid, { backgroundColor: '#E8F5E9' }]}>
+              <View style={[styles.statIconContainerGrid, { backgroundColor: '#C8E6C9' }]}>
+                <Icon name="payments" type="material" size={24} color="#388E3C" />
+              </View>
+              <View>
+                <ThemedText style={[styles.statValueGrid, { color: '#1B5E20' }]}>
+                  {userStats ? `${(userStats.totalAmountSpent / 1000).toFixed(0)}k` : `${stats.totalOrders}`}
+                </ThemedText>
+                <ThemedText style={styles.statLabelGrid}>Đã chi</ThemedText>
+              </View>
             </View>
-            <ThemedText style={styles.statValue}>
-              {userStats ? `${(userStats.totalAmountSpent / 1000).toFixed(0)}k` : `${stats.totalOrders}`}
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Đã chi (₫)</ThemedText>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="confirmation-number" type="material" size={24} color="#9C27B0" />
+
+            <View style={[styles.statCardGrid, { backgroundColor: '#F3E5F5' }]}>
+              <View style={[styles.statIconContainerGrid, { backgroundColor: '#E1BEE7' }]}>
+                <Icon name="confirmation-number" type="material" size={24} color="#8E24AA" />
+              </View>
+              <View>
+                <ThemedText style={[styles.statValueGrid, { color: '#4A148C' }]}>
+                  {userStats?.totalVouchersUsed ?? 0}
+                </ThemedText>
+                <ThemedText style={styles.statLabelGrid}>Voucher</ThemedText>
+              </View>
             </View>
-            <ThemedText style={styles.statValue}>{userStats?.totalVouchersUsed ?? 0}</ThemedText>
-            <ThemedText style={styles.statLabel}>Voucher</ThemedText>
           </View>
         </View>
 
@@ -525,8 +574,8 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.infoContent}>
               <ThemedText style={styles.infoLabel}>Trạng thái</ThemedText>
-              <ThemedText style={[styles.infoValue, { color: displayUser?.isActive ? "#4CAF50" : "#F44336" }]}>
-                {displayUser?.isActive ? "Đã xác thực" : "Chưa xác thực"}
+              <ThemedText style={[styles.infoValue, { color: (displayUser?.emailVerified || displayUser?.phoneVerified) ? "#4CAF50" : "#F44336" }]}>
+                {(displayUser?.emailVerified || displayUser?.phoneVerified) ? "Đã xác thực" : "Chưa xác thực"}
               </ThemedText>
             </View>
           </View>
@@ -656,6 +705,15 @@ export default function ProfileScreen() {
                 <Icon name="report-problem" type="material" size={28} color="#FF5722" />
               </View>
               <ThemedText style={styles.quickActionText}>Khiếu nại</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.quickActionCard}
+              onPress={handleOpenReports}
+            >
+              <View style={[styles.quickActionIcon, { backgroundColor: '#FCE4EC' }]}>
+                <Icon name="build" type="material" size={28} color="#C62828" />
+              </View>
+              <ThemedText style={styles.quickActionText}>Báo cáo tủ</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -1114,6 +1172,81 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* Locker Reports Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={reportsModalVisible}
+        onRequestClose={() => setReportsModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, { maxHeight: '80%', paddingBottom: 0 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <ThemedText style={styles.modalText}>Báo cáo tủ của tôi</ThemedText>
+              <TouchableOpacity onPress={() => setReportsModalVisible(false)}>
+                <Icon name="close" type="material" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {loadingReports ? (
+              <ActivityIndicator size="large" color="#003D5B" style={{ marginVertical: 40 }} />
+            ) : myReports.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Icon name="check-circle" type="material" size={56} color="#4CAF50" />
+                <ThemedText style={{ fontSize: 15, color: '#666', marginTop: 12, textAlign: 'center' }}>
+                  Bạn chưa có báo cáo tủ nào
+                </ThemedText>
+              </View>
+            ) : (
+              <FlatList
+                data={myReports}
+                keyExtractor={(item, index) => (item.id || index).toString()}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                renderItem={({ item }) => {
+                  const statusInfo = getReportStatusInfo(item.status);
+                  return (
+                    <View style={{
+                      backgroundColor: '#FAFAFA', borderRadius: 14, padding: 14,
+                      marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0',
+                    }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Icon name="build" type="material" size={16} color="#C62828" />
+                          <ThemedText style={{ fontSize: 13, fontWeight: '700', color: '#C62828' }}>
+                            {item.lockerName || `Tủ #${item.lockerId}`}
+                          </ThemedText>
+                        </View>
+                        <View style={{ backgroundColor: statusInfo.bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 }}>
+                          <ThemedText style={{ fontSize: 11, fontWeight: '700', color: statusInfo.color }}>
+                            {statusInfo.label}
+                          </ThemedText>
+                        </View>
+                      </View>
+
+                      <ThemedText style={{ fontSize: 13, color: '#555', lineHeight: 20 }}>
+                        {item.description || item.issue || 'Không có mô tả'}
+                      </ThemedText>
+
+                      {item.resolution && (
+                        <View style={{ marginTop: 8, backgroundColor: '#F0F8FF', padding: 10, borderRadius: 8 }}>
+                          <ThemedText style={{ fontSize: 12, fontWeight: '600', color: '#003D5B', marginBottom: 2 }}>Phản hồi:</ThemedText>
+                          <ThemedText style={{ fontSize: 13, color: '#555' }}>{item.resolution}</ThemedText>
+                        </View>
+                      )}
+
+                      <ThemedText style={{ fontSize: 11, color: '#BBB', marginTop: 8 }}>
+                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                      </ThemedText>
+                    </View>
+                  );
+                }}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -1132,14 +1265,14 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 3,
     zIndex: 10,
   },
   headerContent: {
@@ -1214,46 +1347,38 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flex: 1,
-    marginTop: -20,
+    marginTop: 0,
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: "row",
-    paddingHorizontal: 24,
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 12,
-    marginBottom: 24,
-    marginTop: 30,
+    marginTop: 8,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: "#fff",
+  statCardGrid: {
+    width: "48%",
     borderRadius: 16,
     padding: 16,
+    flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    gap: 12,
   },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#E8F4F8",
+  statIconContainerGrid: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
   },
-  statValue: {
-    fontSize: 24,
+  statValueGrid: {
+    fontSize: 20,
     fontWeight: "900",
-    color: "#000",
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  statLabel: {
-    fontSize: 11,
+  statLabelGrid: {
+    fontSize: 12,
     color: "#666",
-    textAlign: "center",
     fontWeight: "600",
   },
   section: {

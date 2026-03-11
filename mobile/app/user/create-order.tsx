@@ -163,7 +163,7 @@ export default function CreateOrderScreen() {
         style={styles.headerBackground}
       >
         <LinearGradient
-          colors={["rgba(0,0,0,0.1)", "rgba(61, 158, 206, 0.95)"]}
+          colors={["rgba(0,0,0,0.4)", "rgba(61, 158, 206, 0.8)"]}
           style={styles.headerGradient}
         >
           <View style={styles.headerSafeArea}>

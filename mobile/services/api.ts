@@ -75,7 +75,15 @@ api.interceptors.request.use(
 
 // Response interceptor - handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful responses
+    console.log("=== API RESPONSE ===");
+    console.log(`URL: ${response.config.url}`);
+    console.log(`Status: ${response.status}`);
+    console.log(`Data:`, JSON.stringify(response.data, null, 2));
+    console.log("====================");
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;

@@ -52,6 +52,14 @@ export const reportLocker = async (
     return response.data;
 };
 
+/**
+ * Get current user's locker reports
+ */
+export const getMyReports = async (): Promise<ApiResponse<LockerReportResponse[]>> => {
+    const response = await api.get<ApiResponse<LockerReportResponse[]>>('/lockers/my-reports');
+    return response.data;
+};
+
 export const lockerService = {
     getAllLockers,
     getLockersByStore,
@@ -59,6 +67,7 @@ export const lockerService = {
     getBoxesByLocker,
     getAvailableBoxes,
     reportLocker,
+    getMyReports,
 };
 
 export default lockerService;

@@ -66,7 +66,7 @@ export const removeFcmToken = async (fcmToken: string): Promise<ApiResponse<any>
  * Get user statistics
  */
 export const getUserStatistics = async (): Promise<ApiResponse<UserStatisticsResponse>> => {
-    const response = await api.get<ApiResponse<UserStatisticsResponse>>('/users/me/statistics');
+    const response = await api.get<ApiResponse<UserStatisticsResponse>>('/user/me/statistics');
     return response.data;
 };
 
