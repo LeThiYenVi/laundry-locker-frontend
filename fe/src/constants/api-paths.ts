@@ -202,6 +202,7 @@ export const PARTNER_ENDPOINTS = {
   LOCKER_BOXES: (lockerId: number) => `/api/lockers/${lockerId}/boxes`,
   REVENUE: `${ROOT_URI.PARTNER}/revenue`,
   ORDER_COMPLAINTS: (orderId: number) => `/api/orders/${orderId}/complaints`,
+  ORDER_RATING: (orderId: number) => `/api/orders/${orderId}/rating`,
 } as const;
 
 // Combined API Paths

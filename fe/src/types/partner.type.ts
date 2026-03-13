@@ -495,6 +495,16 @@ export interface CreateStaffContactRequest {
 // Order Complaint Types
 // ============================================
 
+export interface OrderRatingResponse {
+  id: number;
+  orderId: number;
+  userId: number;
+  userName: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
 export interface OrderComplaintResponse {
   id: number;
   orderId: number;
