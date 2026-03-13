@@ -21,6 +21,12 @@ export default function PaymentsPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = usePayments();
 
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(
@@ -59,6 +65,12 @@ export default function PaymentsPage() {
             payments={payments}
             isLoading={isLoading}
             onViewDetail={setSelectedPaymentId}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

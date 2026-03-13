@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PromotionStatus } from "~/types/admin/enums";
 import {
   useGetAllPromotionsQuery,
@@ -17,15 +18,20 @@ export function usePromotions() {
   const [statusFilter, setStatusFilter] =
     useState<PromotionStatusFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [urlParams, setUrlParams] = useSearchParams();
+  const page = Number(urlParams.get("page") ?? "0");
+  const pageSize = Number(urlParams.get("size") ?? "10");
+  const setPage = (newPage: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("page", String(newPage)); return next; });
+  const setPageSize = (newSize: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("size", String(newSize)); next.set("page", "0"); return next; });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] =
     useState<PromotionResponse | null>(null);
 
   const { data, isLoading, refetch } = useGetAllPromotionsQuery({
-    pageNumber: page,
-    pageSize,
+    page,
+    size: pageSize,
   });
 
   const [createPromotion, { isLoading: isCreating }] =

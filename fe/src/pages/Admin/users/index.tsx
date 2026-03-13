@@ -23,6 +23,12 @@ export default function UsersPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = useUsers();
 
   return (
@@ -56,7 +62,16 @@ export default function UsersPage() {
             />
           </div>
 
-          <UserTable users={users} isLoading={isLoading} />
+          <UserTable
+            users={users}
+            isLoading={isLoading}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </CardContent>
       </Card>
 

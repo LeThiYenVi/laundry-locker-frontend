@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   useGetAllServicesQuery,
@@ -12,16 +13,21 @@ export type ServiceStatus = "ALL" | "ACTIVE" | "INACTIVE";
 export function useServices() {
   const [status, setStatus] = useState<ServiceStatus>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [urlParams, setUrlParams] = useSearchParams();
+  const page = Number(urlParams.get("page") ?? "0");
+  const pageSize = Number(urlParams.get("size") ?? "10");
+  const setPage = (newPage: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("page", String(newPage)); return next; });
+  const setPageSize = (newSize: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("size", String(newSize)); next.set("page", "0"); return next; });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedService, setSelectedService] =
     useState<AdminServiceResponse | null>(null);
 
   const { data, isLoading, refetch } = useGetAllServicesQuery({
-    pageNumber: page,
-    pageSize,
+    page,
+    size: pageSize,
   });
   const [deleteService] = useDeleteServiceMutation();
   const [updateServiceStatus] = useUpdateServiceStatusMutation();

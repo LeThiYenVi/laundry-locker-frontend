@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useGetAllUsersQuery } from "~/stores/apis/adminApi";
 import type { AdminUserResponse } from "~/types";
 
@@ -7,15 +8,20 @@ export type UserStatus = "ALL" | "ACTIVE" | "INACTIVE" | "PENDING";
 export function useUsers() {
   const [status, setStatus] = useState<UserStatus>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [urlParams, setUrlParams] = useSearchParams();
+  const page = Number(urlParams.get("page") ?? "0");
+  const pageSize = Number(urlParams.get("size") ?? "10");
+  const setPage = (newPage: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("page", String(newPage)); return next; });
+  const setPageSize = (newSize: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("size", String(newSize)); next.set("page", "0"); return next; });
 
   const {
     data: apiData,
     isLoading,
     error,
     refetch,
-  } = useGetAllUsersQuery({ pageNumber: page, pageSize });
+  } = useGetAllUsersQuery({ page, size: pageSize });
 
   const users: AdminUserResponse[] = apiData?.data?.content ?? [];
   const totalElements = apiData?.data?.totalElements ?? 0;

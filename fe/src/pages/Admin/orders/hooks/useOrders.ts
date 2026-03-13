@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { OrderStatus } from "~/types/admin/enums";
 import { useGetAllOrdersQuery } from "@/stores/apis/admin/orders";
 import type { OrderResponse } from "~/types/admin/order";
@@ -8,12 +9,17 @@ type OrderStatusFilter = "ALL" | OrderStatus;
 export function useOrders() {
   const [status, setStatus] = useState<OrderStatusFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [urlParams, setUrlParams] = useSearchParams();
+  const page = Number(urlParams.get("page") ?? "0");
+  const pageSize = Number(urlParams.get("size") ?? "10");
+  const setPage = (newPage: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("page", String(newPage)); return next; });
+  const setPageSize = (newSize: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("size", String(newSize)); next.set("page", "0"); return next; });
 
   const { data, isLoading, refetch } = useGetAllOrdersQuery({
-    pageNumber: page,
-    pageSize,
+    page,
+    size: pageSize,
     ...(status !== "ALL" ? { status } : {}),
   });
 

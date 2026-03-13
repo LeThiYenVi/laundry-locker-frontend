@@ -31,6 +31,12 @@ interface PromotionTableProps {
   isLoading: boolean;
   onEdit?: (promotion: PromotionResponse) => void;
   onDelete?: (id: number) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<PromotionResponse>();
@@ -124,6 +130,12 @@ export function PromotionTable({
   isLoading,
   onEdit,
   onDelete,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: PromotionTableProps) {
   const { t } = useTranslation();
   const columns = [
@@ -280,6 +292,14 @@ export function PromotionTable({
       data={promotions}
       isLoading={isLoading}
       emptyMessage={t("admin.promotions.emptyMessage")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

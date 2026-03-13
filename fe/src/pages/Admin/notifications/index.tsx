@@ -48,6 +48,11 @@ export default function NotificationsPage() {
     handleDelete,
     handleUpdateStatus,
     handleResend,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
   } = useNotifications();
 
   return (
@@ -215,6 +220,12 @@ export default function NotificationsPage() {
             onDelete={handleDelete}
             onUpdateStatus={handleUpdateStatus}
             onResend={handleResend}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

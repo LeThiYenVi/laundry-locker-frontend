@@ -37,6 +37,12 @@ import type { AdminUserResponse } from "~/types";
 interface UserTableProps {
   users: AdminUserResponse[];
   isLoading: boolean;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<AdminUserResponse>();
@@ -119,7 +125,16 @@ const getRoleBadge = (role: string) => {
   );
 };
 
-export function UserTable({ users, isLoading }: UserTableProps) {
+export function UserTable({
+  users,
+  isLoading,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
+}: UserTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [updateStatus] = useUpdateUserStatusMutation();
@@ -308,6 +323,14 @@ export function UserTable({ users, isLoading }: UserTableProps) {
       data={users}
       isLoading={isLoading}
       emptyMessage={t("common.noData")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

@@ -36,6 +36,12 @@ interface LockerTableProps {
   isLoading: boolean;
   onMaintenance: (lockerId: number) => void;
   onActivate: (lockerId: number) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<AdminLockerResponse>();
@@ -153,6 +159,12 @@ export function LockerTable({
   isLoading,
   onMaintenance,
   onActivate,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: LockerTableProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -325,6 +337,14 @@ export function LockerTable({
       data={lockers}
       isLoading={isLoading}
       emptyMessage={t("common.noData")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

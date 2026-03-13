@@ -53,6 +53,12 @@ interface PartnerTableProps {
   onApprove: (partnerId: number) => void;
   onReject: (partnerId: number) => void;
   onSuspend: (partnerId: number) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<PartnerRowData>();
@@ -153,6 +159,12 @@ export function PartnerTable({
   onApprove,
   onReject,
   onSuspend,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: PartnerTableProps) {
   const { t } = useTranslation();
   const columns = [
@@ -301,6 +313,14 @@ export function PartnerTable({
       data={partners}
       isLoading={isLoading}
       emptyMessage={t("common.noData")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }
