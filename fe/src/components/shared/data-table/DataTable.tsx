@@ -20,6 +20,15 @@ import {
   TableRow,
 } from "~/components/ui/table";
 
+interface ServerPaginationProps {
+  pageIndex: number;
+  pageSize: number;
+  pageCount: number;
+  totalRows: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -27,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   className?: string;
   emptyMessage?: string;
   isLoading?: boolean;
+  serverPagination?: ServerPaginationProps;
 }
 
 export function DataTable<TData, TValue>({
@@ -36,6 +46,7 @@ export function DataTable<TData, TValue>({
   className,
   emptyMessage = "Không có dữ liệu",
   isLoading = false,
+  serverPagination,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -43,17 +54,37 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(serverPagination
+      ? {
+          manualPagination: true,
+          pageCount: serverPagination.pageCount,
+          onPaginationChange: (updater) => {
+            const current = {
+              pageIndex: serverPagination.pageIndex,
+              pageSize: serverPagination.pageSize,
+            };
+            const next =
+              typeof updater === "function" ? updater(current) : updater;
+            if (next.pageIndex !== current.pageIndex)
+              serverPagination.onPageChange(next.pageIndex);
+            if (next.pageSize !== current.pageSize)
+              serverPagination.onPageSizeChange(next.pageSize);
+          },
+          state: {
+            sorting,
+            pagination: {
+              pageIndex: serverPagination.pageIndex,
+              pageSize: serverPagination.pageSize,
+            },
+          },
+        }
+      : {
+          getPaginationRowModel: getPaginationRowModel(),
+          state: { sorting },
+          initialState: { pagination: { pageSize } },
+        }),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
-    state: {
-      sorting,
-    },
-    initialState: {
-      pagination: {
-        pageSize,
-      },
-    },
   });
 
   if (isLoading) {
@@ -172,7 +203,10 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <DataTablePagination table={table} />
+      <DataTablePagination
+        table={table}
+        totalRowsOverride={serverPagination?.totalRows}
+      />
     </div>
   );
 }

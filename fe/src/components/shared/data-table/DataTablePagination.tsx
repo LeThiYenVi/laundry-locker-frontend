@@ -13,15 +13,17 @@ import {
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   className?: string;
+  totalRowsOverride?: number;
 }
 
 export function DataTablePagination<TData>({
   table,
   className,
+  totalRowsOverride,
 }: DataTablePaginationProps<TData>) {
   const pageIndex = table.getState().pagination.pageIndex;
   const pageCount = table.getPageCount();
-  const totalRows = table.getFilteredRowModel().rows.length;
+  const totalRows = totalRowsOverride ?? table.getFilteredRowModel().rows.length;
 
   const getVisiblePages = () => {
     const pages: (number | "ellipsis")[] = [];
