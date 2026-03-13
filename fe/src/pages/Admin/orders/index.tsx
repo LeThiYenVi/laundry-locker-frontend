@@ -24,6 +24,12 @@ export default function OrdersPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = useOrders();
 
   const handleCreateOrder = (orderData: {
@@ -69,7 +75,16 @@ export default function OrdersPage() {
             />
           </div>
 
-          <OrderTable orders={orders} isLoading={isLoading} />
+          <OrderTable
+            orders={orders}
+            isLoading={isLoading}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </CardContent>
       </Card>
 

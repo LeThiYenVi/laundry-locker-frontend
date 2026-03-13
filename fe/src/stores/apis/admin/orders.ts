@@ -1,5 +1,5 @@
-import { baseApi } from '../../baseAPi';
-import { ADMIN_ENDPOINTS } from '../../../constants';
+import { baseApi } from "../../baseAPi";
+import { ADMIN_ENDPOINTS } from "../../../constants";
 import type {
   ApiResponse,
   Page,
@@ -8,16 +8,21 @@ import type {
   OrderStatus,
   OrderStatisticsResponse,
   RevenueReportResponse,
-} from '../../../types';
-import { UpdateOrderStatusRequestSchema, createValidator } from '../../../schemas';
+} from "../../../types";
+import {
+  UpdateOrderStatusRequestSchema,
+  createValidator,
+} from "../../../schemas";
 
 const TAGS = {
-  ORDERS: 'Orders',
-  DASHBOARD: 'Dashboard',
+  ORDERS: "Orders",
+  DASHBOARD: "Dashboard",
 } as const;
 
 // Create validator
-const updateOrderStatusValidator = createValidator(UpdateOrderStatusRequestSchema);
+const updateOrderStatusValidator = createValidator(
+  UpdateOrderStatusRequestSchema,
+);
 
 export const orderManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -46,7 +51,7 @@ export const orderManagementApi = baseApi.injectEndpoints({
         updateOrderStatusValidator.validateRequestBody({ status });
         return {
           url: ADMIN_ENDPOINTS.ORDER_STATUS(id),
-          method: 'PUT',
+          method: "PUT",
           params: { status },
         };
       },
@@ -57,7 +62,10 @@ export const orderManagementApi = baseApi.injectEndpoints({
       ],
     }),
 
-    getOrderStatistics: builder.query<ApiResponse<OrderStatisticsResponse>, void>({
+    getOrderStatistics: builder.query<
+      ApiResponse<OrderStatisticsResponse>,
+      void
+    >({
       query: () => ADMIN_ENDPOINTS.ORDER_STATISTICS,
       providesTags: [TAGS.ORDERS, TAGS.DASHBOARD],
     }),

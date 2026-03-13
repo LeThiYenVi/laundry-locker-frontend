@@ -35,6 +35,12 @@ import { useTranslation } from "react-i18next";
 interface OrderTableProps {
   orders: OrderResponse[];
   isLoading: boolean;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<OrderResponse>();
@@ -186,7 +192,16 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export function OrderTable({ orders, isLoading }: OrderTableProps) {
+export function OrderTable({
+  orders,
+  isLoading,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
+}: OrderTableProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const columns = [
@@ -337,6 +352,14 @@ export function OrderTable({ orders, isLoading }: OrderTableProps) {
       data={orders}
       isLoading={isLoading}
       emptyMessage={t("common.noData")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }
