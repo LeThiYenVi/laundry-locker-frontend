@@ -1,3 +1,4 @@
+import { AppModalHeader } from "@/components/app-modal-header";
 import { ThemedText } from "@/components/themed-text";
 import { orderService, paymentService } from "@/services/user";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/types";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useState, memo } from "react";
+import React, { useCallback, useEffect, useMemo, useState, memo } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -166,7 +167,11 @@ const MemoizedOrderCard = memo(
         {/* Header: ID + Status */}
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
-            <ThemedText style={styles.modernOrderNumber} numberOfLines={1}>
+            <ThemedText
+              style={styles.modernOrderNumber}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {order.orderCode || `Đơn #${order.id}`}
             </ThemedText>
             {order.type && (
@@ -194,7 +199,7 @@ const MemoizedOrderCard = memo(
             <ThemedText
               style={styles.modernStatusText}
               numberOfLines={1}
-              adjustsFontSizeToFit={true}
+              ellipsizeMode="tail"
             >
               {getStatusText(order.status, order.type)}
             </ThemedText>
@@ -341,7 +346,6 @@ const MemoizedOrderCard = memo(
 
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<OrderFilter>("ALL");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -496,13 +500,11 @@ export default function OrdersScreen() {
     totalPages,
   ]);
 
-  useEffect(() => {
-    // Filter orders based on selected filter
+  const filteredOrders = useMemo(() => {
     if (selectedFilter === "ALL") {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter((o) => o.status === selectedFilter));
+      return orders;
     }
+    return orders.filter((o) => o.status === selectedFilter);
   }, [orders, selectedFilter]);
 
   const handleOrderPress = useCallback(async (orderId: number) => {
@@ -1199,14 +1201,11 @@ export default function OrdersScreen() {
       >
         <View style={styles.centeredView}>
           <View style={styles.trackingModalView}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>
-                Theo dõi đơn hàng
-              </ThemedText>
-              <TouchableOpacity onPress={() => setTrackingModalVisible(false)}>
-                <Icon name="close" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
+            <AppModalHeader
+              title="Theo dõi đơn hàng"
+              onClose={() => setTrackingModalVisible(false)}
+              showDivider={true}
+            />
 
             {isLoadingTracking ? (
               <ActivityIndicator
@@ -1316,31 +1315,18 @@ export default function OrdersScreen() {
         <View style={styles.bottomSheetView}>
           <View style={styles.detailModalView}>
             {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <View>
-                <ThemedText style={styles.detailOrderCode}>
-                  {selectedOrder?.orderCode || `Đơn #${selectedOrder?.id}`}
-                </ThemedText>
-                <ThemedText
-                  style={{ color: "#666", fontSize: 13, marginTop: 4 }}
-                >
-                  {selectedOrder?.type === "LAUNDRY"
-                    ? "🧺 Dịch vụ Giặt đồ"
-                    : "📦 Dịch vụ Lưu trữ"}
-                </ThemedText>
-              </View>
-              <TouchableOpacity onPress={() => setShowDetailModal(false)}>
-                <View
-                  style={{
-                    backgroundColor: "#F0F0F0",
-                    padding: 8,
-                    borderRadius: 20,
-                  }}
-                >
-                  <Icon name="close" size={20} color="#333" />
-                </View>
-              </TouchableOpacity>
-            </View>
+            <AppModalHeader
+              title={
+                selectedOrder?.orderCode || `Đơn #${selectedOrder?.id || ""}`
+              }
+              subtitle={
+                selectedOrder?.type === "LAUNDRY"
+                  ? "🧺 Dịch vụ Giặt đồ"
+                  : "📦 Dịch vụ Lưu trữ"
+              }
+              onClose={() => setShowDetailModal(false)}
+              showDivider={true}
+            />
 
             {isLoadingDetail ? (
               <ActivityIndicator
@@ -2534,14 +2520,11 @@ export default function OrdersScreen() {
       >
         <View style={styles.centeredView}>
           <View style={styles.trackingModalView}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>
-                Chi tiết lộ trình
-              </ThemedText>
-              <TouchableOpacity onPress={() => setShowTimelineDetail(false)}>
-                <Icon name="close" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
+            <AppModalHeader
+              title="Chi tiết lộ trình"
+              onClose={() => setShowTimelineDetail(false)}
+              showDivider={true}
+            />
 
             {isLoadingTimeline ? (
               <ActivityIndicator
@@ -3118,6 +3101,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 8,
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 10,
@@ -3128,8 +3112,10 @@ const styles = StyleSheet.create({
     gap: 8,
     flex: 1,
     paddingRight: 8,
+    minWidth: 0,
   },
   modernOrderNumber: {
+    flexShrink: 1,
     fontSize: 15,
     fontWeight: "800",
     color: "#1F2937",
@@ -3141,10 +3127,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   modernStatusBadge: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
     flexShrink: 0,
+    minWidth: 90,
+    maxWidth: 110,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -3268,20 +3256,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#003D5B",
-  },
   trackingInfoContainer: {
     marginBottom: 20,
     backgroundColor: "#F7FAFC",
@@ -3401,11 +3375,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
-  },
-  detailOrderCode: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111",
   },
   detailStatusBadge: {
     paddingHorizontal: 12,

@@ -12,6 +12,9 @@ export default function PartnerTabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
+        lazy: true,
+        freezeOnBlur: true,
+        detachInactiveScreens: true,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: "#fff",

@@ -15,6 +15,9 @@ export default function TabLayout() {
         tabBarActiveTintColor: "#FFFFFF", // White for active
         tabBarInactiveTintColor: "#B0C4DE", // Light blue for inactive
         headerShown: false,
+        lazy: true,
+        freezeOnBlur: true,
+        detachInactiveScreens: true,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: "#003D5B", // User specified Dark Blue
@@ -50,7 +53,14 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                width: "100%",
+              }}
+            >
               {focused && (
                 <View
                   style={{
@@ -74,8 +84,15 @@ export default function TabLayout() {
         options={{
           title: "Lockers",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
-                {focused && (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                width: "100%",
+              }}
+            >
+              {focused && (
                 <View
                   style={{
                     position: "absolute",
@@ -98,8 +115,15 @@ export default function TabLayout() {
         options={{
           title: "Orders",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
-                {focused && (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                width: "100%",
+              }}
+            >
+              {focused && (
                 <View
                   style={{
                     position: "absolute",
@@ -122,8 +146,15 @@ export default function TabLayout() {
         options={{
           title: "Thông báo",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
-                 {focused && (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                width: "100%",
+              }}
+            >
+              {focused && (
                 <View
                   style={{
                     position: "absolute",
@@ -136,7 +167,12 @@ export default function TabLayout() {
                   }}
                 />
               )}
-              <Icon name="notifications" type="material" color={color} size={26} />
+              <Icon
+                name="notifications"
+                type="material"
+                color={color}
+                size={26}
+              />
             </View>
           ),
         }}
@@ -146,8 +182,15 @@ export default function TabLayout() {
         options={{
           title: "Hồ sơ",
           tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
-                 {focused && (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                width: "100%",
+              }}
+            >
+              {focused && (
                 <View
                   style={{
                     position: "absolute",

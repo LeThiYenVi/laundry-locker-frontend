@@ -4,7 +4,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { notificationService, storeService, userService } from "@/services/user";
+import {
+  notificationService,
+  storeService,
+  userService,
+} from "@/services/user";
 import { Store, User } from "@/types";
 import { Avatar, Icon } from "@rneui/themed";
 import { Image } from "expo-image";
@@ -18,10 +22,23 @@ import {
   StatusBar,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
+
+const HOME_FILTER_CHIPS = [
+  { label: "Đơn hàng", icon: "receipt", route: "/user/(tabs)/orders" },
+  { label: "Lockers", icon: "inbox", route: "/user/(tabs)/lockers" },
+  { label: "Cửa hàng", icon: "storefront", route: "/user/stores" },
+  {
+    label: "Thông báo",
+    icon: "notifications",
+    route: "/user/(tabs)/notifications",
+  },
+  { label: "Ưu đãi", icon: "card-giftcard", route: "/user/(tabs)/profile" },
+  { label: "Tạo đơn", icon: "add-circle", route: "/user/create-order" },
+] as const;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -36,17 +53,9 @@ export default function HomeScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Favorites state for Stores
-  const [favoriteStores, setFavoriteStores] = useState<{ [key: string]: Store }>({});
-
-  // Filter chips for quick navigation
-  const filterChips = [
-    { label: "Đơn hàng", icon: "receipt", route: "/user/(tabs)/orders" },
-    { label: "Lockers", icon: "inbox", route: "/user/(tabs)/lockers" },
-    { label: "Cửa hàng", icon: "storefront", route: "/user/stores" },
-    { label: "Thông báo", icon: "notifications", route: "/user/(tabs)/notifications" },
-    { label: "Ưu đãi", icon: "card-giftcard", route: "/user/(tabs)/profile" },
-    { label: "Tạo đơn", icon: "add-circle", route: "/user/create-order" },
-  ];
+  const [favoriteStores, setFavoriteStores] = useState<{
+    [key: string]: Store;
+  }>({});
 
   // Dynamic greeting based on time of day with emoji
   const greeting = useMemo(() => {
@@ -61,12 +70,17 @@ export default function HomeScreen() {
   const displayUser = profileData || user;
 
   // Display name from user data
-  const displayName = displayUser?.lastName && displayUser?.firstName
-    ? `${displayUser.lastName} ${displayUser.firstName}`
-    : displayUser?.fullName || "Người dùng";
+  const displayName =
+    displayUser?.lastName && displayUser?.firstName
+      ? `${displayUser.lastName} ${displayUser.firstName}`
+      : displayUser?.fullName || "Người dùng";
 
   // Avatar source with robust fallback for broken URLs
-  const avatarSource = displayUser?.imageUrl || displayUser?.image || displayUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser?.firstName || 'User')}&background=003D5B&color=fff&size=128`;
+  const avatarSource =
+    displayUser?.imageUrl ||
+    displayUser?.image ||
+    displayUser?.avatarUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser?.firstName || "User")}&background=003D5B&color=fff&size=128`;
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -92,7 +106,7 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     try {
       setIsLoadingStores(true);
       setStoreError(null);
@@ -109,13 +123,13 @@ export default function HomeScreen() {
       setIsLoadingStores(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       const loadFavorites = async () => {
         try {
-          const storedStr = await AsyncStorage.getItem('favorite_stores');
+          const storedStr = await AsyncStorage.getItem("favorite_stores");
           if (storedStr) {
             setFavoriteStores(JSON.parse(storedStr));
           } else {
@@ -126,40 +140,75 @@ export default function HomeScreen() {
         }
       };
       loadFavorites();
-    }, [])
+      fetchUnreadCount();
+    }, [fetchUnreadCount]),
   );
 
-  const toggleFavoriteStore = async (store: Store) => {
+  const toggleFavoriteStore = useCallback(async (store: Store) => {
     try {
-      const newFavs = { ...favoriteStores };
-      if (newFavs[store.id]) {
-        delete newFavs[store.id];
-      } else {
-        newFavs[store.id] = store;
-      }
-      setFavoriteStores(newFavs);
-      await AsyncStorage.setItem('favorite_stores', JSON.stringify(newFavs));
+      let nextFavorites: { [key: string]: Store } = {};
+      setFavoriteStores((currentFavorites) => {
+        nextFavorites = { ...currentFavorites };
+        if (nextFavorites[store.id]) {
+          delete nextFavorites[store.id];
+        } else {
+          nextFavorites[store.id] = store;
+        }
+        return nextFavorites;
+      });
+      await AsyncStorage.setItem(
+        "favorite_stores",
+        JSON.stringify(nextFavorites),
+      );
     } catch (e) {
       console.error("Failed to save favorite store", e);
     }
-  };
+  }, []);
 
   // Fetch data on mount
   useEffect(() => {
     fetchProfile();
     fetchStores();
     fetchUnreadCount();
-  }, []);
+  }, [fetchProfile, fetchStores, fetchUnreadCount]);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchProfile();
     fetchStores();
     fetchUnreadCount();
-  };
+  }, [fetchProfile, fetchStores, fetchUnreadCount]);
 
-  // Get the first store or use default data
-  const firstStore = stores.length > 0 ? stores[0] : null;
+  const handleChipPress = useCallback(
+    (route: string) => {
+      router.push(route as any);
+    },
+    [router],
+  );
+
+  const firstStore = useMemo(() => stores[0] ?? null, [stores]);
+
+  const handleOpenStoreDetail = useCallback(() => {
+    if (!firstStore) {
+      return;
+    }
+
+    router.push({
+      pathname: "/user/store-detail",
+      params: {
+        id: firstStore.id,
+        name: firstStore.name,
+        address: firstStore.address,
+        phone: firstStore.phone,
+        openTime: firstStore.openTime,
+        closeTime: firstStore.closeTime,
+        latitude: firstStore.latitude,
+        longitude: firstStore.longitude,
+        image: firstStore.image,
+        imageUrl: firstStore.imageUrl,
+      } as any,
+    });
+  }, [firstStore, router]);
 
   return (
     <View style={styles.wrapper}>
@@ -169,7 +218,11 @@ export default function HomeScreen() {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#003D5B"]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#003D5B"]}
+          />
         }
       >
         {/* Gradient Wave Header */}
@@ -181,7 +234,9 @@ export default function HomeScreen() {
         >
           <View style={styles.headerContent}>
             <View style={styles.greetingRow}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
+              >
                 {/* Avatar with gradient border */}
                 <LinearGradient
                   colors={["#003D5B", "#0077B6", "#00B4D8"]}
@@ -198,8 +253,15 @@ export default function HomeScreen() {
                     />
                   </View>
                 </LinearGradient>
-                <View style={[styles.greetingTextContainer, { marginLeft: 14 }]}>
-                  <ThemedText type="title" style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
+                <View
+                  style={[styles.greetingTextContainer, { marginLeft: 14 }]}
+                >
+                  <ThemedText
+                    type="title"
+                    style={styles.greeting}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     Hi {displayName}!
                   </ThemedText>
                   <ThemedText style={styles.subGreeting}>{greeting}</ThemedText>
@@ -211,7 +273,12 @@ export default function HomeScreen() {
                 onPress={() => router.push("/user/(tabs)/notifications")}
                 activeOpacity={0.7}
               >
-                <Icon name="notifications-none" type="material" size={28} color="#003D5B" />
+                <Icon
+                  name="notifications-none"
+                  type="material"
+                  size={28}
+                  color="#003D5B"
+                />
                 {unreadCount > 0 && (
                   <View style={styles.notificationBadge}>
                     <ThemedText style={styles.notificationBadgeText}>
@@ -231,15 +298,22 @@ export default function HomeScreen() {
           contentContainerStyle={styles.filterContainer}
           style={{ marginBottom: 24 }}
         >
-          {filterChips.map((chip, index) => (
+          {HOME_FILTER_CHIPS.map((chip) => (
             <TouchableOpacity
-              key={index}
+              key={chip.route}
               style={styles.filterChip}
-              onPress={() => router.push(chip.route as any)}
+              onPress={() => handleChipPress(chip.route)}
               activeOpacity={0.7}
             >
-              <Icon name={chip.icon} type="material" size={18} color="#003D5B" />
-              <ThemedText style={styles.filterChipText}>{chip.label}</ThemedText>
+              <Icon
+                name={chip.icon}
+                type="material"
+                size={18}
+                color="#003D5B"
+              />
+              <ThemedText style={styles.filterChipText}>
+                {chip.label}
+              </ThemedText>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -272,7 +346,9 @@ export default function HomeScreen() {
             <View style={styles.iconWrapper}>
               <IconSymbol size={18} name="building.2.fill" color="#003D5B" />
             </View>
-            <ThemedText style={styles.sectionTitle}>Các nơi đặt locker</ThemedText>
+            <ThemedText style={styles.sectionTitle}>
+              Các nơi đặt locker
+            </ThemedText>
           </View>
           <TouchableOpacity
             style={styles.seeAllButton}
@@ -286,34 +362,26 @@ export default function HomeScreen() {
         {/* Store Card */}
         {isLoadingStores ? (
           <View style={[styles.storeCard, styles.storeCardLoading]}>
-             <ActivityIndicator size="large" color="#003D5B" />
-             <ThemedText style={styles.loadingText}>Loading stores...</ThemedText>
+            <ActivityIndicator size="large" color="#003D5B" />
+            <ThemedText style={styles.loadingText}>
+              Loading stores...
+            </ThemedText>
           </View>
         ) : storeError ? (
           <View style={styles.storeCard}>
             <View style={styles.errorContainer}>
-              <IconSymbol size={48} name="exclamationmark.triangle" color="#FF6B6B" />
+              <IconSymbol
+                size={48}
+                name="exclamationmark.triangle"
+                color="#FF6B6B"
+              />
               <ThemedText style={styles.errorText}>{storeError}</ThemedText>
             </View>
           </View>
         ) : firstStore ? (
           <TouchableOpacity
             style={styles.storeCard}
-            onPress={() => router.push({
-              pathname: "/user/store-detail",
-              params: {
-                id: firstStore.id,
-                name: firstStore.name,
-                address: firstStore.address,
-                phone: firstStore.phone,
-                openTime: firstStore.openTime,
-                closeTime: firstStore.closeTime,
-                latitude: firstStore.latitude,
-                longitude: firstStore.longitude,
-                image: firstStore.image,
-                imageUrl: firstStore.imageUrl,
-              } as any
-            })}
+            onPress={handleOpenStoreDetail}
             activeOpacity={0.9}
           >
             <View style={styles.storeCardHeader}>
@@ -321,21 +389,27 @@ export default function HomeScreen() {
                 <View style={styles.statusDot} />
                 <ThemedText style={styles.statusText}>Hoạt động</ThemedText>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
                 {firstStore.latitude && firstStore.longitude && (
-                   <View style={styles.distanceBadge}>
-                      <IconSymbol size={12} name="location.fill" color="#003D5B" />
-                      <ThemedText style={styles.distanceText}>1.2 km</ThemedText>
-                   </View>
+                  <View style={styles.distanceBadge}>
+                    <IconSymbol
+                      size={12}
+                      name="location.fill"
+                      color="#003D5B"
+                    />
+                    <ThemedText style={styles.distanceText}>1.2 km</ThemedText>
+                  </View>
                 )}
                 {/* Heart Icon for Store */}
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
                     toggleFavoriteStore(firstStore);
                   }}
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
                     padding: 6,
                     borderRadius: 100,
                     shadowColor: "#000",
@@ -345,11 +419,17 @@ export default function HomeScreen() {
                   }}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Icon 
-                    name={favoriteStores[firstStore.id] ? "favorite" : "favorite-border"} 
-                    type="material" 
-                    size={20} 
-                    color={favoriteStores[firstStore.id] ? "#E91E63" : "#003D5B"} 
+                  <Icon
+                    name={
+                      favoriteStores[firstStore.id]
+                        ? "favorite"
+                        : "favorite-border"
+                    }
+                    type="material"
+                    size={20}
+                    color={
+                      favoriteStores[firstStore.id] ? "#E91E63" : "#003D5B"
+                    }
                   />
                 </TouchableOpacity>
               </View>
@@ -358,42 +438,54 @@ export default function HomeScreen() {
             {/* Map Placeholder or Real Map or Store Image */}
             <View style={styles.mapContainer}>
               {firstStore.image || firstStore.imageUrl ? (
-                  <Image
-                    source={{ uri: firstStore.image || firstStore.imageUrl }}
-                    style={{ width: '100%', height: '100%' }}
-                    contentFit="cover"
-                    transition={1000}
-                  />
+                <Image
+                  source={{ uri: firstStore.image || firstStore.imageUrl }}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
+                  transition={300}
+                />
               ) : firstStore.latitude && firstStore.longitude ? (
-                  <View style={styles.mapPlaceholderContent}>
-                     <IconSymbol size={40} name="map.fill" color="#A0AEC0" />
-                     <ThemedText style={styles.mapPlaceholderLabel}>Map Preview</ThemedText>
-                  </View>
+                <View style={styles.mapPlaceholderContent}>
+                  <IconSymbol size={40} name="map.fill" color="#A0AEC0" />
+                  <ThemedText style={styles.mapPlaceholderLabel}>
+                    Map Preview
+                  </ThemedText>
+                </View>
               ) : (
-                  <View style={styles.mapPlaceholderContent}>
-                      <IconSymbol size={40} name="map.fill" color="#CBD5E0" />
-                      <ThemedText style={styles.mapPlaceholderLabel}>No Location Data</ThemedText>
-                  </View>
+                <View style={styles.mapPlaceholderContent}>
+                  <IconSymbol size={40} name="map.fill" color="#CBD5E0" />
+                  <ThemedText style={styles.mapPlaceholderLabel}>
+                    No Location Data
+                  </ThemedText>
+                </View>
               )}
             </View>
 
             <View style={styles.cardContent}>
-              <ThemedText style={styles.storeTitle}>{firstStore.name}</ThemedText>
-              <ThemedText style={styles.storeAddress}>{firstStore.address}</ThemedText>
-              
+              <ThemedText style={styles.storeTitle}>
+                {firstStore.name}
+              </ThemedText>
+              <ThemedText style={styles.storeAddress}>
+                {firstStore.address}
+              </ThemedText>
+
               <View style={styles.cardFooter}>
-                 {firstStore.phone && (
-                   <View style={styles.infoRow}>
-                     <IconSymbol size={14} name="phone.fill" color="#718096" />
-                     <ThemedText style={styles.infoText}>{firstStore.phone}</ThemedText>
-                   </View>
-                 )}
-                 {firstStore.openTime && (
-                   <View style={styles.infoRow}>
-                     <IconSymbol size={14} name="clock.fill" color="#718096" />
-                     <ThemedText style={styles.infoText}>{firstStore.openTime} - {firstStore.closeTime}</ThemedText>
-                   </View>
-                 )}
+                {firstStore.phone && (
+                  <View style={styles.infoRow}>
+                    <IconSymbol size={14} name="phone.fill" color="#718096" />
+                    <ThemedText style={styles.infoText}>
+                      {firstStore.phone}
+                    </ThemedText>
+                  </View>
+                )}
+                {firstStore.openTime && (
+                  <View style={styles.infoRow}>
+                    <IconSymbol size={14} name="clock.fill" color="#718096" />
+                    <ThemedText style={styles.infoText}>
+                      {firstStore.openTime} - {firstStore.closeTime}
+                    </ThemedText>
+                  </View>
+                )}
               </View>
             </View>
           </TouchableOpacity>
@@ -401,7 +493,9 @@ export default function HomeScreen() {
           <View style={styles.storeCard}>
             <View style={styles.emptyContainer}>
               <IconSymbol size={48} name="building.2.fill" color="#CBD5E0" />
-              <ThemedText style={styles.emptyText}>Chưa có nơi đặt locker nào</ThemedText>
+              <ThemedText style={styles.emptyText}>
+                Chưa có nơi đặt locker nào
+              </ThemedText>
             </View>
           </View>
         )}
@@ -469,8 +563,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  avatarContainer: {
-  },
+  avatarContainer: {},
   notificationBell: {
     width: 48,
     height: 48,
@@ -483,11 +576,12 @@ const styles = StyleSheet.create({
   },
   notificationBadge: {
     position: "absolute",
-    top: 2,
-    right: 2,
+    top: 1,
+    right: 1,
     minWidth: 20,
     height: 20,
     borderRadius: 10,
+    paddingHorizontal: 4,
     backgroundColor: "#FF3B30",
     justifyContent: "center",
     alignItems: "center",
@@ -496,7 +590,8 @@ const styles = StyleSheet.create({
   },
   notificationBadgeText: {
     fontSize: 10,
-    fontWeight: "bold",
+    lineHeight: 10,
+    fontWeight: "700",
     color: "#fff",
     textAlign: "center",
     textAlignVertical: "center",
@@ -667,14 +762,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     minWidth: 120,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   seeAllText: {
     fontSize: 10,
     fontWeight: "600",
     color: "#003D5B",
   },
-  
+
   /* Store Card Styles */
   storeCard: {
     marginHorizontal: 24,
@@ -686,29 +781,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: '#F0F4F8',
+    borderColor: "#F0F4F8",
   },
   storeCardLoading: {
     height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   storeCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    position: "absolute",
     top: 16,
     left: 16,
     right: 16,
     zIndex: 10,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 100,
@@ -730,9 +825,9 @@ const styles = StyleSheet.create({
     color: "#2F855A",
   },
   distanceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 100,
@@ -747,24 +842,24 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#003D5B",
   },
-  
+
   mapContainer: {
     height: 200,
-    width: '100%',
-    backgroundColor: '#F7FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    backgroundColor: "#F7FAFC",
+    justifyContent: "center",
+    alignItems: "center",
   },
   mapPlaceholderContent: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 8,
   },
   mapPlaceholderLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#A0AEC0',
+    fontWeight: "500",
+    color: "#A0AEC0",
   },
-  
+
   cardContent: {
     padding: 20,
   },
@@ -774,20 +869,20 @@ const styles = StyleSheet.create({
     color: "#1A202C",
     marginBottom: 4,
   },
-  storeAddress: { 
+  storeAddress: {
     fontSize: 14,
     color: "#718096",
     lineHeight: 20,
     marginBottom: 16,
   },
   cardFooter: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   infoText: {
@@ -795,35 +890,35 @@ const styles = StyleSheet.create({
     color: "#4A5568",
     fontWeight: "500",
   },
-  
+
   /* Fallback States */
   loadingContainer: {
     gap: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loadingText: {
-    color: '#718096',
-    fontSize: 14, 
+    color: "#718096",
+    fontSize: 14,
   },
   errorContainer: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
   },
   errorText: {
-    color: '#E53E3E',
-    textAlign: 'center',
+    color: "#E53E3E",
+    textAlign: "center",
   },
   emptyContainer: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
   },
   emptyText: {
-      color: '#A0AEC0',
+    color: "#A0AEC0",
   },
-  
+
   bottomSpacer: {
-      height: 100,
+    height: 100,
   },
 });

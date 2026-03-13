@@ -36,7 +36,6 @@ export const validatePromotionCode = async (
     const response = await api.get<ApiResponse<PromotionValidateResponse>>(
         `/promotions/validate/${code.toUpperCase()}`
     );
-    console.log(`=== API VALIDATE MÃ GIẢM GIÁ [${code}] ===\n`, JSON.stringify(response.data, null, 2));
     return response.data;
 };
 
@@ -49,7 +48,6 @@ export const getActivePromotions = async (): Promise<ApiResponse<PromotionValida
     const response = await api.get<ApiResponse<PromotionValidateResponse[]>>(
         '/promotions/active'
     );
-    console.log('=== API ƯU ĐÃI (ACTIVE PROMOTIONS) ===\n', JSON.stringify(response.data, null, 2));
     return response.data;
 };
 
