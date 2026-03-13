@@ -3,18 +3,18 @@ import { partnerOrderService } from "@/services/partner";
 import { orderService } from "@/services/user";
 import { Order, OrderItem, OrderStatus } from "@/types";
 import { Icon } from "@rneui/themed";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    RefreshControl,
-    StatusBar,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type FilterStatus = "ALL" | OrderStatus;
@@ -28,7 +28,9 @@ const statusFilters: { label: string; value: FilterStatus; color: string }[] = [
   { label: "Đã trả", value: "RETURNED", color: "#00BCD4" },
 ];
 
-const getStatusInfo = (status: OrderStatus): { label: string; color: string; bgColor: string } => {
+const getStatusInfo = (
+  status: OrderStatus,
+): { label: string; color: string; bgColor: string } => {
   switch (status) {
     case "INITIALIZED":
       return { label: "Khởi tạo", color: "#9E9E9E", bgColor: "#F5F5F5" };
@@ -51,12 +53,18 @@ const getStatusInfo = (status: OrderStatus): { label: string; color: string; bgC
   }
 };
 
-const getNextAction = (status: OrderStatus): { label: string; action: string; icon: string } | null => {
+const getNextAction = (
+  status: OrderStatus,
+): { label: string; action: string; icon: string } | null => {
   switch (status) {
     case "WAITING":
       return { label: "Lấy đồ", action: "collect", icon: "inventory-2" };
     case "COLLECTED":
-      return { label: "Bắt đầu xử lý", action: "process", icon: "local-laundry-service" };
+      return {
+        label: "Bắt đầu xử lý",
+        action: "process",
+        icon: "local-laundry-service",
+      };
     case "PROCESSING":
       return { label: "Đánh dấu sẵn sàng", action: "ready", icon: "done-all" };
     case "READY":
@@ -68,7 +76,6 @@ const getNextAction = (status: OrderStatus): { label: string; action: string; ic
 
 export default function PartnerOrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<FilterStatus>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -84,9 +91,15 @@ export default function PartnerOrdersScreen() {
       const response = await orderService.getOrders(0, 50);
       if (response.success) {
         // Filter orders that staff can manage (WAITING, COLLECTED, PROCESSING, READY)
-        const manageableStatuses: OrderStatus[] = ["WAITING", "COLLECTED", "PROCESSING", "READY", "RETURNED"];
-        const manageableOrders = response.data.content.filter(
-          (order) => manageableStatuses.includes(order.status)
+        const manageableStatuses: OrderStatus[] = [
+          "WAITING",
+          "COLLECTED",
+          "PROCESSING",
+          "READY",
+          "RETURNED",
+        ];
+        const manageableOrders = response.data.content.filter((order) =>
+          manageableStatuses.includes(order.status),
         );
         setOrders(manageableOrders);
       }
@@ -103,20 +116,21 @@ export default function PartnerOrdersScreen() {
     fetchOrders();
   }, [fetchOrders]);
 
-  useEffect(() => {
+  const filteredOrders = useMemo(() => {
     let result = orders;
     if (selectedFilter !== "ALL") {
       result = result.filter((o) => o.status === selectedFilter);
     }
-    if (searchQuery.trim()) {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
       result = result.filter(
         (o) =>
-          o.id.toString().includes(searchQuery) ||
-          o.pin?.includes(searchQuery)
+          o.id.toString().includes(trimmedQuery) ||
+          o.pin?.includes(trimmedQuery),
       );
     }
-    setFilteredOrders(result);
-  }, [orders, selectedFilter, searchQuery]);
+    return result;
+  }, [orders, searchQuery, selectedFilter]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -131,7 +145,7 @@ export default function PartnerOrdersScreen() {
     }
 
     const actionLabel = getNextAction(order.status)?.label.toLowerCase();
-    
+
     Alert.alert(
       "Xác nhận",
       `Bạn có chắc muốn ${actionLabel} đơn hàng #${order.id}?`,
@@ -160,20 +174,26 @@ export default function PartnerOrdersScreen() {
               if (response.success) {
                 // Update local state with new order data
                 setOrders((prev) =>
-                  prev.map((o) => (o.id === order.id ? response.data : o))
+                  prev.map((o) => (o.id === order.id ? response.data : o)),
                 );
-                Alert.alert("Thành công", `Đã ${actionLabel} đơn hàng #${order.id}`);
+                Alert.alert(
+                  "Thành công",
+                  `Đã ${actionLabel} đơn hàng #${order.id}`,
+                );
               } else {
                 Alert.alert("Lỗi", response.message || "Thao tác thất bại");
               }
             } catch (error: any) {
-              Alert.alert("Lỗi", error.response?.data?.message || "Thao tác thất bại");
+              Alert.alert(
+                "Lỗi",
+                error.response?.data?.message || "Thao tác thất bại",
+              );
             } finally {
               setIsActionLoading(false);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -191,10 +211,13 @@ export default function PartnerOrdersScreen() {
 
     setIsActionLoading(true);
     try {
-      const response = await partnerOrderService.returnOrder(selectedOrder.id, boxId);
+      const response = await partnerOrderService.returnOrder(
+        selectedOrder.id,
+        boxId,
+      );
       if (response.success) {
         setOrders((prev) =>
-          prev.map((o) => (o.id === selectedOrder.id ? response.data : o))
+          prev.map((o) => (o.id === selectedOrder.id ? response.data : o)),
         );
         Alert.alert("Thành công", `Đã trả đồ vào Box ${boxId}`);
         setShowReturnModal(false);
@@ -217,10 +240,13 @@ export default function PartnerOrdersScreen() {
   const formatDateTime = (dateStr?: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return `${date.toLocaleDateString("vi-VN")} ${date.toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
+    return `${date.toLocaleDateString("vi-VN")} ${date.toLocaleTimeString(
+      "vi-VN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+    )}`;
   };
 
   const renderOrderItem = ({ item }: { item: Order }) => {
@@ -240,8 +266,15 @@ export default function PartnerOrdersScreen() {
               </View>
             )}
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusInfo.bgColor }]}>
-            <ThemedText style={[styles.statusText, { color: statusInfo.color }]}>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: statusInfo.bgColor },
+            ]}
+          >
+            <ThemedText
+              style={[styles.statusText, { color: statusInfo.color }]}
+            >
               {statusInfo.label}
             </ThemedText>
           </View>
@@ -271,7 +304,9 @@ export default function PartnerOrdersScreen() {
               <ThemedText style={styles.itemName}>
                 {orderItem.serviceName}
               </ThemedText>
-              <ThemedText style={styles.itemQty}>x{orderItem.quantity}</ThemedText>
+              <ThemedText style={styles.itemQty}>
+                x{orderItem.quantity}
+              </ThemedText>
               <ThemedText style={styles.itemPrice}>
                 {formatCurrency(orderItem.subtotal)}
               </ThemedText>
@@ -325,8 +360,15 @@ export default function PartnerOrdersScreen() {
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <>
-                <Icon name={nextAction.icon} type="material" size={20} color="#fff" />
-                <ThemedText style={styles.actionButtonText}>{nextAction.label}</ThemedText>
+                <Icon
+                  name={nextAction.icon}
+                  type="material"
+                  size={20}
+                  color="#fff"
+                />
+                <ThemedText style={styles.actionButtonText}>
+                  {nextAction.label}
+                </ThemedText>
               </>
             )}
           </TouchableOpacity>
@@ -405,13 +447,19 @@ export default function PartnerOrdersScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="inbox" type="material" size={64} color="#CCC" />
-            <ThemedText style={styles.emptyText}>Không có đơn hàng nào</ThemedText>
+            <ThemedText style={styles.emptyText}>
+              Không có đơn hàng nào
+            </ThemedText>
             <ThemedText style={styles.emptySubtext}>
               Đơn hàng cần xử lý sẽ hiển thị tại đây
             </ThemedText>
@@ -434,7 +482,9 @@ export default function PartnerOrdersScreen() {
             </ThemedText>
 
             <View style={styles.modalInfoCard}>
-              <ThemedText style={styles.modalInfoLabel}>Locker hiện tại:</ThemedText>
+              <ThemedText style={styles.modalInfoLabel}>
+                Locker hiện tại:
+              </ThemedText>
               <ThemedText style={styles.modalInfoValue}>
                 Locker {selectedOrder?.lockerId} - Box {selectedOrder?.boxId}
               </ThemedText>
@@ -463,14 +513,19 @@ export default function PartnerOrdersScreen() {
                 <ThemedText style={styles.modalCancelText}>Hủy</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalConfirmButton, isActionLoading && { opacity: 0.7 }]}
+                style={[
+                  styles.modalConfirmButton,
+                  isActionLoading && { opacity: 0.7 },
+                ]}
                 onPress={handleReturnOrder}
                 disabled={isActionLoading}
               >
                 {isActionLoading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <ThemedText style={styles.modalConfirmText}>Xác nhận trả đồ</ThemedText>
+                  <ThemedText style={styles.modalConfirmText}>
+                    Xác nhận trả đồ
+                  </ThemedText>
                 )}
               </TouchableOpacity>
             </View>

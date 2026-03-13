@@ -1,10 +1,11 @@
+import { AppModalHeader } from "@/components/app-modal-header";
 import LockerIcon from "@/components/LockerIcon";
 import { ThemedText } from "@/components/themed-text";
 import { lockerService, storeService } from "@/services/user";
 import { Box, Locker, Store } from "@/types";
 import { Icon } from "@rneui/themed";
-import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'expo-image';
+import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -18,18 +19,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  TextInput
+  TextInput,
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
-type ViewMode = 'stores' | 'lockers';
+type ViewMode = "stores" | "lockers";
 
 export default function LockersScreen() {
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<ViewMode>('stores');
+  const [viewMode, setViewMode] = useState<ViewMode>("stores");
   const [stores, setStores] = useState<Store[]>([]);
   const [filteredStores, setFilteredStores] = useState<Store[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,7 +38,7 @@ export default function LockersScreen() {
   const [lockers, setLockers] = useState<Locker[]>([]);
   const [selectedLocker, setSelectedLocker] = useState<Locker | null>(null);
   const [boxes, setBoxes] = useState<Box[]>([]);
-  
+
   const [isLoadingStores, setIsLoadingStores] = useState(true);
   const [isLoadingLockers, setIsLoadingLockers] = useState(false);
   const [isLoadingBoxes, setIsLoadingBoxes] = useState(false);
@@ -45,7 +46,9 @@ export default function LockersScreen() {
 
   // Favorites state
   const [favorites, setFavorites] = useState<{ [key: string]: Locker }>({});
-  const [favoriteStores, setFavoriteStores] = useState<{ [key: string]: Store }>({});
+  const [favoriteStores, setFavoriteStores] = useState<{
+    [key: string]: Store;
+  }>({});
 
   // Box modal state
   const [showBoxesModal, setShowBoxesModal] = useState(false);
@@ -83,7 +86,7 @@ export default function LockersScreen() {
     try {
       setIsLoadingLockers(true);
       setError(null);
-      
+
       const response = await lockerService.getLockersByStore(storeId);
       if (response.success && response.data) {
         setLockers(response.data);
@@ -100,7 +103,7 @@ export default function LockersScreen() {
     try {
       setIsLoadingBoxes(true);
       setError(null);
-      
+
       const response = await lockerService.getBoxesByLocker(lockerId);
       if (response.success && response.data) {
         setBoxes(response.data);
@@ -126,8 +129,8 @@ export default function LockersScreen() {
         stores.filter(
           (store) =>
             store.name.toLowerCase().includes(lowerCaseQuery) ||
-            store.address.toLowerCase().includes(lowerCaseQuery)
-        )
+            store.address.toLowerCase().includes(lowerCaseQuery),
+        ),
       );
     }
   }, [searchQuery, stores]);
@@ -137,15 +140,16 @@ export default function LockersScreen() {
       const loadFavorites = async () => {
         try {
           // Load Favorite Lockers
-          const storedLockersStr = await AsyncStorage.getItem('favorite_lockers');
+          const storedLockersStr =
+            await AsyncStorage.getItem("favorite_lockers");
           if (storedLockersStr) {
             setFavorites(JSON.parse(storedLockersStr));
           } else {
             setFavorites({});
           }
-          
+
           // Load Favorite Stores
-          const storedStoresStr = await AsyncStorage.getItem('favorite_stores');
+          const storedStoresStr = await AsyncStorage.getItem("favorite_stores");
           if (storedStoresStr) {
             setFavoriteStores(JSON.parse(storedStoresStr));
           } else {
@@ -156,7 +160,19 @@ export default function LockersScreen() {
         }
       };
       loadFavorites();
-    }, [])
+
+      // When leaving Lockers tab, reset to default stores view.
+      return () => {
+        setViewMode("stores");
+        setSelectedStore(null);
+        setLockers([]);
+        setSelectedLocker(null);
+        setBoxes([]);
+        setShowBoxesModal(false);
+        setShowAllStoresModal(false);
+        setSearchQuery("");
+      };
+    }, []),
   );
 
   const toggleFavoriteStore = async (store: Store) => {
@@ -168,7 +184,7 @@ export default function LockersScreen() {
         newFavs[store.id] = store;
       }
       setFavoriteStores(newFavs);
-      await AsyncStorage.setItem('favorite_stores', JSON.stringify(newFavs));
+      await AsyncStorage.setItem("favorite_stores", JSON.stringify(newFavs));
     } catch (e) {
       console.error("Failed to save favorite store", e);
     }
@@ -183,7 +199,7 @@ export default function LockersScreen() {
         newFavs[locker.id] = locker;
       }
       setFavorites(newFavs);
-      await AsyncStorage.setItem('favorite_lockers', JSON.stringify(newFavs));
+      await AsyncStorage.setItem("favorite_lockers", JSON.stringify(newFavs));
     } catch (e) {
       console.error("Failed to save favorite", e);
     }
@@ -195,18 +211,18 @@ export default function LockersScreen() {
     setSelectedLocker(null);
     setBoxes([]);
     fetchLockers(store.id);
-    setViewMode('lockers');
+    setViewMode("lockers");
   };
 
   // Handle locker selection - show boxes modal
   const handleLockerSelect = (locker: Locker) => {
     setSelectedLocker(locker);
     fetchBoxes(locker.id);
-    
+
     // Reset and show modal
     boxesModalAnim.setValue(0);
     setShowBoxesModal(true);
-    
+
     // Animate modal in
     Animated.spring(boxesModalAnim, {
       toValue: 1,
@@ -229,19 +245,6 @@ export default function LockersScreen() {
     });
   };
 
-  // Open all stores modal
-  const openAllStoresModal = () => {
-    allStoresModalAnim.setValue(0);
-    setShowAllStoresModal(true);
-    
-    Animated.spring(allStoresModalAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 10,
-    }).start();
-  };
-
   // Close all stores modal
   const closeAllStoresModal = () => {
     Animated.timing(allStoresModalAnim, {
@@ -253,9 +256,22 @@ export default function LockersScreen() {
     });
   };
 
+  // Open all stores modal
+  const openAllStoresModal = () => {
+    allStoresModalAnim.setValue(0);
+    setShowAllStoresModal(true);
+
+    Animated.spring(allStoresModalAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 10,
+    }).start();
+  };
+
   // Back to stores view
   const backToStores = () => {
-    setViewMode('stores');
+    setViewMode("stores");
     setSelectedStore(null);
     setLockers([]);
     setSelectedLocker(null);
@@ -331,7 +347,7 @@ export default function LockersScreen() {
         setReportDescription("");
         Alert.alert(
           "Thành công",
-          "Báo cáo sự cố đã được gửi. Chúng tôi sẽ xử lý sớm nhất."
+          "Báo cáo sự cố đã được gửi. Chúng tôi sẽ xử lý sớm nhất.",
         );
       }
     } catch (err: any) {
@@ -372,7 +388,7 @@ export default function LockersScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       {/* Header with Gradient */}
       <LinearGradient
         colors={["#ffffff", "#f0f8ff", "#d6e9f5"]}
@@ -381,17 +397,24 @@ export default function LockersScreen() {
         style={styles.header}
       >
         <View style={styles.headerContent}>
-          {viewMode === 'lockers' && (
+          {viewMode === "lockers" && (
             <TouchableOpacity onPress={backToStores} style={styles.backButton}>
-              <Icon name="arrow-back" type="material" size={24} color="#003D5B" />
+              <Icon
+                name="arrow-back"
+                type="material"
+                size={24}
+                color="#003D5B"
+              />
             </TouchableOpacity>
           )}
           <View style={styles.headerTextContainer}>
             <ThemedText style={styles.headerTitle}>
-              {viewMode === 'stores' ? 'Lock.R Locker' : selectedStore?.name}
+              {viewMode === "stores" ? "Lock.R Locker" : selectedStore?.name}
             </ThemedText>
             <ThemedText style={styles.headerSubtitle}>
-              {viewMode === 'stores' ? 'Chọn cửa hàng để xem tủ' : 'Chọn tủ để xem ngăn'}
+              {viewMode === "stores"
+                ? "Chọn cửa hàng để xem tủ"
+                : "Chọn tủ để xem ngăn"}
             </ThemedText>
           </View>
         </View>
@@ -399,7 +422,7 @@ export default function LockersScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Store Selection View */}
-        {viewMode === 'stores' && (
+        {viewMode === "stores" && (
           <View style={styles.storeViewContainer}>
             {/* Search Bar */}
             <View style={styles.searchContainer}>
@@ -414,7 +437,12 @@ export default function LockersScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery("")}>
-                    <Icon name="close" type="material" size={20} color="#9CA3AF" />
+                    <Icon
+                      name="close"
+                      type="material"
+                      size={20}
+                      color="#9CA3AF"
+                    />
                   </TouchableOpacity>
                 )}
               </View>
@@ -424,16 +452,20 @@ export default function LockersScreen() {
             <View style={styles.popularSection}>
               <View style={styles.sectionHeader}>
                 <View>
-                  <ThemedText style={styles.sectionTitle}>Cửa hàng gần bạn</ThemedText>
-                  <ThemedText style={styles.sectionSubtitle}>Chọn địa điểm phù hợp</ThemedText>
+                  <ThemedText style={styles.sectionTitle}>
+                    Cửa hàng gần bạn
+                  </ThemedText>
+                  <ThemedText style={styles.sectionSubtitle}>
+                    Chọn địa điểm phù hợp
+                  </ThemedText>
                 </View>
                 <TouchableOpacity onPress={openAllStoresModal}>
                   <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
                 </TouchableOpacity>
               </View>
-              
-              <ScrollView 
-                horizontal 
+
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.popularScrollContent}
                 snapToInterval={width - 60}
@@ -462,27 +494,34 @@ export default function LockersScreen() {
                           end={{ x: 1, y: 1 }}
                           style={styles.popularImage}
                         >
-                          <Icon name="store" type="material" size={64} color="#003D5B" />
+                          <Icon
+                            name="store"
+                            type="material"
+                            size={64}
+                            color="#003D5B"
+                          />
                         </LinearGradient>
                       )}
-                      
+
                       {/* Overlay Badge */}
                       <View style={styles.overlayBadge}>
                         <View style={styles.badgeDot} />
-                        <ThemedText style={styles.overlayBadgeText}>Mở cửa</ThemedText>
+                        <ThemedText style={styles.overlayBadgeText}>
+                          Mở cửa
+                        </ThemedText>
                       </View>
-                        
+
                       {/* Heart Icon */}
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={(e) => {
                           e.stopPropagation();
                           toggleFavoriteStore(store);
                         }}
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           top: 12,
                           right: 12,
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
                           padding: 6,
                           borderRadius: 100,
                           shadowColor: "#000",
@@ -492,25 +531,42 @@ export default function LockersScreen() {
                         }}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Icon 
-                          name={favoriteStores[store.id] ? "favorite" : "favorite-border"} 
-                          type="material" 
-                          size={20} 
-                          color={favoriteStores[store.id] ? "#E91E63" : "#003D5B"} 
+                        <Icon
+                          name={
+                            favoriteStores[store.id]
+                              ? "favorite"
+                              : "favorite-border"
+                          }
+                          type="material"
+                          size={20}
+                          color={
+                            favoriteStores[store.id] ? "#E91E63" : "#003D5B"
+                          }
                         />
                       </TouchableOpacity>
                     </View>
 
                     {/* Store Info */}
                     <View style={styles.popularCardContent}>
-                      <ThemedText style={styles.popularCardName} numberOfLines={1}>
+                      <ThemedText
+                        style={styles.popularCardName}
+                        numberOfLines={1}
+                      >
                         {store.name}
                       </ThemedText>
-                      
+
                       <View style={styles.storeLocationRow}>
-                        <Icon name="location-on" type="material" size={16} color="#6B7280" />
-                        <ThemedText style={styles.popularLocationText} numberOfLines={1}>
-                          {store.address.split(',')[0]}
+                        <Icon
+                          name="location-on"
+                          type="material"
+                          size={16}
+                          color="#6B7280"
+                        />
+                        <ThemedText
+                          style={styles.popularLocationText}
+                          numberOfLines={1}
+                        >
+                          {store.address.split(",")[0]}
                         </ThemedText>
                       </View>
                     </View>
@@ -527,7 +583,7 @@ export default function LockersScreen() {
                   <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.recommendedGrid}>
                 {filteredStores.slice(0, 4).map((store) => (
                   <TouchableOpacity
@@ -552,50 +608,79 @@ export default function LockersScreen() {
                           end={{ x: 1, y: 1 }}
                           style={styles.recommendedImage}
                         >
-                          <Icon name="store" type="material" size={40} color="#003D5B" />
+                          <Icon
+                            name="store"
+                            type="material"
+                            size={40}
+                            color="#003D5B"
+                          />
                         </LinearGradient>
                       )}
-                      
+
                       {/* Small Badge */}
-                      <View style={[styles.smallBadge, { left: 8, right: undefined }]}>
-                        <ThemedText style={styles.smallBadgeText}>NEW</ThemedText>
+                      <View
+                        style={[
+                          styles.smallBadge,
+                          { left: 8, right: undefined },
+                        ]}
+                      >
+                        <ThemedText style={styles.smallBadgeText}>
+                          NEW
+                        </ThemedText>
                       </View>
-                        
+
                       {/* Heart Icon */}
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={(e) => {
                           e.stopPropagation();
                           toggleFavoriteStore(store);
                         }}
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           top: 8,
                           right: 8,
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
                           padding: 4,
                           borderRadius: 100,
                         }}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Icon 
-                          name={favoriteStores[store.id] ? "favorite" : "favorite-border"} 
-                          type="material" 
-                          size={16} 
-                          color={favoriteStores[store.id] ? "#E91E63" : "#003D5B"} 
+                        <Icon
+                          name={
+                            favoriteStores[store.id]
+                              ? "favorite"
+                              : "favorite-border"
+                          }
+                          type="material"
+                          size={16}
+                          color={
+                            favoriteStores[store.id] ? "#E91E63" : "#003D5B"
+                          }
                         />
                       </TouchableOpacity>
                     </View>
 
                     {/* Store Info */}
                     <View style={styles.recommendedCardContent}>
-                      <ThemedText style={styles.recommendedCardName} numberOfLines={2}>
+                      <ThemedText
+                        style={styles.recommendedCardName}
+                        numberOfLines={2}
+                      >
                         {store.name}
                       </ThemedText>
-                      
+
                       <View style={styles.storeLocationRow}>
-                        <Icon name="location-on" type="material" size={12} color="#9CA3AF" />
-                        <ThemedText style={styles.recommendedLocationText} numberOfLines={1}>
-                          {store.address.split(',')[0]}
+                        <Icon
+                          name="location-on"
+                          type="material"
+                          size={12}
+                          color="#9CA3AF"
+                        />
+                        <ThemedText
+                          style={styles.recommendedLocationText}
+                          numberOfLines={1}
+                        >
+                          {store.address.split(",")[0]}
                         </ThemedText>
                       </View>
                     </View>
@@ -607,17 +692,24 @@ export default function LockersScreen() {
         )}
 
         {/* Lockers List View */}
-        {viewMode === 'lockers' && (
+        {viewMode === "lockers" && (
           <View style={styles.section}>
             <View style={styles.sectionTitleRow}>
-              <Icon name="door-front" type="material" size={22} color="#003D5B" />
+              <Icon
+                name="door-front"
+                type="material"
+                size={22}
+                color="#003D5B"
+              />
               <ThemedText style={styles.sectionTitle}>Danh sách tủ</ThemedText>
             </View>
-            
+
             {isLoadingLockers ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#003D5B" />
-                <ThemedText style={styles.loadingText}>Đang tải tủ...</ThemedText>
+                <ThemedText style={styles.loadingText}>
+                  Đang tải tủ...
+                </ThemedText>
               </View>
             ) : lockers.length === 0 ? (
               <View style={styles.emptyContainer}>
@@ -636,28 +728,47 @@ export default function LockersScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.lockerCardHeader}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
                         <View style={styles.lockerIconContainer}>
-                          <Icon name="door-front" type="material" size={28} color="#003D5B" />
+                          <Icon
+                            name="door-front"
+                            type="material"
+                            size={28}
+                            color="#003D5B"
+                          />
                         </View>
                         <View
                           style={[
                             styles.lockerStatusBadge,
-                            locker.status === "ACTIVE" ? styles.statusActive : styles.statusMaintenance,
+                            locker.status === "ACTIVE"
+                              ? styles.statusActive
+                              : styles.statusMaintenance,
                           ]}
                         >
-                          <View style={[
-                            styles.statusDot,
-                            locker.status === "ACTIVE" ? styles.statusDotActive : styles.statusDotMaintenance
-                          ]} />
+                          <View
+                            style={[
+                              styles.statusDot,
+                              locker.status === "ACTIVE"
+                                ? styles.statusDotActive
+                                : styles.statusDotMaintenance,
+                            ]}
+                          />
                           <ThemedText style={styles.statusText}>
-                            {locker.status === "ACTIVE" ? "Hoạt động" : "Bảo trì"}
+                            {locker.status === "ACTIVE"
+                              ? "Hoạt động"
+                              : "Bảo trì"}
                           </ThemedText>
                         </View>
                       </View>
-                      
+
                       {/* Heart Icon Button */}
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={(e) => {
                           e.stopPropagation(); // Prevent locker selection
                           toggleFavorite(locker);
@@ -665,21 +776,35 @@ export default function LockersScreen() {
                         style={{ padding: 4 }}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <Icon 
-                          name={favorites[locker.id] ? "favorite" : "favorite-border"} 
-                          type="material" 
-                          size={28} 
-                          color={favorites[locker.id] ? "#E91E63" : "#D1D5DB"} 
+                        <Icon
+                          name={
+                            favorites[locker.id]
+                              ? "favorite"
+                              : "favorite-border"
+                          }
+                          type="material"
+                          size={28}
+                          color={favorites[locker.id] ? "#E91E63" : "#D1D5DB"}
                         />
                       </TouchableOpacity>
                     </View>
 
-                    <ThemedText style={styles.lockerCardName}>{locker.name}</ThemedText>
-                    
+                    <ThemedText style={styles.lockerCardName}>
+                      {locker.name}
+                    </ThemedText>
+
                     {locker.location && (
                       <View style={styles.lockerLocationRow}>
-                        <Icon name="place" type="material" size={14} color="#6B7280" />
-                        <ThemedText style={styles.lockerCardLocation} numberOfLines={1}>
+                        <Icon
+                          name="place"
+                          type="material"
+                          size={14}
+                          color="#6B7280"
+                        />
+                        <ThemedText
+                          style={styles.lockerCardLocation}
+                          numberOfLines={1}
+                        >
                           {locker.location}
                         </ThemedText>
                       </View>
@@ -690,19 +815,28 @@ export default function LockersScreen() {
                         <ThemedText style={styles.lockerStatValue}>
                           {locker.availableBoxes}
                         </ThemedText>
-                        <ThemedText style={styles.lockerStatLabel}>Ngăn trống</ThemedText>
+                        <ThemedText style={styles.lockerStatLabel}>
+                          Ngăn trống
+                        </ThemedText>
                       </View>
                       <View style={styles.lockerStatDivider} />
                       <View style={styles.lockerStat}>
                         <ThemedText style={styles.lockerStatValue}>
                           {locker.totalBoxes}
                         </ThemedText>
-                        <ThemedText style={styles.lockerStatLabel}>Tổng ngăn</ThemedText>
+                        <ThemedText style={styles.lockerStatLabel}>
+                          Tổng ngăn
+                        </ThemedText>
                       </View>
                     </View>
 
                     <View style={styles.lockerCardArrow}>
-                      <Icon name="chevron-right" type="material" size={24} color="#9CA3AF" />
+                      <Icon
+                        name="chevron-right"
+                        type="material"
+                        size={24}
+                        color="#9CA3AF"
+                      />
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -722,46 +856,47 @@ export default function LockersScreen() {
         onRequestClose={closeBoxesModal}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalBackdrop} 
+          <TouchableOpacity
+            style={styles.modalBackdrop}
             activeOpacity={1}
             onPress={closeBoxesModal}
           />
-          
+
           <Animated.View
             style={[
               styles.modalContainer,
-              { transform: [{ translateY: boxesModalTranslateY }] }
+              { transform: [{ translateY: boxesModalTranslateY }] },
             ]}
           >
             <View style={styles.modalHandle} />
-            
-            <View style={styles.modalHeader}>
-              <View>
-                <ThemedText style={styles.modalTitle}>
-                  Chọn ngăn tủ
-                </ThemedText>
-                <ThemedText style={styles.modalSubtitle}>
-                  {selectedLocker?.name}
-                </ThemedText>
-              </View>
-              <TouchableOpacity onPress={closeBoxesModal} style={styles.closeButton}>
-                <Icon name="close" type="material" size={28} color="#1F2937" />
-              </TouchableOpacity>
-            </View>
 
-            <ScrollView 
+            <AppModalHeader
+              title="Chọn ngăn tủ"
+              subtitle={selectedLocker?.name}
+              onClose={closeBoxesModal}
+              showDivider={true}
+              containerStyle={{ paddingHorizontal: 20, paddingTop: 4 }}
+            />
+
+            <ScrollView
               style={styles.modalContent}
               showsVerticalScrollIndicator={false}
             >
               {isLoadingBoxes ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#003D5B" />
-                  <ThemedText style={styles.loadingText}>Đang tải ngăn...</ThemedText>
+                  <ThemedText style={styles.loadingText}>
+                    Đang tải ngăn...
+                  </ThemedText>
                 </View>
               ) : boxes.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                  <Icon name="inbox" type="material" size={64} color="#D1D5DB" />
+                  <Icon
+                    name="inbox"
+                    type="material"
+                    size={64}
+                    color="#D1D5DB"
+                  />
                   <ThemedText style={styles.emptyText}>
                     Không có ngăn nào trong tủ này
                   </ThemedText>
@@ -771,19 +906,39 @@ export default function LockersScreen() {
                   {/* Legend */}
                   <View style={styles.legend}>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: "#10B981" }]} />
+                      <View
+                        style={[
+                          styles.legendDot,
+                          { backgroundColor: "#10B981" },
+                        ]}
+                      />
                       <ThemedText style={styles.legendText}>Trống</ThemedText>
                     </View>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: "#EF4444" }]} />
+                      <View
+                        style={[
+                          styles.legendDot,
+                          { backgroundColor: "#EF4444" },
+                        ]}
+                      />
                       <ThemedText style={styles.legendText}>Có đồ</ThemedText>
                     </View>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: "#F59E0B" }]} />
+                      <View
+                        style={[
+                          styles.legendDot,
+                          { backgroundColor: "#F59E0B" },
+                        ]}
+                      />
                       <ThemedText style={styles.legendText}>Đã đặt</ThemedText>
                     </View>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: "#6B7280" }]} />
+                      <View
+                        style={[
+                          styles.legendDot,
+                          { backgroundColor: "#6B7280" },
+                        ]}
+                      />
                       <ThemedText style={styles.legendText}>Bảo trì</ThemedText>
                     </View>
                   </View>
@@ -795,32 +950,41 @@ export default function LockersScreen() {
                         key={box.id}
                         style={[
                           styles.boxCell,
-                          { 
+                          {
                             opacity: box.status === "AVAILABLE" ? 1 : 0.6,
-                            borderWidth: 0, 
+                            borderWidth: 0,
                           },
                         ]}
                         onPress={() => handleBoxClick(box)}
                         disabled={box.status !== "AVAILABLE"}
                         activeOpacity={0.8}
                       >
-                        <LockerIcon 
-                          width="70%" 
+                        <LockerIcon
+                          width="70%"
                           height="70%"
                           color={getBoxStatusColor(box.status)}
                         />
-                        
+
                         <View style={styles.boxContentOverlay}>
-                          <ThemedText style={styles.boxNumber}>{box.boxNumber}</ThemedText>
+                          <ThemedText style={styles.boxNumber}>
+                            {box.boxNumber}
+                          </ThemedText>
                           <ThemedText style={styles.boxStatus}>
                             {getBoxStatusText(box.status)}
                           </ThemedText>
-                          <ThemedText style={styles.boxSize}>{box.size}</ThemedText>
+                          <ThemedText style={styles.boxSize}>
+                            {box.size}
+                          </ThemedText>
                         </View>
-                        
+
                         {box.status === "AVAILABLE" && (
                           <View style={styles.boxAvailableBadge}>
-                            <Icon name="check-circle" type="material" size={16} color="#fff" />
+                            <Icon
+                              name="check-circle"
+                              type="material"
+                              size={16}
+                              color="#fff"
+                            />
                           </View>
                         )}
                       </TouchableOpacity>
@@ -835,21 +999,30 @@ export default function LockersScreen() {
               <TouchableOpacity
                 onPress={handleReportLocker}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
                   gap: 8,
-                  backgroundColor: '#FFF3E0',
+                  backgroundColor: "#FFF3E0",
                   marginHorizontal: 20,
                   marginBottom: 20,
                   paddingVertical: 14,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: '#FFB74D',
+                  borderColor: "#FFB74D",
                 }}
               >
-                <Icon name="report-problem" type="material" size={20} color="#E65100" />
-                <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#E65100' }}>Báo cáo sự cố</ThemedText>
+                <Icon
+                  name="report-problem"
+                  type="material"
+                  size={20}
+                  color="#E65100"
+                />
+                <ThemedText
+                  style={{ fontSize: 14, fontWeight: "600", color: "#E65100" }}
+                >
+                  Báo cáo sự cố
+                </ThemedText>
               </TouchableOpacity>
             )}
           </Animated.View>
@@ -864,38 +1037,38 @@ export default function LockersScreen() {
         onRequestClose={closeAllStoresModal}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={styles.modalBackdrop} 
+          <TouchableOpacity
+            style={styles.modalBackdrop}
             activeOpacity={1}
             onPress={closeAllStoresModal}
           />
-          
+
           <Animated.View
             style={[
               styles.modalContainer,
-              { transform: [{ translateY: allStoresModalAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [height, 0],
-              })}] }
+              {
+                transform: [
+                  {
+                    translateY: allStoresModalAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [height, 0],
+                    }),
+                  },
+                ],
+              },
             ]}
           >
             <View style={styles.modalHandle} />
-            
-            <View style={styles.modalHeader}>
-              <View>
-                <ThemedText style={styles.modalTitle}>
-                  Tất cả cửa hàng
-                </ThemedText>
-                <ThemedText style={styles.modalSubtitle}>
-                  {filteredStores.length} cửa hàng
-                </ThemedText>
-              </View>
-              <TouchableOpacity onPress={closeAllStoresModal} style={styles.closeButton}>
-                <Icon name="close" type="material" size={28} color="#1F2937" />
-              </TouchableOpacity>
-            </View>
 
-            <ScrollView 
+            <AppModalHeader
+              title="Tất cả cửa hàng"
+              subtitle={`${filteredStores.length} cửa hàng`}
+              onClose={closeAllStoresModal}
+              showDivider={true}
+              containerStyle={{ paddingHorizontal: 20, paddingTop: 4 }}
+            />
+
+            <ScrollView
               style={styles.modalContent}
               showsVerticalScrollIndicator={false}
             >
@@ -926,33 +1099,56 @@ export default function LockersScreen() {
                           end={{ x: 1, y: 1 }}
                           style={styles.allStoreImage}
                         >
-                          <Icon name="store" type="material" size={48} color="#003D5B" />
+                          <Icon
+                            name="store"
+                            type="material"
+                            size={48}
+                            color="#003D5B"
+                          />
                         </LinearGradient>
                       )}
-                      
+
                       {/* Badge */}
                       <View style={styles.allStoreBadge}>
                         <View style={styles.badgeDot} />
-                        <ThemedText style={styles.overlayBadgeText}>Mở cửa</ThemedText>
+                        <ThemedText style={styles.overlayBadgeText}>
+                          Mở cửa
+                        </ThemedText>
                       </View>
                     </View>
 
                     {/* Store Info */}
                     <View style={styles.allStoreCardContent}>
-                      <ThemedText style={styles.allStoreCardName} numberOfLines={2}>
+                      <ThemedText
+                        style={styles.allStoreCardName}
+                        numberOfLines={2}
+                      >
                         {store.name}
                       </ThemedText>
-                      
+
                       <View style={styles.storeLocationRow}>
-                        <Icon name="location-on" type="material" size={14} color="#9CA3AF" />
-                        <ThemedText style={styles.allStoreLocationText} numberOfLines={2}>
+                        <Icon
+                          name="location-on"
+                          type="material"
+                          size={14}
+                          color="#9CA3AF"
+                        />
+                        <ThemedText
+                          style={styles.allStoreLocationText}
+                          numberOfLines={2}
+                        >
                           {store.address}
                         </ThemedText>
                       </View>
 
                       {store.phone && (
                         <View style={styles.storeDetailRow}>
-                          <Icon name="phone" type="material" size={14} color="#9CA3AF" />
+                          <Icon
+                            name="phone"
+                            type="material"
+                            size={14}
+                            color="#9CA3AF"
+                          />
                           <ThemedText style={styles.allStoreDetailText}>
                             {store.phone}
                           </ThemedText>
@@ -974,49 +1170,69 @@ export default function LockersScreen() {
         visible={reportModalVisible}
         onRequestClose={() => setReportModalVisible(false)}
       >
-        <View style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-        }}>
-          <View style={{
-            width: '88%',
-            backgroundColor: '#fff',
-            borderRadius: 20,
-            padding: 24,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
-            elevation: 8,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF3E0', justifyContent: 'center', alignItems: 'center' }}>
-                <Icon name="report-problem" type="material" size={22} color="#E65100" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={{ fontSize: 17, fontWeight: 'bold', color: '#333' }}>Báo cáo sự cố</ThemedText>
-                <ThemedText style={{ fontSize: 13, color: '#666' }}>{selectedLocker?.name || 'Tủ locker'}</ThemedText>
-              </View>
-              <TouchableOpacity onPress={() => setReportModalVisible(false)}>
-                <Icon name="close" type="material" size={24} color="#999" />
-              </TouchableOpacity>
-            </View>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{
+              width: "88%",
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              padding: 24,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <AppModalHeader
+              title="Báo cáo sự cố"
+              subtitle={selectedLocker?.name || "Tủ locker"}
+              onClose={() => setReportModalVisible(false)}
+              leftAccessory={
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "#FFF3E0",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Icon
+                    name="report-problem"
+                    type="material"
+                    size={22}
+                    color="#E65100"
+                  />
+                </View>
+              }
+            />
 
-            <ThemedText style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>Mô tả sự cố *</ThemedText>
+            <ThemedText
+              style={{ fontSize: 13, color: "#666", marginBottom: 8 }}
+            >
+              Mô tả sự cố *
+            </ThemedText>
             <TextInput
               style={{
                 borderWidth: 1,
-                borderColor: '#E0E0E0',
+                borderColor: "#E0E0E0",
                 borderRadius: 12,
                 padding: 14,
                 fontSize: 14,
                 minHeight: 100,
-                textAlignVertical: 'top',
-                backgroundColor: '#FAFAFA',
+                textAlignVertical: "top",
+                backgroundColor: "#FAFAFA",
               }}
-              placeholder="Ví dụ: Tủ không mở được, màn hình bị lỗi..." 
+              placeholder="Ví dụ: Tủ không mở được, màn hình bị lỗi..."
               placeholderTextColor="#BDBDBD"
               multiline
               numberOfLines={4}
@@ -1024,39 +1240,54 @@ export default function LockersScreen() {
               onChangeText={setReportDescription}
               maxLength={500}
             />
-            <ThemedText style={{ fontSize: 11, color: '#999', marginTop: 4, textAlign: 'right' }}>
+            <ThemedText
+              style={{
+                fontSize: 11,
+                color: "#999",
+                marginTop: 4,
+                textAlign: "right",
+              }}
+            >
               {reportDescription.length}/500
             </ThemedText>
 
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
               <TouchableOpacity
                 onPress={() => setReportModalVisible(false)}
                 style={{
                   flex: 1,
-                  backgroundColor: '#F5F5F5',
+                  backgroundColor: "#F5F5F5",
                   paddingVertical: 14,
                   borderRadius: 12,
-                  alignItems: 'center',
+                  alignItems: "center",
                 }}
               >
-                <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#666' }}>Hủy</ThemedText>
+                <ThemedText
+                  style={{ fontSize: 14, fontWeight: "600", color: "#666" }}
+                >
+                  Hủy
+                </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={submitReport}
                 disabled={isReporting}
                 style={{
                   flex: 1,
-                  backgroundColor: '#E65100',
+                  backgroundColor: "#E65100",
                   paddingVertical: 14,
                   borderRadius: 12,
-                  alignItems: 'center',
+                  alignItems: "center",
                   opacity: isReporting ? 0.7 : 1,
                 }}
               >
                 {isReporting ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Gửi báo cáo</ThemedText>
+                  <ThemedText
+                    style={{ fontSize: 14, fontWeight: "600", color: "#fff" }}
+                  >
+                    Gửi báo cáo
+                  </ThemedText>
                 )}
               </TouchableOpacity>
             </View>
@@ -1174,12 +1405,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
-  
+
   // Store View Container
   storeViewContainer: {
     flex: 1,
   },
-  
+
   // Search Bar
   searchContainer: {
     paddingHorizontal: 20,
@@ -1206,7 +1437,7 @@ const styles = StyleSheet.create({
     color: "#1F2937",
     fontWeight: "500",
   },
-  
+
   // Popular Section - Cửa hàng gần bạn
   popularSection: {
     marginTop: 16,
@@ -1302,7 +1533,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontWeight: "500",
   },
-  
+
   // Recommended Section - Xem gần đây
   recommendedSection: {
     // marginTop: 28,
@@ -1373,7 +1604,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  
+
   loadingContainer: {
     padding: 40,
     alignItems: "center",
@@ -1388,7 +1619,7 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontWeight: "500",
   },
-  
+
   // Lockers Grid
   lockersGrid: {
     gap: 16,
@@ -1505,7 +1736,7 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 40,
   },
-  
+
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -1573,7 +1804,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  
+
   // Box Grid
   legend: {
     flexDirection: "row",
@@ -1609,7 +1840,7 @@ const styles = StyleSheet.create({
     width: (width - 76) / 3,
     aspectRatio: 1, // Square container
     borderRadius: 16,
-    padding: 0, 
+    padding: 0,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff", // White background for the card look
@@ -1622,15 +1853,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   boxContentOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingTop: 16, // Push down to avoid top part of locker
-    paddingRight: 4, 
+    paddingRight: 4,
   },
   boxNumber: {
     fontSize: 20, // Reduced from 24
@@ -1640,7 +1871,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   boxStatus: {
-    fontSize: 8, 
+    fontSize: 8,
     fontWeight: "700",
     color: "#1b1717ff",
     marginBottom: 2,
@@ -1656,7 +1887,7 @@ const styles = StyleSheet.create({
     top: 8,
     right: 8,
   },
-  
+
   // All Stores Modal
   allStoresGrid: {
     flexDirection: "row",

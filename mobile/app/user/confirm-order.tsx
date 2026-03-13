@@ -1,23 +1,33 @@
 import { ThemedText } from "@/components/themed-text";
-import { orderService, serviceService, promotionService, paymentService } from "@/services/user";
+import {
+  orderService,
+  serviceService,
+  promotionService,
+  paymentService,
+  loyaltyService,
+} from "@/services/user";
 import type { PromotionValidateResponse } from "@/services/user/promotionService";
+import type {
+  RedeemedReward,
+  RewardItem,
+} from "@/services/user/loyaltyService";
 import { LaundryService, Order, OrderType, ServiceCategory } from "@/types";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Modal,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
-    Platform,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Platform,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -33,14 +43,17 @@ export default function ConfirmOrderScreen() {
     boxNumber: string;
     selectedCategory: string; // 'LAUNDRY' or 'STORAGE'
     serviceIds: string; // comma-separated
+    prefilledPromoCode?: string;
   }>();
 
   const [services, setServices] = useState<LaundryService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Parse passed params
-  const category = (params.selectedCategory || 'LAUNDRY') as ServiceCategory;
-  const selectedServiceIds = params.serviceIds ? params.serviceIds.split(',').map(id => parseInt(id, 10)) : [];
+  const category = (params.selectedCategory || "LAUNDRY") as ServiceCategory;
+  const selectedServiceIds = params.serviceIds
+    ? params.serviceIds.split(",").map((id) => parseInt(id, 10))
+    : [];
 
   // Order Detail States
   const [customerNote, setCustomerNote] = useState("");
@@ -59,7 +72,20 @@ export default function ConfirmOrderScreen() {
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState("");
-  const [promoDetail, setPromoDetail] = useState<PromotionValidateResponse | null>(null);
+  const [promoDetail, setPromoDetail] =
+    useState<PromotionValidateResponse | null>(null);
+
+  // Active (redeemed) vouchers the user can pick from
+  const [activeVouchers, setActiveVouchers] = useState<RedeemedReward[]>([]);
+  const [redeemableRewards, setRedeemableRewards] = useState<RewardItem[]>([]);
+  const [redeemingRewardId, setRedeemingRewardId] = useState<number | null>(
+    null,
+  );
+  const [systemPromotions, setSystemPromotions] = useState<
+    PromotionValidateResponse[]
+  >([]);
+  const [showVoucherPicker, setShowVoucherPicker] = useState(false);
+  const [voucherTab, setVoucherTab] = useState<"mine" | "system">("mine");
 
   // Submission States
   const [isCreating, setIsCreating] = useState(false);
@@ -67,11 +93,11 @@ export default function ConfirmOrderScreen() {
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
   // Payment States
-  const [paymentTab, setPaymentTab] = useState<'info' | 'momo'>('info');
+  const [paymentTab, setPaymentTab] = useState<"info" | "momo">("info");
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState('');
+  const [paymentUrl, setPaymentUrl] = useState("");
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState('');
+  const [paymentError, setPaymentError] = useState("");
   const [isPolling, setIsPolling] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -84,7 +110,7 @@ export default function ConfirmOrderScreen() {
         setServices(response.data);
       }
     } catch (error) {
-      console.error('[fetchServices] Error:', error);
+      console.error("[fetchServices] Error:", error);
       Alert.alert("Lỗi", "Không thể tải danh sách dịch vụ");
     } finally {
       setIsLoading(false);
@@ -95,28 +121,98 @@ export default function ConfirmOrderScreen() {
     fetchServices();
   }, [fetchServices]);
 
+  const loadVoucherData = useCallback(async () => {
+    try {
+      const res = await loyaltyService.getAvailableRewards();
+      if (res.success && res.data) {
+        const active = (res.data.redeemedRewards || []).filter(
+          (r) => r.status === "ACTIVE" && r.code,
+        );
+        const canRedeemNow = (res.data.availableRewards || []).filter(
+          (r) => !!r.canRedeem,
+        );
+        setActiveVouchers(active);
+        setRedeemableRewards(canRedeemNow);
+      }
+    } catch {
+      // ignore loading errors in picker prefetch
+    }
+  }, []);
+
+  const handleQuickRedeemAndApply = useCallback(
+    async (reward: RewardItem) => {
+      try {
+        setRedeemingRewardId(reward.id);
+        const res = await loyaltyService.redeemReward(reward.id);
+        const code = (res.data as any)?.code;
+        await loadVoucherData();
+
+        if (!code) {
+          Alert.alert(
+            "Thông báo",
+            "Đổi voucher thành công, vui lòng chọn lại.",
+          );
+          return;
+        }
+
+        const applied = await applyPromoCode(code);
+        if (applied) {
+          setShowVoucherPicker(false);
+          Alert.alert("Thành công", `Đã đổi và áp dụng voucher ${code}`);
+        }
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không thể đổi voucher lúc này";
+        Alert.alert("Đổi voucher thất bại", message);
+      } finally {
+        setRedeemingRewardId(null);
+      }
+    },
+    [applyPromoCode, loadVoucherData],
+  );
+
+  // Fetch user's vouchers for picker
+  useEffect(() => {
+    loadVoucherData();
+    promotionService
+      .getActivePromotions()
+      .then((res) => {
+        if (res.success && res.data) setSystemPromotions(res.data);
+      })
+      .catch(() => {});
+  }, [loadVoucherData]);
+
   // Derived Values
-  const selectedServicesList = services.filter(s => selectedServiceIds.includes(s.id));
+  const selectedServicesList = services.filter((s) =>
+    selectedServiceIds.includes(s.id),
+  );
   const subtotal = selectedServicesList.reduce((sum, s) => sum + s.price, 0);
   const total = Math.max(0, subtotal - promoDiscount);
 
   // Auto-set intendedReceiveAt for STORAGE if service has estimated time
   // For LAUNDRY, we might have an estimated time. For STORAGE, it should be manually selected unless it's a very specific fixed-time service.
-  const mainService = selectedServicesList.length > 0 ? selectedServicesList[0] : null;
-  
+  const mainService =
+    selectedServicesList.length > 0 ? selectedServicesList[0] : null;
+
   // Calculate fixed hours based on category
   let fixedHours: number | null = null;
-  if (category === 'LAUNDRY' && mainService) {
-      // Auto set expected receive time for LAUNDRY based on estimated time needed
-      fixedHours = mainService.estimatedTime || mainService.estimatedHours || 24; // default 24h if not specified
-  } else if (category === 'STORAGE' && mainService) {
-      // Only lock storage time if it's a specific "fixed duration" service (e.g., "Gửi đồ 2h").
-      // Check for patterns like "2h", "12 h", "2 giờ", "12 giờ" using regex to avoid matching "hàng", "thường"
-      const serviceNameLower = mainService.name?.toLowerCase() || "";
-      const hasFixedTimeRegex = /\b\d+\s*(h|giờ)\b/;
-      if ((mainService.estimatedTime || mainService.estimatedHours) && hasFixedTimeRegex.test(serviceNameLower)) {
-         fixedHours = mainService.estimatedTime || mainService.estimatedHours || null;
-      }
+  if (category === "LAUNDRY" && mainService) {
+    // Auto set expected receive time for LAUNDRY based on estimated time needed
+    fixedHours = mainService.estimatedTime || mainService.estimatedHours || 24; // default 24h if not specified
+  } else if (category === "STORAGE" && mainService) {
+    // Only lock storage time if it's a specific "fixed duration" service (e.g., "Gửi đồ 2h").
+    // Check for patterns like "2h", "12 h", "2 giờ", "12 giờ" using regex to avoid matching "hàng", "thường"
+    const serviceNameLower = mainService.name?.toLowerCase() || "";
+    const hasFixedTimeRegex = /\b\d+\s*(h|giờ)\b/;
+    if (
+      (mainService.estimatedTime || mainService.estimatedHours) &&
+      hasFixedTimeRegex.test(serviceNameLower)
+    ) {
+      fixedHours =
+        mainService.estimatedTime || mainService.estimatedHours || null;
+    }
   }
 
   const isTimeFixed = !!fixedHours;
@@ -129,9 +225,11 @@ export default function ConfirmOrderScreen() {
     }
   }, [isTimeFixed, fixedHours]);
 
-  // Handle applied promo code validation
-  const handleApplyPromo = async () => {
-    const code = promotionCode.trim();
+  const applyPromoCode = async (
+    rawCode: string,
+    selectedPromo?: PromotionValidateResponse,
+  ): Promise<boolean> => {
+    const code = rawCode.trim().toUpperCase();
     if (!code) return;
 
     setPromoLoading(true);
@@ -141,24 +239,43 @@ export default function ConfirmOrderScreen() {
     setPromoDetail(null);
 
     try {
-      const response = await promotionService.validatePromotionCode(code);
-      if (response.data) {
-        const promo = response.data;
+      const promo =
+        selectedPromo ||
+        (await promotionService.validatePromotionCode(code)).data;
+
+      if (promo) {
         if (promo.minOrderAmount && subtotal < promo.minOrderAmount) {
-          setPromoError(`Đơn hàng tối thiểu ${formatPrice(promo.minOrderAmount)} để áp dụng mã này`);
-          return;
+          setPromoError(
+            `Đơn hàng tối thiểu ${formatPrice(promo.minOrderAmount)} để áp dụng mã này`,
+          );
+          return false;
         }
         const discount = promotionService.calculateDiscount(promo, subtotal);
+        setPromotionCode(code);
         setPromoDetail(promo);
         setPromoDiscount(discount);
         setPromoApplied(true);
+        return true;
       }
     } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || error?.message || "Mã khuyến mãi không hợp lệ";
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Mã khuyến mãi không hợp lệ";
       setPromoError(errorMsg);
+      return false;
     } finally {
       setPromoLoading(false);
     }
+
+    return false;
+  };
+
+  // Handle applied promo code validation
+  const handleApplyPromo = async () => {
+    const code = promotionCode.trim();
+    if (!code) return false;
+    return applyPromoCode(code);
   };
 
   const handleRemovePromo = () => {
@@ -172,7 +289,7 @@ export default function ConfirmOrderScreen() {
   const handleCreateOrder = async () => {
     try {
       setIsCreating(true);
-      
+
       const orderData: any = {
         type: category as OrderType,
         serviceCategory: category,
@@ -186,40 +303,48 @@ export default function ConfirmOrderScreen() {
         orderData.promotionCode = promotionCode.trim();
       }
 
-      if (category === 'LAUNDRY' && estimatedWeight && parseFloat(estimatedWeight) > 0) {
+      if (
+        category === "LAUNDRY" &&
+        estimatedWeight &&
+        parseFloat(estimatedWeight) > 0
+      ) {
         orderData.estimatedWeight = parseFloat(estimatedWeight);
       }
 
-      if (category === 'STORAGE') {
-        if (intendedReceiveAt) orderData.intendedReceiveAt = intendedReceiveAt.toISOString();
+      if (category === "STORAGE") {
+        if (intendedReceiveAt)
+          orderData.intendedReceiveAt = intendedReceiveAt.toISOString();
         if (sendToOther && receiverName.trim() && receiverPhone.trim()) {
           orderData.receiverName = receiverName.trim();
           orderData.receiverPhone = receiverPhone.trim();
         }
       }
 
-      console.log('[ConfirmOrder] Sending:', orderData);
+      console.log("[ConfirmOrder] Sending:", orderData);
       const response = await orderService.createOrder(orderData);
-      
+
       if (response.success && response.data) {
         setCreatedOrder(response.data);
 
         // Confirm order so it transitions to WAITING (eligible for payment)
         try {
           await orderService.confirmOrder(response.data.id);
-          console.log('[ConfirmOrder] Order confirmed:', response.data.id);
+          console.log("[ConfirmOrder] Order confirmed:", response.data.id);
         } catch (e) {
-          console.warn('[ConfirmOrder] Confirm failed (best-effort):', e);
+          console.warn("[ConfirmOrder] Confirm failed (best-effort):", e);
         }
 
-        setPaymentTab('info');
-        setPaymentUrl('');
-        setPaymentError('');
+        setPaymentTab("info");
+        setPaymentUrl("");
+        setPaymentError("");
         setPaymentSuccess(false);
         setShowSuccessModal(true);
       }
     } catch (error: any) {
-      Alert.alert("Tạo đơn thất bại", error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
+      Alert.alert(
+        "Tạo đơn thất bại",
+        error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -229,21 +354,25 @@ export default function ConfirmOrderScreen() {
   const handlePayMomo = async () => {
     if (!createdOrder) return;
     setIsPaymentLoading(true);
-    setPaymentError('');
+    setPaymentError("");
     setQrCodeData(null);
     try {
-      const res = await paymentService.createPayment(createdOrder.id, 'MOMO');
+      const res = await paymentService.createPayment(createdOrder.id, "MOMO");
       const paymentData = res.data as any;
       if (res.success && paymentData?.paymentUrl) {
         setPaymentUrl(paymentData.paymentUrl);
         setQrCodeData(paymentData.qrCodeUrl || null);
-        setPaymentTab('momo');
+        setPaymentTab("momo");
         startPaymentPolling(createdOrder.id);
       } else {
-        setPaymentError((res as any).message || 'Không thể tạo thanh toán MoMo');
+        setPaymentError(
+          (res as any).message || "Không thể tạo thanh toán MoMo",
+        );
       }
     } catch (err: any) {
-      setPaymentError(err?.response?.data?.message || err.message || 'Lỗi kết nối');
+      setPaymentError(
+        err?.response?.data?.message || err.message || "Lỗi kết nối",
+      );
     } finally {
       setIsPaymentLoading(false);
     }
@@ -260,27 +389,47 @@ export default function ConfirmOrderScreen() {
           setIsPolling(false);
           setPaymentSuccess(true);
           setShowSuccessModal(false);
-          Alert.alert('Thành công!', 'Thanh toán MoMo thành công.', [
-            { text: 'OK', onPress: () => router.push('/user/(tabs)/orders' as any) },
+          Alert.alert("Thành công!", "Thanh toán MoMo thành công.", [
+            {
+              text: "OK",
+              onPress: () => router.push("/user/(tabs)/orders" as any),
+            },
           ]);
         }
-      } catch { /* ignore polling errors */ }
+      } catch {
+        /* ignore polling errors */
+      }
     }, 3000);
   };
 
   // Clean up polling on unmount
   useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
+  useEffect(() => {
+    const code = params.prefilledPromoCode?.trim().toUpperCase();
+    if (!code) return;
+    setPromotionCode(code);
+    applyPromoCode(code);
+  }, [params.prefilledPromoCode, subtotal]);
+
   const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
   };
 
   const formatDateTime = (date: Date): string => {
-    return date.toLocaleString('vi-VN', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+    return date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -296,69 +445,127 @@ export default function ConfirmOrderScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
+
       {/* Header */}
       <View style={styles.header}>
-        <LinearGradient colors={["#003D5B", "#002B40"]} style={styles.headerGradient}>
+        <LinearGradient
+          colors={["#003D5B", "#002B40"]}
+          style={styles.headerGradient}
+        >
           <View style={styles.headerSafeArea}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
               <View style={styles.backButtonBlur}>
-                 <Icon name="arrow-back" type="material" size={24} color="#fff" />
+                <Icon
+                  name="arrow-back"
+                  type="material"
+                  size={24}
+                  color="#fff"
+                />
               </View>
             </TouchableOpacity>
-            <ThemedText style={styles.headerTitle}>Chi tiết đơn hàng</ThemedText>
+            <ThemedText style={styles.headerTitle}>
+              Chi tiết đơn hàng
+            </ThemedText>
           </View>
         </LinearGradient>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-        
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Info Card */}
         <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-                <View style={styles.infoIconBox}>
-                    <Icon name="storefront" type="material" size={20} color="#003D5B" />
-                </View>
-                <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.infoLabel}>Cửa hàng</ThemedText>
-                    <ThemedText style={styles.infoValue} numberOfLines={1}>{params.storeName}</ThemedText>
-                </View>
+          <View style={styles.infoRow}>
+            <View style={styles.infoIconBox}>
+              <Icon
+                name="storefront"
+                type="material"
+                size={20}
+                color="#003D5B"
+              />
             </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-                <View style={[styles.infoIconBox, { backgroundColor: "rgba(227, 242, 253, 0.8)" }]}>
-                    <Icon name="door-sliding" type="material" size={20} color="#003D5B" />
-                </View>
-                <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.infoLabel}>Tủ đồ</ThemedText>
-                    <ThemedText style={styles.infoValue} numberOfLines={1}>{params.lockerName}</ThemedText>
-                </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.infoLabel}>Cửa hàng</ThemedText>
+              <ThemedText style={styles.infoValue} numberOfLines={1}>
+                {params.storeName}
+              </ThemedText>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-                <View style={[styles.infoIconBox, { backgroundColor: "rgba(227, 242, 253, 0.8)" }]}>
-                    <Icon name="inventory-2" type="material" size={20} color="#003D5B" />
-                </View>
-                <View style={{ flex: 1 }}>
-                    <ThemedText style={styles.infoLabel}>Ngăn tủ</ThemedText>
-                    <ThemedText style={styles.infoValue}>Số {params.boxNumber}</ThemedText>
-                </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <View
+              style={[
+                styles.infoIconBox,
+                { backgroundColor: "rgba(227, 242, 253, 0.8)" },
+              ]}
+            >
+              <Icon
+                name="door-sliding"
+                type="material"
+                size={20}
+                color="#003D5B"
+              />
             </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.infoLabel}>Tủ đồ</ThemedText>
+              <ThemedText style={styles.infoValue} numberOfLines={1}>
+                {params.lockerName}
+              </ThemedText>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <View
+              style={[
+                styles.infoIconBox,
+                { backgroundColor: "rgba(227, 242, 253, 0.8)" },
+              ]}
+            >
+              <Icon
+                name="inventory-2"
+                type="material"
+                size={20}
+                color="#003D5B"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.infoLabel}>Ngăn tủ</ThemedText>
+              <ThemedText style={styles.infoValue}>
+                Số {params.boxNumber}
+              </ThemedText>
+            </View>
+          </View>
         </View>
 
         {/* Selected Services */}
         <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Dịch vụ đã chọn</ThemedText>
-            {selectedServicesList.map(s => (
-                <View key={s.id} style={styles.serviceRow}>
-                    <View style={styles.serviceIconWrap}>
-                        <Icon name="check-circle" type="material" size={18} color="#4CAF50" />
-                    </View>
-                    <ThemedText style={styles.serviceName}>{s.name}</ThemedText>
-                    <ThemedText style={styles.servicePrice}>{formatPrice(s.price)}</ThemedText>
-                </View>
-            ))}
+          <ThemedText style={styles.sectionTitle}>Dịch vụ đã chọn</ThemedText>
+          {selectedServicesList.map((s) => (
+            <View key={s.id} style={styles.serviceRow}>
+              <View style={styles.serviceIconWrap}>
+                <Icon
+                  name="check-circle"
+                  type="material"
+                  size={18}
+                  color="#4CAF50"
+                />
+              </View>
+              <ThemedText style={styles.serviceName}>{s.name}</ThemedText>
+              <ThemedText style={styles.servicePrice}>
+                {formatPrice(s.price)}
+              </ThemedText>
+            </View>
+          ))}
         </View>
 
         {/* Note Input */}
@@ -382,18 +589,33 @@ export default function ConfirmOrderScreen() {
         </View>
 
         {/* STORAGE: Receiver Section */}
-        {category === 'STORAGE' && (
+        {category === "STORAGE" && (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <ThemedText style={styles.sectionTitle}>Người nhận đồ</ThemedText>
-              <TouchableOpacity style={styles.toggleButton} onPress={() => setSendToOther(!sendToOther)}>
-                <View style={[styles.toggleTrack, sendToOther && styles.toggleTrackActive]}>
-                  <View style={[styles.toggleThumb, sendToOther && styles.toggleThumbActive]} />
+              <TouchableOpacity
+                style={styles.toggleButton}
+                onPress={() => setSendToOther(!sendToOther)}
+              >
+                <View
+                  style={[
+                    styles.toggleTrack,
+                    sendToOther && styles.toggleTrackActive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleThumb,
+                      sendToOther && styles.toggleThumbActive,
+                    ]}
+                  />
                 </View>
-                <ThemedText style={styles.toggleLabel}>{sendToOther ? 'Gửi cho người khác' : 'Tự nhận'}</ThemedText>
+                <ThemedText style={styles.toggleLabel}>
+                  {sendToOther ? "Gửi cho người khác" : "Tự nhận"}
+                </ThemedText>
               </TouchableOpacity>
             </View>
-            
+
             {sendToOther && (
               <View style={styles.receiverInputs}>
                 <View style={styles.inputRow}>
@@ -424,47 +646,190 @@ export default function ConfirmOrderScreen() {
 
         {/* Time Picker Section */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Thời gian nhận dự kiến</ThemedText>
+          <ThemedText style={styles.sectionTitle}>
+            Thời gian nhận dự kiến
+          </ThemedText>
           <TouchableOpacity
-            style={[styles.datePickerButton, isTimeFixed && { backgroundColor: '#F0F0F0' }]}
+            style={[
+              styles.datePickerButton,
+              isTimeFixed && { backgroundColor: "#F0F0F0" },
+            ]}
             disabled={isTimeFixed}
             onPress={() => {
-              const initialDate = intendedReceiveAt || (() => {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                tomorrow.setHours(10, 0, 0, 0);
-                return tomorrow;
-              })();
+              const initialDate =
+                intendedReceiveAt ||
+                (() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  tomorrow.setHours(10, 0, 0, 0);
+                  return tomorrow;
+                })();
               setTempDate(initialDate);
               setShowDatePicker(true);
             }}
           >
             <Icon name="event" type="material" size={22} color="#003D5B" />
             <ThemedText style={styles.datePickerText}>
-              {intendedReceiveAt ? formatDateTime(intendedReceiveAt) : 'Chọn thời gian nhận đồ'}
+              {intendedReceiveAt
+                ? formatDateTime(intendedReceiveAt)
+                : "Chọn thời gian nhận đồ"}
             </ThemedText>
-            {!isTimeFixed && <Icon name="chevron-right" type="material" size={22} color="#666" />}
+            {!isTimeFixed && (
+              <Icon
+                name="chevron-right"
+                type="material"
+                size={22}
+                color="#666"
+              />
+            )}
           </TouchableOpacity>
           {isTimeFixed && fixedHours && (
-            <ThemedText style={{fontSize: 12, color: '#666', marginTop: 8, fontStyle: 'italic'}}>
+            <ThemedText
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginTop: 8,
+                fontStyle: "italic",
+              }}
+            >
               * Thời gian được tính tự động dựa trên dịch vụ ({fixedHours} giờ)
             </ThemedText>
           )}
         </View>
 
         {/* Promo Code Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Mã giảm giá</ThemedText>
-          <View style={styles.promoInputRow}>
-            <View style={[styles.promoInputContainer, promoApplied && styles.promoInputApplied, promoError ? styles.promoInputError : null]}>
-              <Icon name="local-offer" type="material" size={20} color={promoApplied ? "#4CAF50" : promoError ? "#F44336" : "#666"} />
+        {/* Voucher Section – Shopee-style tappable row */}
+        <TouchableOpacity
+          style={styles.shopeeVoucherRow}
+          onPress={() => setShowVoucherPicker(true)}
+          activeOpacity={0.75}
+        >
+          <Icon name="local-offer" type="material" size={22} color="#E53935" />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            {promoApplied && promoDetail ? (
+              <>
+                <ThemedText style={styles.shopeeVoucherAppliedTitle}>
+                  {promoDetail.title}
+                </ThemedText>
+                <ThemedText style={styles.shopeeVoucherAppliedSub}>
+                  Giảm {formatPrice(promoDiscount)} · Mã: {promoDetail.code}
+                </ThemedText>
+              </>
+            ) : (
+              <ThemedText style={styles.shopeeVoucherPlaceholder}>
+                {activeVouchers.length + systemPromotions.length > 0
+                  ? `${activeVouchers.length + systemPromotions.length} voucher có thể dùng`
+                  : "Chọn voucher hoặc nhập mã giảm giá"}
+              </ThemedText>
+            )}
+          </View>
+          {promoApplied ? (
+            <TouchableOpacity
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleRemovePromo();
+              }}
+            >
+              <Icon name="cancel" type="material" size={20} color="#999" />
+            </TouchableOpacity>
+          ) : (
+            <Icon name="chevron-right" type="material" size={20} color="#CCC" />
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Footer Pricing Summary */}
+      <View style={styles.footerContainer}>
+        <View style={styles.priceSummaryBox}>
+          <View style={styles.priceRow}>
+            <ThemedText style={styles.priceLabel}>
+              Tạm tính ({selectedServicesList.length} d.vụ):
+            </ThemedText>
+            <ThemedText style={styles.priceValue}>
+              {formatPrice(subtotal)}
+            </ThemedText>
+          </View>
+          {promoApplied && promoDiscount > 0 && (
+            <View style={styles.priceRow}>
+              <ThemedText style={[styles.priceLabel, { color: "#4CAF50" }]}>
+                Khuyến mãi:
+              </ThemedText>
+              <ThemedText style={[styles.priceValue, { color: "#F44336" }]}>
+                -{formatPrice(promoDiscount)}
+              </ThemedText>
+            </View>
+          )}
+          <View style={styles.totalRow}>
+            <ThemedText style={styles.totalLabel}>Tổng cộng:</ThemedText>
+            <ThemedText style={styles.totalValue}>
+              {formatPrice(total)}
+            </ThemedText>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.checkoutButton,
+            isCreating && styles.checkoutButtonDisabled,
+          ]}
+          onPress={handleCreateOrder}
+          disabled={isCreating}
+        >
+          {isCreating ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Icon
+                name="check-circle-outline"
+                type="material"
+                size={22}
+                color="#fff"
+              />
+              <ThemedText style={styles.checkoutButtonText}>
+                Xác nhận & Đặt đơn
+              </ThemedText>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Voucher Picker Modal */}
+      {/* Voucher Picker Modal – Shopee style */}
+      <Modal
+        visible={showVoucherPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowVoucherPicker(false)}
+      >
+        <View style={styles.voucherPickerOverlay}>
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setShowVoucherPicker(false)}
+          />
+          <View style={styles.voucherPickerSheet}>
+            {/* Handle */}
+            <View style={styles.vpHandle} />
+
+            {/* Header */}
+            <View style={styles.vpHeader}>
+              <ThemedText style={styles.vpTitle}>Chọn Voucher</ThemedText>
+              <TouchableOpacity onPress={() => setShowVoucherPicker(false)}>
+                <Icon name="close" type="material" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Manual code input row */}
+            <View style={styles.vpInputRow}>
+              <Icon name="local-offer" type="material" size={20} color="#999" />
               <TextInput
-                style={styles.promoInput}
-                placeholder="Nhập mã khuyến mãi"
-                placeholderTextColor="#A0A0A0"
+                style={styles.vpInput}
+                placeholder="Nhập mã giảm giá"
+                placeholderTextColor="#BBB"
                 value={promotionCode}
-                onChangeText={(text) => {
-                  setPromotionCode(text.toUpperCase());
+                onChangeText={(t) => {
+                  setPromotionCode(t.toUpperCase());
                   if (promoApplied || promoError) {
                     setPromoApplied(false);
                     setPromoError("");
@@ -473,119 +838,375 @@ export default function ConfirmOrderScreen() {
                   }
                 }}
                 autoCapitalize="characters"
-                editable={!promoApplied && !promoLoading}
+                editable={!promoApplied}
               />
-              {promoApplied && (
-                <TouchableOpacity onPress={handleRemovePromo} style={styles.promoRemoveBtn}>
-                  <Icon name="close" type="material" size={18} color="#999" />
-                </TouchableOpacity>
-              )}
-            </View>
-            {!promoApplied && (
               <TouchableOpacity
-                style={[styles.promoApplyButton, promoLoading && { opacity: 0.6 }]}
-                onPress={handleApplyPromo}
-                disabled={!promotionCode.trim() || promoLoading}
+                style={[
+                  styles.vpApplyBtn,
+                  (!promotionCode.trim() || promoApplied) && { opacity: 0.4 },
+                ]}
+                disabled={!promotionCode.trim() || promoApplied || promoLoading}
+                onPress={async () => {
+                  const applied = await handleApplyPromo();
+                  if (applied) setShowVoucherPicker(false);
+                }}
               >
-                {promoLoading ? <ActivityIndicator size="small" color="#fff" /> : <ThemedText style={styles.promoApplyText}>Áp dụng</ThemedText>}
+                {promoLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText style={styles.vpApplyText}>Áp dụng</ThemedText>
+                )}
               </TouchableOpacity>
-            )}
+            </View>
+            {promoError ? (
+              <ThemedText style={styles.vpError}>{promoError}</ThemedText>
+            ) : null}
+
+            {/* Tabs */}
+            <View style={styles.vpTabs}>
+              <TouchableOpacity
+                style={[
+                  styles.vpTab,
+                  voucherTab === "mine" && styles.vpTabActive,
+                ]}
+                onPress={() => setVoucherTab("mine")}
+              >
+                <ThemedText
+                  style={[
+                    styles.vpTabText,
+                    voucherTab === "mine" && styles.vpTabTextActive,
+                  ]}
+                >
+                  Voucher của tôi ({activeVouchers.length})
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.vpTab,
+                  voucherTab === "system" && styles.vpTabActive,
+                ]}
+                onPress={() => setVoucherTab("system")}
+              >
+                <ThemedText
+                  style={[
+                    styles.vpTabText,
+                    voucherTab === "system" && styles.vpTabTextActive,
+                  ]}
+                >
+                  Ưu đãi hệ thống ({systemPromotions.length})
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {voucherTab === "mine" ? (
+                activeVouchers.length === 0 &&
+                redeemableRewards.length === 0 ? (
+                  <View style={styles.vpEmpty}>
+                    <Icon
+                      name="card-giftcard"
+                      type="material"
+                      size={44}
+                      color="#DDD"
+                    />
+                    <ThemedText style={styles.vpEmptyText}>
+                      Bạn chưa có voucher đã đổi
+                    </ThemedText>
+                    <ThemedText style={styles.vpEmptySubText}>
+                      Đổi điểm lấy voucher trong mục Voucher & Ưu đãi
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <>
+                    {activeVouchers.map((v) => {
+                      const isSelected =
+                        promoApplied && promotionCode === v.code;
+                      return (
+                        <TouchableOpacity
+                          key={v.id}
+                          style={[
+                            styles.vpCard,
+                            isSelected && styles.vpCardSelected,
+                          ]}
+                          onPress={() => {
+                            if (isSelected) {
+                              handleRemovePromo();
+                              return;
+                            }
+                            applyPromoCode(v.code).then((applied) => {
+                              if (applied) setShowVoucherPicker(false);
+                            });
+                          }}
+                        >
+                          <View
+                            style={[
+                              styles.vpCardLeft,
+                              { backgroundColor: "#E8F5E920" },
+                            ]}
+                          >
+                            <Icon
+                              name="confirmed-event"
+                              type="material"
+                              size={26}
+                              color="#4CAF50"
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <ThemedText style={styles.vpCardName}>
+                              {v.rewardName}
+                            </ThemedText>
+                            <ThemedText style={styles.vpCardCode}>
+                              {v.code}
+                            </ThemedText>
+                            {v.expiresAt && (
+                              <ThemedText style={styles.vpCardExpiry}>
+                                HSD:{" "}
+                                {new Date(v.expiresAt).toLocaleDateString(
+                                  "vi-VN",
+                                )}
+                              </ThemedText>
+                            )}
+                          </View>
+                          <View
+                            style={[
+                              styles.vpRadio,
+                              isSelected && styles.vpRadioSelected,
+                            ]}
+                          >
+                            {isSelected && <View style={styles.vpRadioDot} />}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+
+                    {redeemableRewards.length > 0 && (
+                      <View style={styles.vpQuickRedeemSection}>
+                        <ThemedText style={styles.vpQuickRedeemTitle}>
+                          Đổi nhanh bằng điểm
+                        </ThemedText>
+                        {redeemableRewards.map((reward) => (
+                          <View
+                            key={reward.id}
+                            style={styles.vpQuickRedeemCard}
+                          >
+                            <View style={{ flex: 1 }}>
+                              <ThemedText style={styles.vpCardName}>
+                                {reward.name}
+                              </ThemedText>
+                              <ThemedText style={styles.vpCardExpiry}>
+                                Cần{" "}
+                                {reward.pointsRequired.toLocaleString("vi-VN")}{" "}
+                                điểm
+                              </ThemedText>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.vpQuickRedeemBtn}
+                              onPress={() => handleQuickRedeemAndApply(reward)}
+                              disabled={
+                                redeemingRewardId === reward.id || promoLoading
+                              }
+                            >
+                              {redeemingRewardId === reward.id ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <ThemedText style={styles.vpQuickRedeemBtnText}>
+                                  Đổi & áp dụng
+                                </ThemedText>
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )
+              ) : systemPromotions.length === 0 ? (
+                <View style={styles.vpEmpty}>
+                  <Icon
+                    name="local-offer"
+                    type="material"
+                    size={44}
+                    color="#DDD"
+                  />
+                  <ThemedText style={styles.vpEmptyText}>
+                    Không có ưu đãi nào
+                  </ThemedText>
+                </View>
+              ) : (
+                systemPromotions.map((promo) => {
+                  const isSelected =
+                    promoApplied && promotionCode === promo.code;
+                  const discountLabel =
+                    promo.discountType === "PERCENTAGE"
+                      ? `Giảm ${promo.discountValue}%${promo.maxDiscountAmount ? ` tối đa ${formatPrice(promo.maxDiscountAmount)}` : ""}`
+                      : promo.discountType === "FIXED_AMOUNT"
+                        ? `Giảm ${formatPrice(promo.discountValue)}`
+                        : "Miễn phí dịch vụ";
+                  const canApply =
+                    !promo.minOrderAmount || subtotal >= promo.minOrderAmount;
+                  return (
+                    <TouchableOpacity
+                      key={promo.id}
+                      style={[
+                        styles.vpCard,
+                        isSelected && styles.vpCardSelected,
+                        !canApply && styles.vpCardDisabled,
+                      ]}
+                      onPress={() => {
+                        if (!canApply) return;
+                        if (isSelected) {
+                          handleRemovePromo();
+                          return;
+                        }
+                        applyPromoCode(promo.code, promo).then((applied) => {
+                          if (applied) setShowVoucherPicker(false);
+                        });
+                      }}
+                    >
+                      <View
+                        style={[
+                          styles.vpCardLeft,
+                          { backgroundColor: "#FFEBEE" },
+                        ]}
+                      >
+                        <Icon
+                          name="local-offer"
+                          type="material"
+                          size={26}
+                          color="#E53935"
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <ThemedText style={styles.vpCardName}>
+                          {promo.title}
+                        </ThemedText>
+                        <ThemedText
+                          style={[styles.vpCardCode, { color: "#E53935" }]}
+                        >
+                          {discountLabel}
+                        </ThemedText>
+                        {promo.minOrderAmount ? (
+                          <ThemedText
+                            style={[
+                              styles.vpCardExpiry,
+                              !canApply && { color: "#F44336" },
+                            ]}
+                          >
+                            {canApply
+                              ? `Đơn tối thiểu ${formatPrice(promo.minOrderAmount)}`
+                              : `Cần thêm ${formatPrice(promo.minOrderAmount - subtotal)} để dùng mã này`}
+                          </ThemedText>
+                        ) : null}
+                        {promo.endDate ? (
+                          <ThemedText style={styles.vpCardExpiry}>
+                            HSD:{" "}
+                            {new Date(promo.endDate).toLocaleDateString(
+                              "vi-VN",
+                            )}
+                          </ThemedText>
+                        ) : null}
+                      </View>
+                      <View
+                        style={[
+                          styles.vpRadio,
+                          isSelected && styles.vpRadioSelected,
+                          !canApply && { opacity: 0.3 },
+                        ]}
+                      >
+                        {isSelected && <View style={styles.vpRadioDot} />}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+              <View style={{ height: 32 }} />
+            </ScrollView>
           </View>
-
-          {promoError ? (
-            <View style={styles.promoErrorMsg}>
-              <Icon name="error-outline" type="material" size={16} color="#F44336" />
-              <ThemedText style={styles.promoErrorText}>{promoError}</ThemedText>
-            </View>
-          ) : null}
-
-          {promoApplied && promoDetail && (
-            <View style={styles.promoSuccessCard}>
-              <View style={styles.promoSuccessHeader}>
-                <Icon name="check-circle" type="material" size={20} color="#4CAF50" />
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.promoSuccessTitle}>{promoDetail.title}</ThemedText>
-                  <ThemedText style={styles.promoSuccessCode}>Mã: {promoDetail.code}</ThemedText>
-                </View>
-              </View>
-            </View>
-          )}
         </View>
-
-      </ScrollView>
-
-      {/* Footer Pricing Summary */}
-      <View style={styles.footerContainer}>
-        <View style={styles.priceSummaryBox}>
-            <View style={styles.priceRow}>
-                <ThemedText style={styles.priceLabel}>Tạm tính ({selectedServicesList.length} d.vụ):</ThemedText>
-                <ThemedText style={styles.priceValue}>{formatPrice(subtotal)}</ThemedText>
-            </View>
-            {promoApplied && promoDiscount > 0 && (
-                <View style={styles.priceRow}>
-                    <ThemedText style={[styles.priceLabel, { color: '#4CAF50' }]}>Khuyến mãi:</ThemedText>
-                    <ThemedText style={[styles.priceValue, { color: '#F44336' }]}>-{formatPrice(promoDiscount)}</ThemedText>
-                </View>
-            )}
-            <View style={styles.totalRow}>
-                <ThemedText style={styles.totalLabel}>Tổng cộng:</ThemedText>
-                <ThemedText style={styles.totalValue}>{formatPrice(total)}</ThemedText>
-            </View>
-        </View>
-
-        <TouchableOpacity
-            style={[styles.checkoutButton, isCreating && styles.checkoutButtonDisabled]}
-            onPress={handleCreateOrder}
-            disabled={isCreating}
-        >
-            {isCreating ? (
-            <ActivityIndicator size="small" color="#fff" />
-            ) : (
-            <>
-                <Icon name="check-circle-outline" type="material" size={22} color="#fff" />
-                <ThemedText style={styles.checkoutButtonText}>Xác nhận & Đặt đơn</ThemedText>
-            </>
-            )}
-        </TouchableOpacity>
-      </View>
+      </Modal>
 
       {/* Success Modal */}
       <Modal visible={showSuccessModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-
             {/* ── Tab: Order Info ── */}
-            {paymentTab === 'info' && (
+            {paymentTab === "info" && (
               <>
                 <View style={styles.successHeader}>
-                  <Icon name="check-circle" type="material" size={60} color="#4CAF50" />
+                  <Icon
+                    name="check-circle"
+                    type="material"
+                    size={60}
+                    color="#4CAF50"
+                  />
                 </View>
                 <ThemedText style={styles.modalTitle}>Thành công!</ThemedText>
-                <ThemedText style={styles.modalSubtitle}>Đơn hàng của bạn đã được tạo.</ThemedText>
+                <ThemedText style={styles.modalSubtitle}>
+                  Đơn hàng của bạn đã được tạo.
+                </ThemedText>
 
                 {(createdOrder?.pin || createdOrder?.pinCode) && (
                   <View style={styles.pinContainer}>
-                    <ThemedText style={styles.pinLabel}>MÃ PIN MỞ TỦ</ThemedText>
-                    <ThemedText style={styles.pinCode}>{createdOrder.pin || createdOrder.pinCode}</ThemedText>
+                    <ThemedText style={styles.pinLabel}>
+                      MÃ PIN MỞ TỦ
+                    </ThemedText>
+                    <ThemedText style={styles.pinCode}>
+                      {createdOrder.pin || createdOrder.pinCode}
+                    </ThemedText>
                     <View style={styles.pinInstruction}>
-                      <Icon name="touch-app" type="material" size={16} color="#003D5B" />
+                      <Icon
+                        name="touch-app"
+                        type="material"
+                        size={16}
+                        color="#003D5B"
+                      />
                       <ThemedText style={styles.pinInstructionText}>
-                        {createdOrder?.nextActionMessage || "Nhập mã này trên màn hình tủ"}
+                        {createdOrder?.nextActionMessage ||
+                          "Nhập mã này trên màn hình tủ"}
                       </ThemedText>
                     </View>
                   </View>
                 )}
 
                 {paymentError ? (
-                  <View style={{ backgroundColor: '#FFF5F5', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#FFCDD2', width: '100%', marginBottom: 12 }}>
-                    <ThemedText style={{ color: '#F44336', fontSize: 13, textAlign: 'center' }}>{paymentError}</ThemedText>
+                  <View
+                    style={{
+                      backgroundColor: "#FFF5F5",
+                      padding: 12,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: "#FFCDD2",
+                      width: "100%",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <ThemedText
+                      style={{
+                        color: "#F44336",
+                        fontSize: 13,
+                        textAlign: "center",
+                      }}
+                    >
+                      {paymentError}
+                    </ThemedText>
                   </View>
                 ) : null}
 
                 <View style={styles.buttonStack}>
                   {/* MoMo Pay Button */}
                   <TouchableOpacity
-                    style={[styles.primaryButton, { backgroundColor: '#A50064', flexDirection: 'row', justifyContent: 'center', gap: 8 }]}
+                    style={[
+                      styles.primaryButton,
+                      {
+                        backgroundColor: "#A50064",
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        gap: 8,
+                      },
+                    ]}
                     onPress={handlePayMomo}
                     disabled={isPaymentLoading || paymentSuccess}
                   >
@@ -593,9 +1214,16 @@ export default function ConfirmOrderScreen() {
                       <ActivityIndicator size="small" color="#fff" />
                     ) : (
                       <>
-                        <Icon name="payment" type="material" size={20} color="#fff" />
+                        <Icon
+                          name="payment"
+                          type="material"
+                          size={20}
+                          color="#fff"
+                        />
                         <ThemedText style={styles.primaryButtonText}>
-                          {paymentSuccess ? 'Đã thanh toán ✓' : 'Thanh toán MoMo'}
+                          {paymentSuccess
+                            ? "Đã thanh toán ✓"
+                            : "Thanh toán MoMo"}
                         </ThemedText>
                       </>
                     )}
@@ -609,7 +1237,9 @@ export default function ConfirmOrderScreen() {
                       router.push("/user/(tabs)/orders" as any);
                     }}
                   >
-                    <ThemedText style={styles.primaryButtonText}>Xem đơn hàng</ThemedText>
+                    <ThemedText style={styles.primaryButtonText}>
+                      Xem đơn hàng
+                    </ThemedText>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -620,58 +1250,156 @@ export default function ConfirmOrderScreen() {
                       router.push("/user/(tabs)/home" as any);
                     }}
                   >
-                    <ThemedText style={styles.secondaryButtonText}>Về trang chủ</ThemedText>
+                    <ThemedText style={styles.secondaryButtonText}>
+                      Về trang chủ
+                    </ThemedText>
                   </TouchableOpacity>
                 </View>
               </>
             )}
 
             {/* ── Tab: MoMo QR / Link ── */}
-            {paymentTab === 'momo' && (
+            {paymentTab === "momo" && (
               <>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <TouchableOpacity onPress={() => setPaymentTab('info')}>
-                    <Icon name="arrow-back" type="material" size={24} color="#333" />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 16,
+                  }}
+                >
+                  <TouchableOpacity onPress={() => setPaymentTab("info")}>
+                    <Icon
+                      name="arrow-back"
+                      type="material"
+                      size={24}
+                      color="#333"
+                    />
                   </TouchableOpacity>
-                  <ThemedText style={[styles.modalTitle, { marginBottom: 0, flex: 1 }]}>Thanh toán MoMo</ThemedText>
+                  <ThemedText
+                    style={[styles.modalTitle, { marginBottom: 0, flex: 1 }]}
+                  >
+                    Thanh toán MoMo
+                  </ThemedText>
                 </View>
 
-                <View style={{ width: '100%', backgroundColor: '#FFF0F6', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#F8BBD0', alignItems: 'center', marginBottom: 16 }}>
+                <View
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#FFF0F6",
+                    borderRadius: 16,
+                    padding: 20,
+                    borderWidth: 1,
+                    borderColor: "#F8BBD0",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
                   {qrCodeData ? (
-                    <View style={{ padding: 10, backgroundColor: 'white', borderRadius: 12, marginBottom: 12 }}>
+                    <View
+                      style={{
+                        padding: 10,
+                        backgroundColor: "white",
+                        borderRadius: 12,
+                        marginBottom: 12,
+                      }}
+                    >
                       <QRCode value={qrCodeData} size={150} />
                     </View>
                   ) : (
-                    <Icon name="qr-code-2" type="material" size={80} color="#A50064" />
+                    <Icon
+                      name="qr-code-2"
+                      type="material"
+                      size={80}
+                      color="#A50064"
+                    />
                   )}
-                  <ThemedText style={{ fontSize: 14, color: '#A50064', fontWeight: '700', marginTop: 8, textAlign: 'center' }}>
+                  <ThemedText
+                    style={{
+                      fontSize: 14,
+                      color: "#A50064",
+                      fontWeight: "700",
+                      marginTop: 8,
+                      textAlign: "center",
+                    }}
+                  >
                     Quét mã QR bằng ứng dụng MoMo
                   </ThemedText>
-                  <ThemedText style={{ fontSize: 12, color: '#888', marginTop: 4, textAlign: 'center' }}>
+                  <ThemedText
+                    style={{
+                      fontSize: 12,
+                      color: "#888",
+                      marginTop: 4,
+                      textAlign: "center",
+                    }}
+                  >
                     Hoặc nhấn nút bên dưới để chuyển sang MoMo
                   </ThemedText>
                 </View>
 
                 {isPolling && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 16,
+                    }}
+                  >
                     <ActivityIndicator size="small" color="#A50064" />
-                    <ThemedText style={{ fontSize: 13, color: '#666' }}>Đang chờ xác nhận thanh toán...</ThemedText>
+                    <ThemedText style={{ fontSize: 13, color: "#666" }}>
+                      Đang chờ xác nhận thanh toán...
+                    </ThemedText>
                   </View>
                 )}
 
                 {paymentSuccess && (
-                  <View style={{ backgroundColor: '#F1F8E9', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#C8E6C9', width: '100%', marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Icon name="check-circle" type="material" size={20} color="#4CAF50" />
-                    <ThemedText style={{ color: '#2E7D32', fontWeight: '700', fontSize: 14 }}>Thanh toán thành công!</ThemedText>
+                  <View
+                    style={{
+                      backgroundColor: "#F1F8E9",
+                      padding: 12,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: "#C8E6C9",
+                      width: "100%",
+                      marginBottom: 16,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Icon
+                      name="check-circle"
+                      type="material"
+                      size={20}
+                      color="#4CAF50"
+                    />
+                    <ThemedText
+                      style={{
+                        color: "#2E7D32",
+                        fontWeight: "700",
+                        fontSize: 14,
+                      }}
+                    >
+                      Thanh toán thành công!
+                    </ThemedText>
                   </View>
                 )}
 
                 <View style={styles.buttonStack}>
                   <TouchableOpacity
-                    style={[styles.primaryButton, { backgroundColor: '#A50064' }]}
-                    onPress={() => { if (paymentUrl) Linking.openURL(paymentUrl); }}
+                    style={[
+                      styles.primaryButton,
+                      { backgroundColor: "#A50064" },
+                    ]}
+                    onPress={() => {
+                      if (paymentUrl) Linking.openURL(paymentUrl);
+                    }}
                   >
-                    <ThemedText style={styles.primaryButtonText}>Mở MoMo thanh toán</ThemedText>
+                    <ThemedText style={styles.primaryButtonText}>
+                      Mở MoMo thanh toán
+                    </ThemedText>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -683,13 +1411,12 @@ export default function ConfirmOrderScreen() {
                     }}
                   >
                     <ThemedText style={styles.secondaryButtonText}>
-                      {paymentSuccess ? 'Xem đơn hàng' : 'Thanh toán sau'}
+                      {paymentSuccess ? "Xem đơn hàng" : "Thanh toán sau"}
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
               </>
             )}
-
           </View>
         </View>
       </Modal>
@@ -703,9 +1430,9 @@ export default function ConfirmOrderScreen() {
           minimumDate={new Date()}
           onChange={(event, selectedDate) => {
             setShowDatePicker(false);
-            if (event.type === 'set' && selectedDate) {
+            if (event.type === "set" && selectedDate) {
               setTempDate(selectedDate);
-              if (Platform.OS === 'android') {
+              if (Platform.OS === "android") {
                 setTimeout(() => setShowTimePicker(true), 100);
               } else {
                 setShowTimePicker(true);
@@ -723,9 +1450,14 @@ export default function ConfirmOrderScreen() {
           display="default"
           onChange={(event, selectedTime) => {
             setShowTimePicker(false);
-            if (event.type === 'set' && selectedTime && tempDate) {
+            if (event.type === "set" && selectedTime && tempDate) {
               const finalDate = new Date(tempDate);
-              finalDate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
+              finalDate.setHours(
+                selectedTime.getHours(),
+                selectedTime.getMinutes(),
+                0,
+                0,
+              );
               setIntendedReceiveAt(finalDate);
             }
           }}
@@ -737,93 +1469,656 @@ export default function ConfirmOrderScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FA" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
   loadingText: { marginTop: 12, fontSize: 14, color: "#003D5B" },
-  
-  header: { backgroundColor: "#003D5B", borderBottomLeftRadius: 24, borderBottomRightRadius: 24, paddingBottom: 20 },
+
+  header: {
+    backgroundColor: "#003D5B",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    paddingBottom: 20,
+  },
   headerGradient: { paddingTop: 40, paddingBottom: 20, paddingHorizontal: 20 },
-  headerSafeArea: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  headerSafeArea: { flexDirection: "row", alignItems: "center", gap: 16 },
   backButton: {},
-  backButtonBlur: { backgroundColor: "rgba(255,255,255,0.2)", padding: 8, borderRadius: 12 },
+  backButtonBlur: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: 8,
+    borderRadius: 12,
+  },
   headerTitle: { fontSize: 20, fontWeight: "800", color: "#fff" },
-  
+
   content: { flex: 1, marginTop: -20 },
-  contentContainer: { paddingBottom: 180, paddingHorizontal: 20, paddingTop: 10 },
-  
-  infoCard: { backgroundColor: "#fff", borderRadius: 16, padding: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 4, marginBottom: 20, gap: 12 },
+  contentContainer: {
+    paddingBottom: 180,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 4,
+    marginBottom: 20,
+    gap: 12,
+  },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   divider: { height: 1, backgroundColor: "#F0F0F0" },
-  infoIconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#F0F8FF", justifyContent: "center", alignItems: "center" },
+  infoIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#F0F8FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   infoLabel: { fontSize: 12, color: "#888", marginBottom: 2 },
   infoValue: { fontSize: 15, fontWeight: "700", color: "#333" },
 
-  section: { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 6, elevation: 2 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#003D5B", marginBottom: 12 },
-  sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  
-  serviceRow: { flexDirection: "row", alignItems: "center", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: "#F5F5F5" },
+  section: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#003D5B",
+    marginBottom: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  serviceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F5F5F5",
+  },
   serviceIconWrap: { marginRight: 10 },
   serviceName: { flex: 1, fontSize: 14, color: "#333" },
   servicePrice: { fontSize: 14, fontWeight: "600", color: "#111" },
 
-  noteInputContainer: { flexDirection: 'row', backgroundColor: "#F9FAFB", borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: "#E5E7EB", gap: 10 },
-  noteInput: { flex: 1, paddingVertical: 12, fontSize: 14, color: "#1F2937", minHeight: 80 },
+  noteInputContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    gap: 10,
+  },
+  noteInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: "#1F2937",
+    minHeight: 80,
+  },
 
   toggleButton: { flexDirection: "row", alignItems: "center", gap: 8 },
-  toggleTrack: { width: 40, height: 22, borderRadius: 11, backgroundColor: "#E5E7EB", justifyContent: "center", paddingHorizontal: 2 },
+  toggleTrack: {
+    width: 40,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#E5E7EB",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
   toggleTrackActive: { backgroundColor: "#003D5B" },
-  toggleThumb: { width: 18, height: 18, borderRadius: 9, backgroundColor: "#fff" },
+  toggleThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#fff",
+  },
   toggleThumbActive: { alignSelf: "flex-end" },
   toggleLabel: { fontSize: 12, color: "#666" },
-  
+
   receiverInputs: { gap: 12 },
-  inputRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#F9FAFB", borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: "#E5E7EB" },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
   textInputField: { flex: 1, fontSize: 14, color: "#111", paddingVertical: 10 },
 
-  datePickerButton: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#F9FAFB", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, borderWidth: 1, borderColor: "#E5E7EB" },
+  datePickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
   datePickerText: { flex: 1, fontSize: 14, color: "#333" },
 
   promoInputRow: { flexDirection: "row", gap: 10 },
-  promoInputContainer: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#F9FAFB", borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: "#E5E7EB" },
+  promoInputContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
   promoInput: { flex: 1, fontSize: 14, color: "#111", paddingVertical: 10 },
-  promoApplyButton: { backgroundColor: "#003D5B", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, justifyContent: "center" },
+  promoApplyButton: {
+    backgroundColor: "#003D5B",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    justifyContent: "center",
+  },
   promoApplyText: { color: "#fff", fontWeight: "600", fontSize: 14 },
   promoInputApplied: { borderColor: "#4CAF50", backgroundColor: "#F1F8E9" },
   promoInputError: { borderColor: "#FFCDD2", backgroundColor: "#FFF5F5" },
   promoRemoveBtn: { padding: 4 },
-  promoErrorMsg: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+  promoErrorMsg: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+  },
   promoErrorText: { fontSize: 13, color: "#F44336", flex: 1 },
-  promoSuccessCard: { marginTop: 10, backgroundColor: "#F1F8E9", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#C8E6C9" },
+  promoSuccessCard: {
+    marginTop: 10,
+    backgroundColor: "#F1F8E9",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#C8E6C9",
+  },
   promoSuccessHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   promoSuccessTitle: { fontSize: 14, fontWeight: "600", color: "#2E7D32" },
   promoSuccessCode: { fontSize: 12, color: "#66BB6A", marginTop: 2 },
 
-  footerContainer: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#fff", paddingTop: 16, paddingBottom: 30, paddingHorizontal: 24, borderTopLeftRadius: 24, borderTopRightRadius: 24, shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 20 },
+  footerContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingTop: 16,
+    paddingBottom: 30,
+    paddingHorizontal: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+  },
   priceSummaryBox: { marginBottom: 16 },
-  priceRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
   priceLabel: { fontSize: 14, color: "#666" },
   priceValue: { fontSize: 15, fontWeight: "600", color: "#333" },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#E0E0E0" },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+  },
   totalLabel: { fontSize: 16, fontWeight: "700", color: "#003D5B" },
   totalValue: { fontSize: 20, fontWeight: "800", color: "#F44336" },
 
-  checkoutButton: { backgroundColor: "#003D5B", flexDirection: "row", justifyContent: "center", alignItems: "center", paddingVertical: 16, borderRadius: 14, gap: 10, shadowColor: "#003D5B", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  checkoutButtonDisabled: { backgroundColor: "#A0A0A0", shadowOpacity: 0, elevation: 0 },
+  checkoutButton: {
+    backgroundColor: "#003D5B",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 10,
+    shadowColor: "#003D5B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  checkoutButtonDisabled: {
+    backgroundColor: "#A0A0A0",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   checkoutButtonText: { fontSize: 16, fontWeight: "700", color: "#fff" },
 
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.6)", justifyContent: "center", padding: 20 },
-  modalContent: { backgroundColor: "#fff", borderRadius: 24, padding: 24, alignItems: "center" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+  },
   successHeader: { marginBottom: 16 },
-  modalTitle: { fontSize: 22, fontWeight: "900", color: "#003D5B", marginBottom: 8 },
-  modalSubtitle: { fontSize: 15, color: "#6B7280", textAlign: "center", marginBottom: 24 },
-  pinContainer: { width: "100%", backgroundColor: "#F0F8FF", borderRadius: 16, padding: 20, alignItems: "center", borderWidth: 1, borderColor: "#B0C4DE", marginBottom: 24 },
-  pinLabel: { fontSize: 12, fontWeight: "700", color: "#003D5B", letterSpacing: 1, marginBottom: 12 },
-  pinCode: { fontSize: 30, fontWeight: "900", color: "#003D5B", letterSpacing: 4, marginBottom: 16 },
-  pinInstruction: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#003D5B",
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 15,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  pinContainer: {
+    width: "100%",
+    backgroundColor: "#F0F8FF",
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#B0C4DE",
+    marginBottom: 24,
+  },
+  pinLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#003D5B",
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  pinCode: {
+    fontSize: 30,
+    fontWeight: "900",
+    color: "#003D5B",
+    letterSpacing: 4,
+    marginBottom: 16,
+  },
+  pinInstruction: { flexDirection: "row", alignItems: "center", gap: 6 },
   pinInstructionText: { fontSize: 13, color: "#003D5B" },
   buttonStack: { width: "100%", gap: 12 },
-  primaryButton: { backgroundColor: "#003D5B", paddingVertical: 16, borderRadius: 12, alignItems: "center" },
+  primaryButton: {
+    backgroundColor: "#003D5B",
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
   primaryButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   secondaryButton: { paddingVertical: 16, alignItems: "center" },
   secondaryButtonText: { color: "#003D5B", fontWeight: "600", fontSize: 15 },
+
+  // Voucher picker
+  voucherPickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#EBF5FF",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#B0C4DE",
+    borderStyle: "dashed",
+  },
+  voucherPickerButtonText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#003D5B",
+  },
+  voucherPickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  voucherPickerSheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: "75%",
+    paddingBottom: 20,
+  },
+  voucherPickerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  voucherPickerTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#003D5B",
+  },
+  voucherPickerItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F5F5F5",
+    gap: 12,
+  },
+  voucherPickerItemLeft: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E8F5E9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  voucherPickerItemName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#222",
+    marginBottom: 2,
+  },
+  voucherPickerItemCode: {
+    fontSize: 13,
+    color: "#003D5B",
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+
+  // Loyalty Points
+
+  // Shopee-style voucher row
+  shopeeVoucherRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  shopeeVoucherPlaceholder: {
+    fontSize: 14,
+    color: "#999",
+  },
+  shopeeVoucherAppliedTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  shopeeVoucherAppliedSub: {
+    fontSize: 12,
+    color: "#4CAF50",
+    marginTop: 2,
+  },
+
+  // Full picker modal
+  vpHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: "#D1D5DB",
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  vpHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  vpTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  vpInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 14,
+    marginBottom: 4,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  vpInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#1F2937",
+    paddingVertical: 4,
+  },
+  vpApplyBtn: {
+    backgroundColor: "#E53935",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  vpApplyText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  vpError: {
+    fontSize: 12,
+    color: "#F44336",
+    marginHorizontal: 20,
+    marginBottom: 6,
+  },
+  vpTabs: {
+    flexDirection: "row",
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    gap: 8,
+  },
+  vpTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+  },
+  vpTabActive: {
+    backgroundColor: "#E53935",
+  },
+  vpTabText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#666",
+  },
+  vpTabTextActive: {
+    color: "#fff",
+  },
+  vpEmpty: {
+    alignItems: "center",
+    paddingVertical: 40,
+    gap: 10,
+  },
+  vpEmptyText: {
+    fontSize: 14,
+    color: "#999",
+    fontWeight: "600",
+  },
+  vpEmptySubText: {
+    fontSize: 12,
+    color: "#BBB",
+    textAlign: "center",
+    paddingHorizontal: 30,
+  },
+  vpCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 10,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#F0F0F0",
+    backgroundColor: "#fff",
+    gap: 12,
+  },
+  vpCardSelected: {
+    borderColor: "#E53935",
+    backgroundColor: "#FFF5F5",
+  },
+  vpCardDisabled: {
+    opacity: 0.55,
+  },
+  vpCardLeft: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vpCardName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  vpCardCode: {
+    fontSize: 12,
+    color: "#4CAF50",
+    fontWeight: "600",
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  vpCardExpiry: {
+    fontSize: 11,
+    color: "#999",
+    marginTop: 2,
+  },
+  vpQuickRedeemSection: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+  },
+  vpQuickRedeemTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 8,
+  },
+  vpQuickRedeemCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginBottom: 8,
+    backgroundColor: "#FAFAFA",
+  },
+  vpQuickRedeemBtn: {
+    backgroundColor: "#E53935",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 96,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vpQuickRedeemBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  vpRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#CCC",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vpRadioSelected: {
+    borderColor: "#E53935",
+  },
+  vpRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E53935",
+  },
+
+  // Loyalty Points
+  pointsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF8E1",
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#FFE082",
+  },
+  pointsInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  pointsBalance: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FF9800",
+  },
+  pointsNote: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 2,
+  },
 });
