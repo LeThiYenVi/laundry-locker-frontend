@@ -50,6 +50,13 @@ export const clearTokens = async (): Promise<void> => {
   await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
 };
 
+// Global logout callback — registered by AuthProvider so the interceptor can
+// force-logout the user when the refresh token is invalid (e.g. stale JWT after DB reset).
+let _logoutCallback: (() => Promise<void>) | null = null;
+export const setLogoutCallback = (cb: () => Promise<void>) => {
+  _logoutCallback = cb;
+};
+
 // Request interceptor - add token to requests
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
@@ -89,6 +96,24 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
+    const responseData = (error.response?.data || {}) as {
+      code?: string;
+      message?: string;
+    };
+
+    // Backend can return 400 E_LOYALTY001 when JWT userId no longer exists in DB
+    // (common in dev after resetting DB). Treat it like an unauthorized session.
+    if (
+      error.response?.status === 400 &&
+      responseData.code === "E_LOYALTY001"
+    ) {
+      await clearTokens();
+      if (_logoutCallback) {
+        await _logoutCallback().catch(() => {});
+      }
+      return Promise.reject(error);
+    }
+
     // If 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -114,6 +139,9 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         await clearTokens();
+        if (_logoutCallback) {
+          _logoutCallback().catch(() => {});
+        }
         return Promise.reject(refreshError);
       }
     }
