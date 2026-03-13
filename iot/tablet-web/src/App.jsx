@@ -995,31 +995,20 @@ function PinScreen({ goHome, showSuccess }) {
 function StaffScreen({ goHome, showSuccess }) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [codeState, setCodeState] = useState('');
   const [msg, setMsg] = useState('');
 
-  const pressKey = (char) => {
-    if (code.length >= 6) return;
-    const newCode = code + char;
-    setCode(newCode);
-    setCodeState('');
-    setMsg('');
-    if (newCode.length === 6) setTimeout(() => submitCode(newCode), 300);
-  };
-
-  const clearAll = () => { setCode(''); setCodeState(''); setMsg(''); };
-  const backspace = () => { setCode(c => c.slice(0, -1)); setCodeState(''); };
-
-  const submitCode = async (c) => {
-    const raw = c || code;
-    if (raw.length !== 6) return;
-    const accessCode = `STAFF-${raw}`;
+  const submitCode = async () => {
+    const accessCode = code.trim().toUpperCase();
+    if (accessCode.length < 6) {
+      setMsg('Vui lòng nhập mã hợp lệ');
+      return;
+    }
+    
     setLoading(true); setMsg('');
     try {
       console.log('%c[STAFF] Unlocking with access code:', 'color:#fbbf24', accessCode);
       const res = await api.unlockWithCode(null, accessCode, undefined);
       if (res.success && res.data?.success) {
-        setCodeState('success');
         const boxInfo = res.data.boxes?.map(b => `#${b.boxNumber}`).join(', ') || '';
         const purpose = res.data.action === 'COLLECT' ? 'Lấy đồ' : res.data.action === 'RETURN' ? 'Trả đồ' : '';
         setTimeout(() => showSuccess(
@@ -1032,14 +1021,12 @@ function StaffScreen({ goHome, showSuccess }) {
           }
         ), 500);
       } else {
-        setCodeState('error');
         setMsg(res.data?.message || res.message || 'Mã không hợp lệ hoặc đã hết hạn');
-        setTimeout(clearAll, 2000);
+        setTimeout(() => setCode(''), 2000);
       }
     } catch {
-      setCodeState('error');
       setMsg('Lỗi kết nối server');
-      setTimeout(clearAll, 2000);
+      setTimeout(() => setCode(''), 2000);
     }
     setLoading(false);
   };
@@ -1048,24 +1035,32 @@ function StaffScreen({ goHome, showSuccess }) {
     <div className="screen">
       <Header onBack={goHome} title="Mã nhân viên" />
       <p className="subtitle" style={{ textAlign: 'center' }}>
-        Nhập 6 ký tự mã truy cập (sau STAFF-)
+        Nhập mã lấy đồ nhân viên để mở tủ
       </p>
-      <div className="staff-prefix">STAFF -</div>
-      <div className="pin-row">
-        {[0,1,2,3,4,5].map(i => (
-          <div key={i} className={`pin-box ${code.length > i ? 'filled' : ''} ${codeState}`}>
-            {code[i] || ''}
-          </div>
-        ))}
+      
+      <div className="form-group" style={{ marginTop: 24, marginBottom: 32 }}>
+        <input 
+          className="input" 
+          value={code} 
+          onChange={e => {
+            setCode(e.target.value.toUpperCase());
+            setMsg('');
+          }}
+          placeholder="Ví dụ: 9YYP4JWZ" 
+          style={{ 
+            textAlign: 'center', 
+            fontSize: 24, 
+            letterSpacing: 4, 
+            fontWeight: 700, 
+            textTransform: 'uppercase',
+            padding: '20px'
+          }}
+          onKeyDown={e => e.key === 'Enter' && submitCode()}
+          autoFocus
+        />
       </div>
-      <div className="numpad staff-pad">
-        {['1','2','3','A','4','5','6','B','7','8','9','C','0','D','E','F'].map(k => (
-          <div key={k} className={`key ${/[A-F]/.test(k) ? 'key-alpha' : ''}`} onClick={() => pressKey(k)}>{k}</div>
-        ))}
-        <div className="key fn" onClick={clearAll}>Xóa</div>
-        <div className="key fn" onClick={backspace}><Delete size={20} /></div>
-      </div>
-      <Btn onClick={() => submitCode(code)} loading={loading} disabled={code.length < 6} style={{ marginTop: 16 }}>
+
+      <Btn onClick={submitCode} loading={loading} disabled={code.length < 6}>
         <Unlock size={18} /> Mở khóa
       </Btn>
       {msg && <Msg type="error" text={msg} />}
