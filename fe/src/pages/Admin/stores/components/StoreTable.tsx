@@ -34,6 +34,12 @@ interface StoreTableProps {
   isLoading: boolean;
   onEdit: (store: AdminStoreResponse) => void;
   onDelete: (storeId: number) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<AdminStoreResponse>();
@@ -95,6 +101,12 @@ export function StoreTable({
   isLoading,
   onEdit,
   onDelete,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: StoreTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -265,6 +277,14 @@ export function StoreTable({
       data={stores}
       isLoading={isLoading}
       emptyMessage={t("common.noData")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

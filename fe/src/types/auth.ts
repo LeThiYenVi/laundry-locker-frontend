@@ -58,8 +58,8 @@ export interface ApiResponse<T> {
 
 // Query params for pagination (used in API calls)
 export interface PageableRequest {
-  pageNumber?: number;
-  pageSize?: number;
+  page?: number;
+  size?: number;
   sort?: string;
 }
 

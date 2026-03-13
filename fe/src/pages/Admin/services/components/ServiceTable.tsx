@@ -18,6 +18,12 @@ interface ServiceTableProps {
   onEdit: (service: AdminServiceResponse) => void;
   onDelete: (serviceId: number) => void;
   onToggleStatus: (serviceId: number, currentActive: boolean) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<AdminServiceResponse>();
@@ -43,6 +49,12 @@ export function ServiceTable({
   onEdit,
   onDelete,
   onToggleStatus,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: ServiceTableProps) {
   const columns = [
     columnHelper.accessor("name", {
@@ -174,6 +186,14 @@ export function ServiceTable({
       data={services}
       isLoading={isLoading}
       emptyMessage="Không tìm thấy dịch vụ nào"
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

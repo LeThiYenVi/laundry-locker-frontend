@@ -21,6 +21,12 @@ export default function LockersPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = useLockers();
 
   return (
@@ -54,6 +60,12 @@ export default function LockersPage() {
             isLoading={isLoading}
             onMaintenance={handleMaintenance}
             onActivate={handleActivate}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

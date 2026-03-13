@@ -30,6 +30,12 @@ interface PaymentTableProps {
   payments: PaymentResponse[];
   isLoading: boolean;
   onViewDetail: (id: number) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<PaymentResponse>();
@@ -126,6 +132,12 @@ export function PaymentTable({
   payments,
   isLoading,
   onViewDetail,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: PaymentTableProps) {
   const columns = [
     columnHelper.accessor("id", {
@@ -238,6 +250,14 @@ export function PaymentTable({
       data={payments}
       isLoading={isLoading}
       emptyMessage="Không tìm thấy giao dịch nào"
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

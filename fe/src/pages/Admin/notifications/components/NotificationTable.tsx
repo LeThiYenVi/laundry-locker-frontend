@@ -38,6 +38,12 @@ interface NotificationTableProps {
   onDelete?: (id: number) => void;
   onUpdateStatus?: (id: number, status: NotificationStatus) => void;
   onResend?: (id: number) => void;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const columnHelper = createColumnHelper<AdminNotificationResponse>();
@@ -213,6 +219,12 @@ export function NotificationTable({
   onDelete,
   onUpdateStatus,
   onResend,
+  page,
+  pageSize,
+  totalPages,
+  totalElements,
+  onPageChange,
+  onPageSizeChange,
 }: NotificationTableProps) {
   const { t } = useTranslation();
   const columns = [
@@ -364,6 +376,14 @@ export function NotificationTable({
       data={notifications}
       isLoading={isLoading}
       emptyMessage={t("admin.notifications.emptyMessage")}
+      serverPagination={{
+        pageIndex: page,
+        pageSize,
+        pageCount: totalPages,
+        totalRows: totalElements,
+        onPageChange,
+        onPageSizeChange,
+      }}
     />
   );
 }

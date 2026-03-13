@@ -28,6 +28,12 @@ export default function ServicesPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = useServices();
 
   return (
@@ -67,6 +73,12 @@ export default function ServicesPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onToggleStatus={handleToggleStatus}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

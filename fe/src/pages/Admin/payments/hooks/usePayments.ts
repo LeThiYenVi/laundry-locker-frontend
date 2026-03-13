@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PaymentStatus } from "~/types/admin/enums";
 import { useGetAllPaymentsQuery } from "@/stores/apis/admin/payments";
 import type { PaymentResponse } from "~/types/admin/payment";
@@ -8,12 +9,17 @@ export type PaymentStatusFilter = "ALL" | PaymentStatus;
 export function usePayments() {
   const [status, setStatus] = useState<PaymentStatusFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [urlParams, setUrlParams] = useSearchParams();
+  const page = Number(urlParams.get("page") ?? "0");
+  const pageSize = Number(urlParams.get("size") ?? "10");
+  const setPage = (newPage: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("page", String(newPage)); return next; });
+  const setPageSize = (newSize: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("size", String(newSize)); next.set("page", "0"); return next; });
 
   const { data, isLoading, refetch } = useGetAllPaymentsQuery({
-    pageNumber: page,
-    pageSize,
+    page,
+    size: pageSize,
     ...(status !== "ALL" ? { status } : {}),
   });
 

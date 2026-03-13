@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   useGetAllPartnersQuery,
@@ -30,8 +31,13 @@ const mapPartnerToTable = (partner: PartnerResponse) => ({
 export function usePartners() {
   const [status, setStatus] = useState<PartnerStatusFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [urlParams, setUrlParams] = useSearchParams();
+  const page = Number(urlParams.get("page") ?? "0");
+  const pageSize = Number(urlParams.get("size") ?? "10");
+  const setPage = (newPage: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("page", String(newPage)); return next; });
+  const setPageSize = (newSize: number) =>
+    setUrlParams((prev) => { const next = new URLSearchParams(prev); next.set("size", String(newSize)); next.set("page", "0"); return next; });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<ReturnType<typeof mapPartnerToTable> | null>(null);
@@ -43,8 +49,8 @@ export function usePartners() {
     error,
     refetch,
   } = useGetAllPartnersQuery({
-    pageNumber: page,
-    pageSize: pageSize,
+    page,
+    size: pageSize,
     status: status === "ALL" ? undefined : status,
   });
 

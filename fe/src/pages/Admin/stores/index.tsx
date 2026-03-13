@@ -29,6 +29,12 @@ export default function StoresPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = useStores();
 
   return (
@@ -67,6 +73,12 @@ export default function StoresPage() {
             isLoading={isLoading}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

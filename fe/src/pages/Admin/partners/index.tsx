@@ -29,6 +29,12 @@ export default function PartnersPage() {
     refetch,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalElements,
   } = usePartners();
 
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
@@ -76,6 +82,12 @@ export default function PartnersPage() {
             onApprove={handleApprove}
             onReject={handleReject}
             onSuspend={handleSuspend}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

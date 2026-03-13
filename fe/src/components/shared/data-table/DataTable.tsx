@@ -58,6 +58,7 @@ export function DataTable<TData, TValue>({
       ? {
           manualPagination: true,
           pageCount: serverPagination.pageCount,
+          getPaginationRowModel: getPaginationRowModel(),
           onPaginationChange: (updater) => {
             const current = {
               pageIndex: serverPagination.pageIndex,
@@ -65,10 +66,11 @@ export function DataTable<TData, TValue>({
             };
             const next =
               typeof updater === "function" ? updater(current) : updater;
-            if (next.pageIndex !== current.pageIndex)
-              serverPagination.onPageChange(next.pageIndex);
-            if (next.pageSize !== current.pageSize)
+            if (next.pageSize !== current.pageSize) {
               serverPagination.onPageSizeChange(next.pageSize);
+            } else if (next.pageIndex !== current.pageIndex) {
+              serverPagination.onPageChange(next.pageIndex);
+            }
           },
           state: {
             sorting,

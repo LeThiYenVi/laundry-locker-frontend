@@ -85,6 +85,11 @@ export default function PromotionsPage() {
     handleDelete,
     clearFilters,
     hasActiveFilters,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
   } = usePromotions();
 
   return (
@@ -160,6 +165,12 @@ export default function PromotionsPage() {
             isLoading={isLoading}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>
