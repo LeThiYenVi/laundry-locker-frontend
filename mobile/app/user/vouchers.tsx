@@ -55,6 +55,10 @@ export default function VouchersScreen() {
     null,
   );
 
+  const isInvalidLoyaltySession = (error: any): boolean =>
+    error?.response?.status === 400 &&
+    error?.response?.data?.code === "E_LOYALTY001";
+
   const fetchVouchers = useCallback(async () => {
     try {
       const res = await loyaltyService.getAvailableRewards();
@@ -65,6 +69,7 @@ export default function VouchersScreen() {
         setMembershipTier(res.data.membershipTier || "");
       }
     } catch (error: any) {
+      if (isInvalidLoyaltySession(error)) return;
       console.error(
         "Failed to fetch vouchers:",
         error?.message,
@@ -81,6 +86,7 @@ export default function VouchersScreen() {
         setStampCards(res.data);
       }
     } catch (error: any) {
+      if (isInvalidLoyaltySession(error)) return;
       console.error(
         "Failed to fetch stamp cards:",
         error?.message,
@@ -114,6 +120,7 @@ export default function VouchersScreen() {
         setPointsHistory(Array.isArray(items) ? items : []);
       }
     } catch (error: any) {
+      if (isInvalidLoyaltySession(error)) return;
       console.error("Failed to fetch points history:", error?.message);
     }
   }, []);
@@ -125,6 +132,7 @@ export default function VouchersScreen() {
         setExpiringPoints(res.data);
       }
     } catch (error: any) {
+      if (isInvalidLoyaltySession(error)) return;
       console.error("Failed to fetch expiring points:", error?.message);
     }
   }, []);
