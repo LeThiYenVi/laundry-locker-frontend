@@ -122,7 +122,6 @@ export const getPointsHistory = async (page = 0, size = 20): Promise<ApiResponse
  */
 export const getStampCards = async (): Promise<ApiResponse<StampCard[]>> => {
     const response = await api.get<ApiResponse<StampCard[]>>('/loyalty/stamps');
-    console.log("=== API THẺ TÍCH ĐIỂM (STAMPS) ===\n", JSON.stringify(response.data, null, 2));
     return response.data;
 };
 
@@ -131,7 +130,14 @@ export const getStampCards = async (): Promise<ApiResponse<StampCard[]>> => {
  */
 export const getAvailableRewards = async (): Promise<ApiResponse<RewardsResponse>> => {
     const response = await api.get<ApiResponse<RewardsResponse>>('/loyalty/rewards');
-    console.log("=== API VOUCHER (REWARDS) ===\n", JSON.stringify(response.data, null, 2));
+    return response.data;
+};
+
+/**
+ * Redeem a specific reward by reward id.
+ */
+export const redeemReward = async (rewardId: number): Promise<ApiResponse<RedeemedReward>> => {
+    const response = await api.post<ApiResponse<RedeemedReward>>(`/loyalty/rewards/${rewardId}/redeem`);
     return response.data;
 };
 
@@ -171,6 +177,7 @@ export const loyaltyService = {
     getPointsHistory,
     getStampCards,
     getAvailableRewards,
+    redeemReward,
     getExpiringPoints,
     redeemPoints,
     redeemStampReward,

@@ -3,19 +3,22 @@ import { notificationService } from "@/services/user";
 import { Notification, NotificationType } from "@/types";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    RefreshControl,
-    StatusBar,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-const getNotificationIcon = (type: NotificationType): { name: string; color: string } => {
+const getNotificationIcon = (
+  type: NotificationType,
+): { name: string; color: string } => {
   switch (type) {
     case "ORDER_CREATED":
       return { name: "add-shopping-cart", color: "#2196F3" };
@@ -66,10 +69,17 @@ export default function NotificationsScreen() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const response = await notificationService.getAllNotifications();
-      if (response.success) {
-        setNotifications(response.data);
-        setUnreadCount(response.data.filter((n) => !n.isRead).length);
+      const [listResponse, countResponse] = await Promise.all([
+        notificationService.getAllNotifications(),
+        notificationService.getUnreadCount(),
+      ]);
+
+      if (listResponse.success) {
+        setNotifications(listResponse.data);
+      }
+
+      if (countResponse.success) {
+        setUnreadCount(countResponse.data?.count || 0);
       }
     } catch (error: any) {
       console.error("Failed to fetch notifications:", error);
@@ -85,7 +95,7 @@ export default function NotificationsScreen() {
     try {
       const response = await notificationService.getUnreadCount();
       if (response.success) {
-        setUnreadCount(response.data.count);
+        setUnreadCount(response.data?.count || 0);
       }
     } catch (error) {
       console.error("Failed to fetch unread count:", error);
@@ -96,6 +106,12 @@ export default function NotificationsScreen() {
     fetchNotifications();
   }, [fetchNotifications]);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [fetchNotifications]),
+  );
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     fetchNotifications();
@@ -103,14 +119,16 @@ export default function NotificationsScreen() {
 
   const handleMarkAsRead = async (notification: Notification) => {
     if (notification.isRead) return;
-    
+
     try {
       const response = await notificationService.markAsRead(notification.id);
       if (response.success) {
         setNotifications((prev) =>
-          prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+          prev.map((n) =>
+            n.id === notification.id ? { ...n, isRead: true } : n,
+          ),
         );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+        fetchUnreadCount();
       }
     } catch (error: any) {
       console.error("Failed to mark as read:", error);
@@ -119,12 +137,12 @@ export default function NotificationsScreen() {
 
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
-    
+
     try {
       const response = await notificationService.markAllAsRead();
       if (response.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setUnreadCount(0);
+        fetchUnreadCount();
       }
     } catch (error: any) {
       Alert.alert("Lỗi", "Không thể đánh dấu tất cả đã đọc");
@@ -133,12 +151,14 @@ export default function NotificationsScreen() {
 
   const handleDelete = async (notification: Notification) => {
     try {
-      const response = await notificationService.deleteNotification(notification.id);
+      const response = await notificationService.deleteNotification(
+        notification.id,
+      );
       if (response.success) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
-        if (!notification.isRead) {
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
+        setNotifications((prev) =>
+          prev.filter((n) => n.id !== notification.id),
+        );
+        fetchUnreadCount();
       }
     } catch (error: any) {
       Alert.alert("Lỗi", "Không thể xóa thông báo");
@@ -157,17 +177,18 @@ export default function NotificationsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await notificationService.deleteAllNotifications();
+              const response =
+                await notificationService.deleteAllNotifications();
               if (response.success) {
                 setNotifications([]);
-                setUnreadCount(0);
+                fetchUnreadCount();
               }
             } catch (error: any) {
               Alert.alert("Lỗi", "Không thể xóa thông báo");
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -179,12 +200,25 @@ export default function NotificationsScreen() {
         onPress={() => handleMarkAsRead(item)}
         activeOpacity={0.7}
       >
-        <View style={[styles.iconContainer, { backgroundColor: `${iconInfo.color}15` }]}>
-          <Icon name={iconInfo.name} type="material" size={26} color={iconInfo.color} />
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: `${iconInfo.color}15` },
+          ]}
+        >
+          <Icon
+            name={iconInfo.name}
+            type="material"
+            size={26}
+            color={iconInfo.color}
+          />
         </View>
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
-            <ThemedText style={[styles.title, !item.isRead && styles.unreadTitle]} numberOfLines={1}>
+            <ThemedText
+              style={[styles.title, !item.isRead && styles.unreadTitle]}
+              numberOfLines={1}
+            >
               {item.title}
             </ThemedText>
             {!item.isRead && <View style={styles.unreadDot} />}
@@ -195,9 +229,16 @@ export default function NotificationsScreen() {
           <View style={styles.metaRow}>
             <View style={styles.timeContainer}>
               <Icon name="schedule" type="material" size={12} color="#9CA3AF" />
-              <ThemedText style={styles.time}>{formatTimeAgo(item.createdAt || "")}</ThemedText>
+              <ThemedText style={styles.time}>
+                {formatTimeAgo(item.createdAt || "")}
+              </ThemedText>
             </View>
-            <View style={[styles.typeBadge, { backgroundColor: `${iconInfo.color}15` }]}>
+            <View
+              style={[
+                styles.typeBadge,
+                { backgroundColor: `${iconInfo.color}15` },
+              ]}
+            >
               <ThemedText style={[styles.typeText, { color: iconInfo.color }]}>
                 {item.type.replace(/_/g, " ")}
               </ThemedText>
@@ -241,16 +282,38 @@ export default function NotificationsScreen() {
             </View>
           )}
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           {unreadCount > 0 ? (
             <TouchableOpacity onPress={handleMarkAllAsRead}>
-              <ThemedText style={styles.markAllText}>Đánh dấu tất cả đã đọc</ThemedText>
+              <ThemedText style={styles.markAllText}>
+                Đánh dấu tất cả đã đọc
+              </ThemedText>
             </TouchableOpacity>
-          ) : <View />}
+          ) : (
+            <View />
+          )}
           {notifications.length > 0 && (
-            <TouchableOpacity onPress={handleDeleteAll} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Icon name="delete-sweep" type="material" size={16} color="#F44336" />
-              <ThemedText style={{ fontSize: 13, color: '#F44336', fontWeight: '600' }}>Xóa tất cả</ThemedText>
+            <TouchableOpacity
+              onPress={handleDeleteAll}
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
+              <Icon
+                name="delete-sweep"
+                type="material"
+                size={16}
+                color="#F44336"
+              />
+              <ThemedText
+                style={{ fontSize: 13, color: "#F44336", fontWeight: "600" }}
+              >
+                Xóa tất cả
+              </ThemedText>
             </TouchableOpacity>
           )}
         </View>
@@ -263,13 +326,24 @@ export default function NotificationsScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="notifications-off" type="material" size={64} color="#CCC" />
-            <ThemedText style={styles.emptyText}>Không có thông báo nào</ThemedText>
+            <Icon
+              name="notifications-off"
+              type="material"
+              size={64}
+              color="#CCC"
+            />
+            <ThemedText style={styles.emptyText}>
+              Không có thông báo nào
+            </ThemedText>
             <ThemedText style={styles.emptySubtext}>
               Các thông báo về đơn hàng và khuyến mãi sẽ hiển thị tại đây
             </ThemedText>

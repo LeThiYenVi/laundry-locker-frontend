@@ -13,6 +13,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -146,12 +147,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const value: AuthContextType = {
-    ...state,
-    login,
-    logout,
-    refreshUser,
-  };
+  const value = useMemo<AuthContextType>(
+    () => ({
+      ...state,
+      login,
+      logout,
+      refreshUser,
+    }),
+    [state, login, logout, refreshUser],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

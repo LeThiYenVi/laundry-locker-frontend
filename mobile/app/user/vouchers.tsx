@@ -1,11 +1,17 @@
 import { ThemedText } from "@/components/themed-text";
 import { promotionService, loyaltyService } from "@/services/user";
 import type { PromotionValidateResponse } from "@/services/user/promotionService";
-import type { RewardItem, StampCard, PointTransaction, ExpiringPoints } from "@/services/user/loyaltyService";
+import type {
+  RewardItem,
+  RedeemedReward,
+  StampCard,
+  PointTransaction,
+  ExpiringPoints,
+} from "@/services/user/loyaltyService";
 import { Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,14 +29,14 @@ export default function VouchersScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<TabType>(
-    params.tab === "rewards" ? "rewards" : "vouchers"
+    params.tab === "rewards" ? "rewards" : "vouchers",
   );
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   // Voucher data
   const [rewards, setRewards] = useState<RewardItem[]>([]);
-  const [redeemedRewards, setRedeemedRewards] = useState<any[]>([]);
+  const [redeemedRewards, setRedeemedRewards] = useState<RedeemedReward[]>([]);
   const [currentPoints, setCurrentPoints] = useState(0);
   const [membershipTier, setMembershipTier] = useState("");
 
@@ -39,15 +45,19 @@ export default function VouchersScreen() {
 
   // Points history & expiring
   const [pointsHistory, setPointsHistory] = useState<PointTransaction[]>([]);
-  const [expiringPoints, setExpiringPoints] = useState<ExpiringPoints | null>(null);
+  const [expiringPoints, setExpiringPoints] = useState<ExpiringPoints | null>(
+    null,
+  );
 
   // Promotions data
   const [promotions, setPromotions] = useState<PromotionValidateResponse[]>([]);
+  const [redeemingRewardId, setRedeemingRewardId] = useState<number | null>(
+    null,
+  );
 
   const fetchVouchers = useCallback(async () => {
     try {
       const res = await loyaltyService.getAvailableRewards();
-      console.log("=== VOUCHERS (getAvailableRewards) RESPONSE ===", JSON.stringify(res, null, 2));
       if (res.success && res.data) {
         setRewards(res.data.availableRewards || []);
         setRedeemedRewards(res.data.redeemedRewards || []);
@@ -55,19 +65,28 @@ export default function VouchersScreen() {
         setMembershipTier(res.data.membershipTier || "");
       }
     } catch (error: any) {
-      console.error("Failed to fetch vouchers:", error?.message, error?.response?.status, error?.response?.data);
+      console.error(
+        "Failed to fetch vouchers:",
+        error?.message,
+        error?.response?.status,
+        error?.response?.data,
+      );
     }
   }, []);
 
   const fetchStampCards = useCallback(async () => {
     try {
       const res = await loyaltyService.getStampCards();
-      console.log("=== STAMP CARDS (getStampCards) RESPONSE ===", JSON.stringify(res, null, 2));
       if (res.success && res.data) {
         setStampCards(res.data);
       }
     } catch (error: any) {
-      console.error("Failed to fetch stamp cards:", error?.message, error?.response?.status, error?.response?.data);
+      console.error(
+        "Failed to fetch stamp cards:",
+        error?.message,
+        error?.response?.status,
+        error?.response?.data,
+      );
     }
   }, []);
 
@@ -78,7 +97,12 @@ export default function VouchersScreen() {
         setPromotions(res.data);
       }
     } catch (error: any) {
-      console.error("Failed to fetch promotions:", error?.message, error?.response?.status, error?.response?.data);
+      console.error(
+        "Failed to fetch promotions:",
+        error?.message,
+        error?.response?.status,
+        error?.response?.data,
+      );
     }
   }, []);
 
@@ -105,11 +129,27 @@ export default function VouchersScreen() {
     }
   }, []);
 
+  const loadAllVoucherData = useCallback(async () => {
+    await Promise.all([
+      fetchVouchers(),
+      fetchStampCards(),
+      fetchPromotions(),
+      fetchPointsHistory(),
+      fetchExpiringPoints(),
+    ]);
+  }, [
+    fetchExpiringPoints,
+    fetchPointsHistory,
+    fetchPromotions,
+    fetchStampCards,
+    fetchVouchers,
+  ]);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
-    await Promise.all([fetchVouchers(), fetchStampCards(), fetchPromotions(), fetchPointsHistory(), fetchExpiringPoints()]);
+    await loadAllVoucherData();
     setIsLoading(false);
-  }, [fetchVouchers, fetchStampCards, fetchPromotions, fetchPointsHistory, fetchExpiringPoints]);
+  }, [loadAllVoucherData]);
 
   useEffect(() => {
     loadData();
@@ -117,9 +157,9 @@ export default function VouchersScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchVouchers(), fetchStampCards(), fetchPromotions(), fetchPointsHistory(), fetchExpiringPoints()]);
+    await loadAllVoucherData();
     setRefreshing(false);
-  }, [fetchVouchers, fetchStampCards, fetchPromotions, fetchPointsHistory, fetchExpiringPoints]);
+  }, [loadAllVoucherData]);
 
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("vi-VN", {
@@ -184,6 +224,283 @@ export default function VouchersScreen() {
     }
   };
 
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleRedeemRewardImproved = useCallback(
+    (reward: RewardItem) => {
+      Alert.alert(
+        `Đổi ${reward.pointsRequired} điểm`,
+        `Nhận "${reward.name}" để dùng giảm giá cho đơn hàng tiếp theo.\n\nVoucher sẽ xuất hiện trong phần "Chọn Voucher" khi bạn đặt đơn.`,
+        [
+          { text: "Để sau", style: "cancel" },
+          {
+            text: "Đổi ngay",
+            onPress: async () => {
+              try {
+                setRedeemingRewardId(reward.id);
+                const res = await loyaltyService.redeemReward(reward.id);
+                if (res.success && res.data) {
+                  await loadAllVoucherData();
+                  const redeemedCode =
+                    (res.data as any).code || (res.data as any).rewardCode;
+                  Alert.alert(
+                    "Đổi voucher thành công",
+                    `Bạn đã nhận mã ${redeemedCode || "(đã tạo thành công)"}.\nHãy vào màn tạo đơn và chọn voucher này để áp dụng.`,
+                    [
+                      { text: "Đóng", style: "cancel" },
+                      {
+                        text: "Tạo đơn",
+                        onPress: () =>
+                          router.push("/user/(tabs)/lockers" as any),
+                      },
+                    ],
+                  );
+                }
+              } catch (error: any) {
+                const errorMsg =
+                  error?.response?.data?.message ||
+                  error?.message ||
+                  "Không thể đổi voucher lúc này";
+                Alert.alert("Đổi voucher thất bại", errorMsg);
+              } finally {
+                setRedeemingRewardId(null);
+              }
+            },
+          },
+        ],
+      );
+    },
+    [loadAllVoucherData, router],
+  );
+
+  const handleShowCode = useCallback((code: string) => {
+    Alert.alert("Mã voucher", `Mã: ${code}`);
+  }, []);
+
+  const handleUseVoucherOnOrder = useCallback(
+    (code: string) => {
+      router.push({
+        pathname: "/user/(tabs)/lockers" as any,
+        params: { prefilledPromoCode: code },
+      });
+    },
+    [router],
+  );
+
+  const rewardCards = useMemo(
+    () =>
+      rewards.map((reward) => (
+        <View key={reward.id} style={styles.rewardCard}>
+          <View style={styles.rewardLeft}>
+            <View
+              style={[
+                styles.rewardIconContainer,
+                { backgroundColor: `${getRewardTypeColor(reward.type)}15` },
+              ]}
+            >
+              <Icon
+                name={getRewardTypeIcon(reward.type)}
+                type="material"
+                size={28}
+                color={getRewardTypeColor(reward.type)}
+              />
+            </View>
+          </View>
+          <View style={styles.rewardContent}>
+            <ThemedText style={styles.rewardName}>{reward.name}</ThemedText>
+            {reward.description ? (
+              <ThemedText style={styles.rewardDescription} numberOfLines={2}>
+                {reward.description}
+              </ThemedText>
+            ) : null}
+            <View style={styles.rewardMeta}>
+              <View style={styles.rewardPointsBadge}>
+                <Icon name="stars" type="material" size={14} color="#FFD700" />
+                <ThemedText style={styles.rewardPointsText}>
+                  {reward.pointsRequired} điểm
+                </ThemedText>
+              </View>
+              {reward.remainingQuantity !== null && (
+                <ThemedText style={styles.rewardRemaining}>
+                  Còn {reward.remainingQuantity}
+                </ThemedText>
+              )}
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.redeemButton,
+              (!reward.canRedeem || redeemingRewardId === reward.id) &&
+                styles.redeemButtonDisabled,
+            ]}
+            disabled={!reward.canRedeem || redeemingRewardId === reward.id}
+            onPress={() => handleRedeemRewardImproved(reward)}
+          >
+            {redeemingRewardId === reward.id ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <ThemedText style={styles.redeemButtonText}>
+                {reward.canRedeem ? "Đổi" : "Chưa đủ"}
+              </ThemedText>
+            )}
+          </TouchableOpacity>
+        </View>
+      )),
+    [
+      getRewardTypeColor,
+      getRewardTypeIcon,
+      handleRedeemRewardImproved,
+      redeemingRewardId,
+      rewards,
+    ],
+  );
+
+  const redeemedRewardCards = useMemo(
+    () =>
+      redeemedRewards.map((reward) => (
+        <View key={reward.id} style={styles.redeemedCard}>
+          <View style={styles.redeemedContent}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+              }}
+            >
+              <ThemedText
+                style={[styles.redeemedName, { flex: 1, marginRight: 8 }]}
+              >
+                {reward.rewardName}
+              </ThemedText>
+              {reward.status === "ACTIVE" && reward.code && (
+                <TouchableOpacity
+                  style={styles.useNowButton}
+                  onPress={() => handleUseVoucherOnOrder(reward.code)}
+                >
+                  <ThemedText style={styles.useNowButtonText}>
+                    Dùng ngay
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.redeemedMeta}>
+              <ThemedText style={styles.redeemedPoints}>
+                -{reward.pointsSpent} điểm
+              </ThemedText>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: `${getRewardStatusColor(reward.status)}15`,
+                  },
+                ]}
+              >
+                <ThemedText
+                  style={[
+                    styles.statusText,
+                    { color: getRewardStatusColor(reward.status) },
+                  ]}
+                >
+                  {getRewardStatusText(reward.status)}
+                </ThemedText>
+              </View>
+            </View>
+            {reward.code ? (
+              <TouchableOpacity
+                style={styles.codeContainer}
+                onPress={() => handleShowCode(reward.code)}
+              >
+                <ThemedText style={styles.codeText}>{reward.code}</ThemedText>
+                <Icon
+                  name="content-copy"
+                  type="material"
+                  size={14}
+                  color="#003D5B"
+                />
+              </TouchableOpacity>
+            ) : null}
+            {reward.expiresAt && reward.status === "ACTIVE" && (
+              <ThemedText style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
+                HSD: {new Date(reward.expiresAt).toLocaleDateString("vi-VN")}
+              </ThemedText>
+            )}
+          </View>
+        </View>
+      )),
+    [
+      getRewardStatusColor,
+      getRewardStatusText,
+      handleShowCode,
+      handleUseVoucherOnOrder,
+      redeemedRewards,
+    ],
+  );
+
+  const pointsHistoryCards = useMemo(
+    () =>
+      pointsHistory.map((tx) => (
+        <View
+          key={tx.id}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: "#F0F0F0",
+          }}
+        >
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: tx.points > 0 ? "#E8F5E9" : "#FFEBEE",
+              justifyContent: "center",
+              alignItems: "center",
+              marginRight: 12,
+            }}
+          >
+            <Icon
+              name={tx.points > 0 ? "add" : "remove"}
+              type="material"
+              size={20}
+              color={tx.points > 0 ? "#4CAF50" : "#F44336"}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <ThemedText
+              style={{ fontSize: 13, color: "#333", fontWeight: "600" }}
+            >
+              {tx.description ||
+                (tx.type === "EARN" ? "Tích điểm" : "Đổi điểm")}
+            </ThemedText>
+            <ThemedText style={{ fontSize: 11, color: "#999", marginTop: 2 }}>
+              {new Date(tx.createdAt).toLocaleDateString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </ThemedText>
+          </View>
+          <ThemedText
+            style={{
+              fontSize: 15,
+              fontWeight: "800",
+              color: tx.points > 0 ? "#4CAF50" : "#F44336",
+            }}
+          >
+            {tx.points > 0 ? "+" : ""}
+            {tx.points}
+          </ThemedText>
+        </View>
+      )),
+    [pointsHistory],
+  );
+
   const renderVouchersTab = () => (
     <View>
       {/* Points Summary */}
@@ -224,12 +541,7 @@ export default function VouchersScreen() {
 
         {rewards.length === 0 ? (
           <View style={styles.emptyState}>
-            <Icon
-              name="card-giftcard"
-              type="material"
-              size={48}
-              color="#CCC"
-            />
+            <Icon name="card-giftcard" type="material" size={48} color="#CCC" />
             <ThemedText style={styles.emptyText}>
               Chưa có voucher khả dụng
             </ThemedText>
@@ -238,79 +550,7 @@ export default function VouchersScreen() {
             </ThemedText>
           </View>
         ) : (
-          rewards.map((reward) => (
-            <View key={reward.id} style={styles.rewardCard}>
-              <View style={styles.rewardLeft}>
-                <View
-                  style={[
-                    styles.rewardIconContainer,
-                    { backgroundColor: `${getRewardTypeColor(reward.type)}15` },
-                  ]}
-                >
-                  <Icon
-                    name={getRewardTypeIcon(reward.type)}
-                    type="material"
-                    size={28}
-                    color={getRewardTypeColor(reward.type)}
-                  />
-                </View>
-              </View>
-              <View style={styles.rewardContent}>
-                <ThemedText style={styles.rewardName}>{reward.name}</ThemedText>
-                {reward.description ? (
-                  <ThemedText style={styles.rewardDescription} numberOfLines={2}>
-                    {reward.description}
-                  </ThemedText>
-                ) : null}
-                <View style={styles.rewardMeta}>
-                  <View style={styles.rewardPointsBadge}>
-                    <Icon
-                      name="stars"
-                      type="material"
-                      size={14}
-                      color="#FFD700"
-                    />
-                    <ThemedText style={styles.rewardPointsText}>
-                      {reward.pointsRequired} điểm
-                    </ThemedText>
-                  </View>
-                  {reward.remainingQuantity !== null && (
-                    <ThemedText style={styles.rewardRemaining}>
-                      Còn {reward.remainingQuantity}
-                    </ThemedText>
-                  )}
-                </View>
-              </View>
-              <TouchableOpacity
-                style={[
-                  styles.redeemButton,
-                  !reward.canRedeem && styles.redeemButtonDisabled,
-                ]}
-                disabled={!reward.canRedeem}
-                onPress={() => {
-                  Alert.alert(
-                    "Đổi voucher",
-                    `Bạn muốn đổi ${reward.pointsRequired} điểm lấy "${reward.name}"?`,
-                    [
-                      { text: "Hủy", style: "cancel" },
-                      {
-                        text: "Đổi",
-                        onPress: () =>
-                          Alert.alert(
-                            "Thông báo",
-                            "Tính năng đổi điểm sẽ hoạt động khi có đơn hàng"
-                          ),
-                      },
-                    ]
-                  );
-                }}
-              >
-                <ThemedText style={styles.redeemButtonText}>
-                  {reward.canRedeem ? "Đổi" : "Chưa đủ"}
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-          ))
+          rewardCards
         )}
       </View>
 
@@ -321,79 +561,48 @@ export default function VouchersScreen() {
             Voucher đã đổi ({redeemedRewards.length})
           </ThemedText>
 
-          {redeemedRewards.map((reward: any) => (
-            <View key={reward.id} style={styles.redeemedCard}>
-              <View style={styles.redeemedContent}>
-                <ThemedText style={styles.redeemedName}>
-                  {reward.rewardName}
-                </ThemedText>
-                <View style={styles.redeemedMeta}>
-                  <ThemedText style={styles.redeemedPoints}>
-                    -{reward.pointsSpent} điểm
-                  </ThemedText>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor: `${getRewardStatusColor(
-                          reward.status
-                        )}15`,
-                      },
-                    ]}
-                  >
-                    <ThemedText
-                      style={[
-                        styles.statusText,
-                        { color: getRewardStatusColor(reward.status) },
-                      ]}
-                    >
-                      {getRewardStatusText(reward.status)}
-                    </ThemedText>
-                  </View>
-                </View>
-                {reward.code && (
-                  <TouchableOpacity
-                    style={styles.codeContainer}
-                    onPress={() => {
-                      try {
-                        Alert.alert("Đã sao chép", `Mã: ${reward.code}`);
-                      } catch (e) {
-                        Alert.alert("Mã voucher", reward.code);
-                      }
-                    }}
-                  >
-                    <ThemedText style={styles.codeText}>
-                      {reward.code}
-                    </ThemedText>
-                    <Icon
-                      name="content-copy"
-                      type="material"
-                      size={14}
-                      color="#003D5B"
-                    />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          ))}
+          {redeemedRewardCards}
         </View>
       )}
 
       {/* Expiring Points Warning */}
       {expiringPoints && (
         <View style={[styles.sectionContainer, { marginTop: 0 }]}>
-          <View style={{ backgroundColor: '#FFF3E0', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#FFE0B2' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <View
+            style={{
+              backgroundColor: "#FFF3E0",
+              borderRadius: 14,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: "#FFE0B2",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 6,
+              }}
+            >
               <Icon name="schedule" type="material" size={20} color="#FF9800" />
-              <ThemedText style={{ fontSize: 14, fontWeight: '700', color: '#E65100' }}>
-                {expiringPoints.expiringPoints.toLocaleString()} điểm sắp hết hạn
+              <ThemedText
+                style={{ fontSize: 14, fontWeight: "700", color: "#E65100" }}
+              >
+                {expiringPoints.expiringPoints.toLocaleString()} điểm sắp hết
+                hạn
               </ThemedText>
             </View>
-            <ThemedText style={{ fontSize: 12, color: '#FF8F00' }}>
-              Hết hạn: {new Date(expiringPoints.expiringDate).toLocaleDateString('vi-VN')}
+            <ThemedText style={{ fontSize: 12, color: "#FF8F00" }}>
+              Hết hạn:{" "}
+              {new Date(expiringPoints.expiringDate).toLocaleDateString(
+                "vi-VN",
+              )}
             </ThemedText>
             {expiringPoints.recommendations?.length > 0 && (
-              <ThemedText style={{ fontSize: 12, color: '#795548', marginTop: 4 }}>
+              <ThemedText
+                style={{ fontSize: 12, color: "#795548", marginTop: 4 }}
+              >
                 💡 {expiringPoints.recommendations[0]}
               </ThemedText>
             )}
@@ -408,76 +617,54 @@ export default function VouchersScreen() {
             Lịch sử điểm ({pointsHistory.length})
           </ThemedText>
 
-          {pointsHistory.map((tx) => (
-            <View key={tx.id} style={{
-              flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
-              borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
-            }}>
-              <View style={{
-                width: 36, height: 36, borderRadius: 18,
-                backgroundColor: tx.points > 0 ? '#E8F5E9' : '#FFEBEE',
-                justifyContent: 'center', alignItems: 'center', marginRight: 12,
-              }}>
-                <Icon
-                  name={tx.points > 0 ? "add" : "remove"}
-                  type="material"
-                  size={20}
-                  color={tx.points > 0 ? "#4CAF50" : "#F44336"}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={{ fontSize: 13, color: '#333', fontWeight: '600' }}>
-                  {tx.description || (tx.type === 'EARN' ? 'Tích điểm' : 'Đổi điểm')}
-                </ThemedText>
-                <ThemedText style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
-                  {new Date(tx.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </ThemedText>
-              </View>
-              <ThemedText style={{
-                fontSize: 15, fontWeight: '800',
-                color: tx.points > 0 ? '#4CAF50' : '#F44336',
-              }}>
-                {tx.points > 0 ? '+' : ''}{tx.points}
-              </ThemedText>
-            </View>
-          ))}
+          {pointsHistoryCards}
         </View>
       )}
     </View>
   );
 
   const formatDiscount = (promo: PromotionValidateResponse): string => {
-    if (promo.discountType === 'PERCENTAGE') {
-      const max = promo.maxDiscountAmount ? ` (tối đa ${formatPrice(promo.maxDiscountAmount)})` : '';
+    if (promo.discountType === "PERCENTAGE") {
+      const max = promo.maxDiscountAmount
+        ? ` (tối đa ${formatPrice(promo.maxDiscountAmount)})`
+        : "";
       return `Giảm ${promo.discountValue}%${max}`;
-    } else if (promo.discountType === 'FIXED_AMOUNT') {
+    } else if (promo.discountType === "FIXED_AMOUNT") {
       return `Giảm ${formatPrice(promo.discountValue)}`;
     } else {
-      return 'Miễn phí dịch vụ';
+      return "Miễn phí dịch vụ";
     }
   };
 
   const formatDate = (dateStr?: string): string => {
-    if (!dateStr) return '';
+    if (!dateStr) return "";
     const d = new Date(dateStr);
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
   };
 
   const getDiscountIcon = (type: string) => {
     switch (type) {
-      case 'PERCENTAGE': return 'percent';
-      case 'FIXED_AMOUNT': return 'attach-money';
-      case 'FREE_SERVICE': return 'local-laundry-service';
-      default: return 'local-offer';
+      case "PERCENTAGE":
+        return "percent";
+      case "FIXED_AMOUNT":
+        return "attach-money";
+      case "FREE_SERVICE":
+        return "local-laundry-service";
+      default:
+        return "local-offer";
     }
   };
 
   const getDiscountColor = (type: string) => {
     switch (type) {
-      case 'PERCENTAGE': return '#E91E63';
-      case 'FIXED_AMOUNT': return '#FF5722';
-      case 'FREE_SERVICE': return '#2196F3';
-      default: return '#4CAF50';
+      case "PERCENTAGE":
+        return "#E91E63";
+      case "FIXED_AMOUNT":
+        return "#FF5722";
+      case "FREE_SERVICE":
+        return "#2196F3";
+      default:
+        return "#4CAF50";
     }
   };
 
@@ -492,9 +679,7 @@ export default function VouchersScreen() {
         {promotions.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="local-offer" type="material" size={48} color="#CCC" />
-            <ThemedText style={styles.emptyText}>
-              Chưa có ưu đãi nào
-            </ThemedText>
+            <ThemedText style={styles.emptyText}>Chưa có ưu đãi nào</ThemedText>
             <ThemedText style={styles.emptySubText}>
               Các ưu đãi sẽ được cập nhật sớm!
             </ThemedText>
@@ -506,7 +691,9 @@ export default function VouchersScreen() {
                 <View
                   style={[
                     styles.promoIconContainer,
-                    { backgroundColor: `${getDiscountColor(promo.discountType)}15` },
+                    {
+                      backgroundColor: `${getDiscountColor(promo.discountType)}15`,
+                    },
                   ]}
                 >
                   <Icon
@@ -677,7 +864,11 @@ export default function VouchersScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
 
       {/* Header */}
       <LinearGradient
@@ -691,12 +882,7 @@ export default function VouchersScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Icon
-              name="arrow-back"
-              type="material"
-              size={24}
-              color="#fff"
-            />
+            <Icon name="arrow-back" type="material" size={24} color="#fff" />
           </TouchableOpacity>
           <ThemedText style={styles.headerTitle}>Voucher & Ưu đãi</ThemedText>
           <View style={{ width: 40 }} />
@@ -706,13 +892,15 @@ export default function VouchersScreen() {
         <View style={styles.tabsContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "vouchers" && styles.tabActive]}
-            onPress={() => setActiveTab("vouchers")}
+            onPress={() => handleTabChange("vouchers")}
           >
             <Icon
               name="card-giftcard"
               type="material"
               size={18}
-              color={activeTab === "vouchers" ? "#003D5B" : "rgba(255,255,255,0.7)"}
+              color={
+                activeTab === "vouchers" ? "#003D5B" : "rgba(255,255,255,0.7)"
+              }
             />
             <ThemedText
               style={[
@@ -725,13 +913,15 @@ export default function VouchersScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === "rewards" && styles.tabActive]}
-            onPress={() => setActiveTab("rewards")}
+            onPress={() => handleTabChange("rewards")}
           >
             <Icon
               name="loyalty"
               type="material"
               size={18}
-              color={activeTab === "rewards" ? "#003D5B" : "rgba(255,255,255,0.7)"}
+              color={
+                activeTab === "rewards" ? "#003D5B" : "rgba(255,255,255,0.7)"
+              }
             />
             <ThemedText
               style={[
@@ -981,6 +1171,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     color: "#fff",
+  },
+  useNowButton: {
+    backgroundColor: "#003D5B",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  useNowButtonText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
   },
   // Redeemed Card
   redeemedCard: {

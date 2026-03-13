@@ -30,9 +30,10 @@ export const orderManagementApi = baseApi.injectEndpoints({
       ApiResponse<Page<OrderResponse>>,
       PageableRequest & { status?: OrderStatus }
     >({
-      query: (params) => ({
+      query: (params ) => ({
         url: ADMIN_ENDPOINTS.ORDERS,
         params,
+        keepUnusedDataFor: 0,
       }),
       providesTags: [TAGS.ORDERS],
     }),
