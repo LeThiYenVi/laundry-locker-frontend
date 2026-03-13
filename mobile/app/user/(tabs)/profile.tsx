@@ -170,7 +170,13 @@ export default function ProfileScreen() {
       if (response.success) {
         setLoyalty(response.data);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (
+        error?.response?.status === 400 &&
+        error?.response?.data?.code === "E_LOYALTY001"
+      ) {
+        return;
+      }
       console.error("Failed to fetch loyalty:", error);
     }
   }, []);

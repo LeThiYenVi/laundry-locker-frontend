@@ -3,6 +3,7 @@ import {
   clearTokens,
   REFRESH_TOKEN_KEY,
   setTokens,
+  setLogoutCallback,
 } from "@/services/api";
 import { authService } from "@/services/user";
 import { AuthTokens, User, UserRole } from "@/types";
@@ -46,6 +47,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Check for existing tokens on mount
   useEffect(() => {
+    // Register logout callback so the Axios interceptor can force-logout when
+    // the refresh token is invalid (e.g. after a DB reset in dev).
+    setLogoutCallback(async () => {
+      await clearTokens();
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        role: null,
+      });
+    });
+
     const checkAuth = async () => {
       try {
         const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
