@@ -6,7 +6,6 @@ import api from '../api';
  */
 export const getProfile = async (): Promise<ApiResponse<User>> => {
     const response = await api.get<ApiResponse<User>>('/user/profile');
-    console.log("=== THÔNG TIN USER ===\n", JSON.stringify(response.data, null, 2));
     return response.data;
 };
 
