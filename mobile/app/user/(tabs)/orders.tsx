@@ -11,7 +11,15 @@ import {
 } from "@/types";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useEffect, useMemo, useState, memo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  memo,
+} from "react";
+import QRCode from "react-native-qrcode-svg";
 import {
   ActivityIndicator,
   Alert,
@@ -123,6 +131,17 @@ const formatPrice = (price: number | undefined | null): string => {
   }).format(price);
 };
 
+const isOrderPaid = (order: Order): boolean => {
+  if (order.isPaid === true) return true;
+  const paymentStatus = (order.payment?.status || "").toUpperCase();
+  return ["SUCCESS", "COMPLETED", "PAID"].includes(paymentStatus);
+};
+
+const isOrderUnpaid = (order: Order): boolean => {
+  if (order.paymentRequired === false) return false;
+  return !isOrderPaid(order);
+};
+
 // Extract Memoized component for better FlatList performance
 interface MemoizedOrderCardProps {
   order: Order;
@@ -133,8 +152,9 @@ interface MemoizedOrderCardProps {
   formatDate: (dateString?: string) => string;
   formatPrice: (price: number | undefined | null) => string;
   handleTrackOrder: (orderId: number) => void;
-  handleConfirmOrder: (orderId: number) => void;
+  handlePayOrder: (orderId: number) => void;
   handleCancelOrder: (orderId: number) => void;
+  payingOrderId: number | null;
 }
 
 const MemoizedOrderCard = memo(
@@ -147,8 +167,9 @@ const MemoizedOrderCard = memo(
     formatDate,
     formatPrice,
     handleTrackOrder,
-    handleConfirmOrder,
+    handlePayOrder,
     handleCancelOrder,
+    payingOrderId,
   }: MemoizedOrderCardProps) => {
     return (
       <TouchableOpacity
@@ -311,18 +332,25 @@ const MemoizedOrderCard = memo(
               </TouchableOpacity>
             )}
 
-            {order.status === "INITIALIZED" && (
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#E8F5E9" }]}
-                onPress={() => handleConfirmOrder(order.id)}
-              >
-                <ThemedText
-                  style={[styles.actionBtnText, { color: "#2E7D32" }]}
+            {order.status !== "CANCELED" &&
+              order.type !== "STORAGE" &&
+              isOrderUnpaid(order) && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: "#FFF0F6" }]}
+                  onPress={() => handlePayOrder(order.id)}
+                  disabled={payingOrderId === order.id}
                 >
-                  Xác nhận
-                </ThemedText>
-              </TouchableOpacity>
-            )}
+                  {payingOrderId === order.id ? (
+                    <ActivityIndicator size="small" color="#A50064" />
+                  ) : (
+                    <ThemedText
+                      style={[styles.actionBtnText, { color: "#A50064" }]}
+                    >
+                      Thanh toán
+                    </ThemedText>
+                  )}
+                </TouchableOpacity>
+              )}
 
             {((order.status === "WAITING" && order.type !== "STORAGE") ||
               order.status === "COLLECTED") && (
@@ -391,6 +419,15 @@ export default function OrdersScreen() {
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [showTimelineDetail, setShowTimelineDetail] = useState(false);
   const [isLoadingTimeline, setIsLoadingTimeline] = useState(false);
+
+  // MoMo quick payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [payingOrderId, setPayingOrderId] = useState<number | null>(null);
+  const [momoPaymentUrl, setMomoPaymentUrl] = useState("");
+  const [momoQrCodeData, setMomoQrCodeData] = useState<string | null>(null);
+  const [isPollingPayment, setIsPollingPayment] = useState(false);
+  const paymentPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const filters: { value: OrderFilter; label: string }[] = [
     { value: "ALL", label: "Tất cả" },
@@ -605,34 +642,6 @@ export default function OrdersScreen() {
       setIsSubmittingComplaint(false);
     }
   };
-
-  const handleConfirmOrder = useCallback(
-    async (orderId: number) => {
-      Alert.alert("Xác nhận gửi đồ", "Bạn xác nhận đã đặt đồ vào tủ locker?", [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xác nhận",
-          onPress: async () => {
-            try {
-              const response = await orderService.confirmOrder(orderId);
-              if (response.success) {
-                Alert.alert("Thành công", "Đơn hàng đã được xác nhận!");
-                fetchOrders(0, { isRefresh: true });
-                setShowDetailModal(false);
-              }
-            } catch (err: any) {
-              console.error("Failed to confirm order:", err);
-              Alert.alert(
-                "Lỗi",
-                err?.response?.data?.message || "Không thể xác nhận đơn hàng",
-              );
-            }
-          },
-        },
-      ]);
-    },
-    [fetchOrders],
-  );
 
   const executeCancelOrder = useCallback(
     async (orderId: number, reason: string) => {
@@ -961,6 +970,91 @@ export default function OrdersScreen() {
     [orders],
   );
 
+  const stopPaymentPolling = useCallback(() => {
+    if (paymentPollRef.current) {
+      clearInterval(paymentPollRef.current);
+      paymentPollRef.current = null;
+    }
+    setIsPollingPayment(false);
+  }, []);
+
+  const startPaymentPolling = useCallback(
+    (orderId: number) => {
+      stopPaymentPolling();
+      setIsPollingPayment(true);
+
+      paymentPollRef.current = setInterval(async () => {
+        try {
+          const statusRes = await orderService.getOrderStatus(orderId);
+          const statusData = statusRes?.data as any;
+          const paymentStatus = (
+            statusData?.payment?.status || ""
+          ).toUpperCase();
+          const paid =
+            statusData?.isPaid === true ||
+            ["SUCCESS", "COMPLETED", "PAID"].includes(paymentStatus);
+
+          if (paid) {
+            stopPaymentPolling();
+            setShowPaymentModal(false);
+            fetchOrders(0, { isRefresh: true });
+            Alert.alert("Thành công", "Thanh toán MoMo thành công.");
+          }
+        } catch {
+          // Ignore polling errors; next interval will retry.
+        }
+      }, 3000);
+    },
+    [fetchOrders, stopPaymentPolling],
+  );
+
+  const handlePayOrder = useCallback(
+    async (orderId: number) => {
+      setPayingOrderId(orderId);
+      setShowPaymentModal(true);
+      setIsCreatingPayment(true);
+      setMomoPaymentUrl("");
+      setMomoQrCodeData(null);
+
+      try {
+        const res = await paymentService.createPayment(orderId, "MOMO");
+        const paymentData = res.data as any;
+
+        if (res.success && paymentData?.paymentUrl) {
+          setMomoPaymentUrl(paymentData.paymentUrl);
+          setMomoQrCodeData(
+            paymentData.qrCodeUrl ||
+              paymentData.qrCodeData ||
+              paymentData.qrCode ||
+              paymentData.paymentUrl,
+          );
+          startPaymentPolling(orderId);
+        } else {
+          setShowPaymentModal(false);
+          Alert.alert("Lỗi", "Không thể tạo thanh toán MoMo");
+        }
+      } catch (err: any) {
+        setShowPaymentModal(false);
+        Alert.alert(
+          "Lỗi",
+          err?.response?.data?.message ||
+            err?.message ||
+            "Không thể tạo thanh toán MoMo",
+        );
+      } finally {
+        setIsCreatingPayment(false);
+        setPayingOrderId(null);
+      }
+    },
+    [startPaymentPolling],
+  );
+
+  useEffect(() => {
+    return () => {
+      stopPaymentPolling();
+    };
+  }, [stopPaymentPolling]);
+
   const renderTimeline = (currentStatus: string) => {
     const steps = [
       { status: "INITIALIZED", label: "Đã đặt" },
@@ -1167,8 +1261,9 @@ export default function OrdersScreen() {
                   formatDate={formatDate}
                   formatPrice={formatPrice}
                   handleTrackOrder={handleTrackOrder}
-                  handleConfirmOrder={handleConfirmOrder}
+                  handlePayOrder={handlePayOrder}
                   handleCancelOrder={handleCancelOrder}
+                  payingOrderId={payingOrderId}
                 />
               )}
               onEndReached={handleLoadMore}
@@ -1300,6 +1395,142 @@ export default function OrdersScreen() {
             ) : (
               <ThemedText style={{ textAlign: "center", margin: 20 }}>
                 Không có dữ liệu
+              </ThemedText>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* MoMo Payment Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showPaymentModal}
+        onRequestClose={() => {
+          stopPaymentPolling();
+          setShowPaymentModal(false);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.trackingModalView}>
+            <AppModalHeader
+              title="Thanh toán MoMo"
+              onClose={() => {
+                stopPaymentPolling();
+                setShowPaymentModal(false);
+              }}
+              showDivider={true}
+            />
+
+            {isCreatingPayment ? (
+              <ActivityIndicator
+                size="large"
+                color="#A50064"
+                style={{ marginVertical: 40 }}
+              />
+            ) : momoPaymentUrl ? (
+              <View
+                style={{
+                  width: "100%",
+                  backgroundColor: "#FFF0F6",
+                  borderRadius: 16,
+                  padding: 20,
+                  borderWidth: 1,
+                  borderColor: "#F8BBD0",
+                  alignItems: "center",
+                }}
+              >
+                {momoQrCodeData ? (
+                  <View
+                    style={{
+                      padding: 10,
+                      backgroundColor: "white",
+                      borderRadius: 12,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <QRCode value={momoQrCodeData} size={160} />
+                  </View>
+                ) : (
+                  <Icon name="qr-code-2" size={80} color="#A50064" />
+                )}
+
+                <ThemedText
+                  style={{
+                    fontSize: 14,
+                    color: "#A50064",
+                    fontWeight: "700",
+                    textAlign: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  Quét mã QR bằng ứng dụng MoMo
+                </ThemedText>
+
+                <ThemedText
+                  style={{
+                    fontSize: 12,
+                    color: "#666",
+                    textAlign: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  Hoặc nhấn nút bên dưới để chuyển sang MoMo
+                </ThemedText>
+
+                {isPollingPayment && (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <ActivityIndicator size="small" color="#A50064" />
+                    <ThemedText style={{ fontSize: 12, color: "#666" }}>
+                      Đang chờ xác nhận thanh toán...
+                    </ThemedText>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    { backgroundColor: "#A50064", paddingHorizontal: 20 },
+                  ]}
+                  onPress={() => Linking.openURL(momoPaymentUrl)}
+                >
+                  <ThemedText style={[styles.actionBtnText, { color: "#fff" }]}>
+                    Mở MoMo thanh toán
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    {
+                      marginTop: 10,
+                      backgroundColor: "#E8F5E9",
+                      paddingHorizontal: 20,
+                    },
+                  ]}
+                  onPress={() => {
+                    stopPaymentPolling();
+                    setShowPaymentModal(false);
+                    fetchOrders(0, { isRefresh: true });
+                  }}
+                >
+                  <ThemedText
+                    style={[styles.actionBtnText, { color: "#2E7D32" }]}
+                  >
+                    Tôi đã thanh toán
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <ThemedText style={{ textAlign: "center", margin: 20 }}>
+                Không thể tạo mã thanh toán
               </ThemedText>
             )}
           </View>
@@ -3215,6 +3446,8 @@ const styles = StyleSheet.create({
   },
   cardActions: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
     gap: 8,
   },
   actionBtn: {
