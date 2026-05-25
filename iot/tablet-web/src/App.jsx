@@ -107,7 +107,7 @@ export default function App() {
       {screen === 'services' && <ServicesScreen go={go} goHome={goHome} jwt={jwt} userName={userName} services={services} setServices={setServices} selectedSvcs={selectedSvcs} setSelectedSvcs={setSelectedSvcs} />}
       {screen === 'order-info' && <OrderInfoScreen go={go} back={back} jwt={jwt} services={services} selectedSvcs={selectedSvcs} selectedBox={selectedBox} setOrderId={setOrderId} setOrderPin={setOrderPin} setOrderCode={setOrderCode} setTotalPrice={setTotalPrice} />}
       {screen === 'payment' && <PaymentScreen go={go} goHome={goHome} jwt={jwt} orderId={orderId} orderPin={orderPin} orderCode={orderCode} totalPrice={totalPrice} selectedBox={selectedBox} showSuccess={showSuccess} />}
-      {screen === 'pin' && <PinScreen goHome={goHome} showSuccess={showSuccess} />}
+      {screen === 'pin' && <PinScreen goHome={goHome} showSuccess={showSuccess} lockerInfo={lockerInfo} />}
       {screen === 'staff' && <StaffScreen goHome={goHome} showSuccess={showSuccess} />}
       {screen === 'success' && <SuccessScreen goHome={goHome} title={successTitle} msg={successMsg} extra={successExtra} countdown={countdown} />}
     </>
@@ -895,13 +895,42 @@ function PaymentScreen({ go, goHome, jwt, orderId, orderPin, orderCode, totalPri
 // ============================================
 // PIN
 // ============================================
-function PinScreen({ goHome, showSuccess }) {
+function PinScreen({ goHome, showSuccess, lockerInfo }) {
+  const [step, setStep] = useState(1);
+  const [boxNum, setBoxNum] = useState('');
+  const [selectedBox, setSelectedBox] = useState(null);
+
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [pinState, setPinState] = useState('');
   const [msg, setMsg] = useState('');
 
-  const pressKey = (num) => {
+  const pressBoxKey = (num) => {
+    if (boxNum.length >= 3) return;
+    setBoxNum(boxNum + num);
+    setMsg('');
+  };
+
+  const clearBox = () => { setBoxNum(''); setMsg(''); };
+  const backspaceBox = () => { setBoxNum(p => p.slice(0, -1)); setMsg(''); };
+
+  const submitBox = () => {
+    if (!boxNum) return;
+    if (!lockerInfo || !lockerInfo.boxes) {
+      setMsg('Đang tải thông tin tủ, vui lòng thử lại');
+      return;
+    }
+    const box = lockerInfo.boxes.find(b => b.boxNumber == boxNum);
+    if (!box) {
+      setMsg(`Không tìm thấy ô tủ số ${boxNum}`);
+      return;
+    }
+    setSelectedBox(box);
+    setStep(2);
+    setMsg('');
+  };
+
+  const pressPinKey = (num) => {
     if (pin.length >= 6) return;
     const newPin = pin + num;
     setPin(newPin);
@@ -910,61 +939,97 @@ function PinScreen({ goHome, showSuccess }) {
     if (newPin.length === 6) setTimeout(() => submitPin(newPin), 300);
   };
 
-  const clearAll = () => { setPin(''); setPinState(''); setMsg(''); };
-  const backspace = () => { setPin(p => p.slice(0, -1)); setPinState(''); };
+  const clearPin = () => { setPin(''); setPinState(''); setMsg(''); };
+  const backspacePin = () => { setPin(p => p.slice(0, -1)); setPinState(''); };
 
   const submitPin = async (p) => {
     const code = p || pin;
     if (code.length !== 6) return;
+    if (!selectedBox) return;
+
     setLoading(true);
     try {
-      console.log('%c[PIN] Looking up order by PIN:', 'color:#fbbf24', code);
-      const orderRes = await api.getOrderByPin(code);
-      if (!orderRes.success || !orderRes.data) {
-        setPinState('error');
-        setMsg('Mã PIN không hợp lệ hoặc đã hết hạn');
-        setTimeout(clearAll, 2000);
-        setLoading(false);
-        return;
-      }
-      const boxId = orderRes.data.sendBoxId || orderRes.data.receiveBoxId || orderRes.data.box?.id || orderRes.data.boxId;
-      console.log('%c[PIN] Found order → boxId:', 'color:#4ade80', boxId, orderRes.data);
+      console.log('%c[PIN] Verifying PIN for box:', 'color:#fbbf24', selectedBox.id, code);
+      const verifyRes = await api.verifyPin(code, selectedBox.id);
 
-      const verifyRes = await api.verifyPin(code, boxId);
       if (verifyRes.success && verifyRes.data?.valid) {
-        const unlockRes = await api.unlockBox(code, boxId, 'PICKUP');
+        const unlockRes = await api.unlockBox(code, selectedBox.id, 'PICKUP');
         if (unlockRes.success || unlockRes.data?.success) {
           setPinState('success');
-          const boxNum = orderRes.data.sendBoxNumber || orderRes.data.box?.boxNumber || '';
-          const oCode = orderRes.data.orderCode || '';
+          const oCode = verifyRes.data?.orderCode || unlockRes.data?.orderCode || '';
           setTimeout(() => showSuccess(
             'Đã mở khóa!',
-            unlockRes.data?.message || 'Hộp đã được mở. Tự khóa sau 5 giây.',
-            { orderCode: oCode, boxNumber: boxNum }
+            unlockRes.data?.message || 'Hộp đã được mở. Vui lòng đóng cửa khi lấy đồ xong.',
+            { orderCode: oCode, boxNumber: selectedBox.boxNumber }
           ), 500);
         } else {
           setPinState('error');
           setMsg(unlockRes.data?.message || 'Lỗi mở khóa');
-          setTimeout(clearAll, 2000);
+          setTimeout(() => { clearPin(); }, 2000);
         }
       } else {
         setPinState('error');
-        setMsg(verifyRes.data?.message || verifyRes.message || 'Mã PIN không hợp lệ');
-        setTimeout(clearAll, 2000);
+        if (verifyRes.message === 'E_IOT_PIN_LOCKED' || verifyRes.data?.message === 'E_IOT_PIN_LOCKED') {
+          setMsg('Nhập sai 5 lần! Thao tác bị tạm khóa. Vui lòng vào App Mobile để "Cấp lại mã PIN" rồi thử lại.');
+        } else {
+          setMsg(verifyRes.data?.message || verifyRes.message || 'Mã PIN không hợp lệ');
+          setTimeout(() => { clearPin(); }, 2000);
+        }
       }
     } catch {
       setPinState('error');
       setMsg('Lỗi kết nối server');
-      setTimeout(clearAll, 2000);
+      setTimeout(() => { clearPin(); }, 2000);
     }
     setLoading(false);
   };
 
+  if (step === 1) {
+    return (
+      <div className="screen">
+        <Header onBack={goHome} title="Lấy đồ" />
+        <p className="subtitle" style={{ textAlign: 'center' }}>
+          Nhập <strong>Số Ô Tủ</strong> của bạn
+        </p>
+        <div className="form-group" style={{ marginTop: 24, marginBottom: 32 }}>
+          <input 
+            className="input" 
+            value={boxNum} 
+            readOnly
+            placeholder="VD: 12" 
+            style={{ 
+              textAlign: 'center', 
+              fontSize: 32, 
+              letterSpacing: 4, 
+              fontWeight: 700, 
+              padding: '20px',
+              backgroundColor: '#f8fafc',
+              border: '2px solid var(--accent)',
+              color: 'var(--accent)'
+            }}
+          />
+        </div>
+        <div className="numpad">
+          {[1,2,3,4,5,6,7,8,9].map(n => (
+            <div key={n} className="key" onClick={() => pressBoxKey(String(n))}>{n}</div>
+          ))}
+          <div className="key fn" onClick={clearBox}>Xóa</div>
+          <div className="key" onClick={() => pressBoxKey('0')}>0</div>
+          <div className="key fn" onClick={backspaceBox}><Delete size={20} /></div>
+        </div>
+        <Btn onClick={submitBox} disabled={!boxNum} style={{ marginTop: 16 }}>
+          Tiếp tục <ChevronRight size={18} />
+        </Btn>
+        {msg && <Msg type="error" text={msg} />}
+      </div>
+    );
+  }
+
   return (
     <div className="screen">
-      <Header onBack={goHome} title="Nhập mã PIN" />
+      <Header onBack={() => { setStep(1); clearPin(); }} title={`Ô Tủ #${selectedBox.boxNumber}`} />
       <p className="subtitle" style={{ textAlign: 'center' }}>
-        Nhập mã PIN 6 số để mở tủ
+        Nhập <strong>Mã PIN</strong> 6 số để mở tủ
       </p>
       <div className="pin-row">
         {[0,1,2,3,4,5].map(i => (
@@ -975,11 +1040,11 @@ function PinScreen({ goHome, showSuccess }) {
       </div>
       <div className="numpad">
         {[1,2,3,4,5,6,7,8,9].map(n => (
-          <div key={n} className="key" onClick={() => pressKey(String(n))}>{n}</div>
+          <div key={n} className="key" onClick={() => pressPinKey(String(n))}>{n}</div>
         ))}
-        <div className="key fn" onClick={clearAll}>Xóa</div>
-        <div className="key" onClick={() => pressKey('0')}>0</div>
-        <div className="key fn" onClick={backspace}><Delete size={20} /></div>
+        <div className="key fn" onClick={clearPin}>Xóa</div>
+        <div className="key" onClick={() => pressPinKey('0')}>0</div>
+        <div className="key fn" onClick={backspacePin}><Delete size={20} /></div>
       </div>
       <Btn onClick={() => submitPin(pin)} loading={loading} disabled={pin.length < 6} style={{ marginTop: 16 }}>
         <Unlock size={18} /> Mở khóa

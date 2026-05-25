@@ -91,9 +91,9 @@ const getStatusGradient = (status: string): string[] => {
 const getStatusText = (status: string, type?: string): string => {
   switch (status) {
     case "INITIALIZED":
-      return "Khởi tạo";
+      return type === "STORAGE" ? "Chờ gửi đồ" : "Khởi tạo";
     case "WAITING":
-      return type === "STORAGE" ? "Đang lưu trữ" : "Chờ thu gom";
+      return type === "STORAGE" ? "Đang giữ đồ" : "Chờ thu gom";
     case "COLLECTED":
       return "Đã thu gom";
     case "PROCESSING":
@@ -103,7 +103,7 @@ const getStatusText = (status: string, type?: string): string => {
     case "RETURNED":
       return "Đã trả";
     case "COMPLETED":
-      return "Hoàn thành";
+      return type === "STORAGE" ? "Đã lấy đồ" : "Hoàn thành";
     case "CANCELED":
       return "Đã hủy";
     default:
@@ -319,7 +319,7 @@ const MemoizedOrderCard = memo(
           </View>
 
           <View style={styles.cardActions}>
-            {order.status !== "CANCELED" && order.type !== "STORAGE" && (
+            {order.status !== "CANCELED" && (
               <TouchableOpacity
                 style={[styles.actionBtn, { backgroundColor: "#E3F2FD" }]}
                 onPress={() => handleTrackOrder(order.id)}
@@ -352,7 +352,8 @@ const MemoizedOrderCard = memo(
                 </TouchableOpacity>
               )}
 
-            {((order.status === "WAITING" && order.type !== "STORAGE") ||
+            {(order.status === "INITIALIZED" ||
+              (order.status === "WAITING" && order.type !== "STORAGE") ||
               order.status === "COLLECTED") && (
               <TouchableOpacity
                 style={[styles.actionBtn, { backgroundColor: "#FFEBEE" }]}
@@ -431,8 +432,8 @@ export default function OrdersScreen() {
 
   const filters: { value: OrderFilter; label: string }[] = [
     { value: "ALL", label: "Tất cả" },
-    { value: "INITIALIZED", label: "Khởi tạo" },
-    { value: "WAITING", label: "Chờ xử lý" },
+    { value: "INITIALIZED", label: "Khởi tạo/Chờ gửi" },
+    { value: "WAITING", label: "Chờ xử lý/Giữ đồ" },
     { value: "PROCESSING", label: "Đang giặt" },
     { value: "COMPLETED", label: "Hoàn thành" },
   ];
@@ -916,14 +917,15 @@ export default function OrdersScreen() {
   const [trackingData, setTrackingData] = useState<any>(null); // Using any temporarily to avoid import issue if type not refreshed, but will cast to OrderTrackingDetail
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
 
-  const handleTrackOrder = useCallback(
+    const handleTrackOrder = useCallback(
     async (orderId: number) => {
       setIsLoadingTracking(true);
       setTrackingModalVisible(true); // Show modal immediately with loading state
+      const orderType = orders.find((o) => o.id === orderId)?.type;
       try {
         const response = await orderService.getOrderStatus(orderId);
-        if (response.success) {
-          setTrackingData(response.data);
+        if (response.success && response.data) {
+          setTrackingData({ ...response.data, type: orderType });
         } else {
           // Fallback to local data if API fails
           throw new Error("API returned failure");
@@ -941,11 +943,12 @@ export default function OrdersScreen() {
           console.log("Found local order data:", localOrder.id);
           const fallbackData = {
             orderId: localOrder.id,
+            type: localOrder.type,
             status: localOrder.status,
-            statusDescription: getStatusText(localOrder.status),
-            pinCode: localOrder.pin,
-            lockerName: localOrder.locker?.name || "Tủ gửi đồ",
-            boxNumber: localOrder.boxId,
+            statusDescription: getStatusText(localOrder.status, localOrder.type),
+            pinCode: localOrder.pin || localOrder.pinCode,
+            lockerName: localOrder.locker?.name || localOrder.lockerName || "Tủ gửi đồ",
+            boxNumber: localOrder.boxId || localOrder.boxNumber || localOrder.sendBoxNumber,
             createdAt: localOrder.createdAt || new Date().toISOString(),
             updatedAt: localOrder.updatedAt || new Date().toISOString(),
             isPaid: false,
@@ -954,8 +957,8 @@ export default function OrdersScreen() {
 
           if (localOrder.status === "INITIALIZED")
             fallbackData.nextAction = "Mang đồ đến tủ và nhập mã PIN";
-          else if (localOrder.status === "RETURNED")
-            fallbackData.nextAction = "Thanh toán để lấy đồ";
+          else if (localOrder.status === "RETURNED" || (localOrder.type === "STORAGE" && localOrder.status === "WAITING"))
+            fallbackData.nextAction = "Thanh toán/Nhập PIN để lấy đồ";
 
           setTrackingData(fallbackData);
         } else {
@@ -1055,15 +1058,24 @@ export default function OrdersScreen() {
     };
   }, [stopPaymentPolling]);
 
-  const renderTimeline = (currentStatus: string) => {
-    const steps = [
-      { status: "INITIALIZED", label: "Đã đặt" },
-      { status: "WAITING", label: "Chờ gửi" },
-      { status: "COLLECTED", label: "Đã thu" },
-      { status: "PROCESSING", label: "Đang giặt" },
-      { status: "READY", label: "Sẵn sàng" },
-      { status: "COMPLETED", label: "Xong" },
-    ];
+  const renderTimeline = (currentStatus: string, orderType?: string) => {
+    let steps;
+    if (orderType === "STORAGE") {
+       steps = [
+         { status: "INITIALIZED", label: "Đã đặt" },
+         { status: "WAITING", label: "Đang giữ đồ" },
+         { status: "COMPLETED", label: "Đã lấy đồ" },
+       ];
+    } else {
+       steps = [
+         { status: "INITIALIZED", label: "Đã đặt" },
+         { status: "WAITING", label: "Chờ gửi" },
+         { status: "COLLECTED", label: "Đã thu" },
+         { status: "PROCESSING", label: "Đang giặt" },
+         { status: "READY", label: "Sẵn sàng" },
+         { status: "COMPLETED", label: "Xong" },
+       ];
+    }
 
     const currentIndex = steps.findIndex((s) => s.status === currentStatus);
     // If status is RETURNED, mapped to COMPLETED logic or specific? Let's treat RETURNED/COMPLETED similar or add RETURNED step.
@@ -1349,7 +1361,7 @@ export default function OrdersScreen() {
                 </View>
 
                 <View style={styles.timelineWrapper}>
-                  {renderTimeline(trackingData.status)}
+                  {renderTimeline(trackingData.status, trackingData.type)}
                 </View>
 
                 <View style={styles.statusDescriptionBox}>
@@ -1621,9 +1633,17 @@ export default function OrdersScreen() {
                         "Kiosk"}{" "}
                       nhập mã PIN này để mở tủ
                     </ThemedText>
-                    {/* Reset PIN Button - only for active orders */}
-                    {selectedOrder.status !== "COMPLETED" &&
-                      selectedOrder.status !== "CANCELED" && (
+                    {/* Failed PIN Attempts Warning */}
+                    {(selectedOrder.failedPinAttempts ?? 0) >= 5 && (
+                      <View style={{ backgroundColor: '#fee2e2', padding: 12, borderRadius: 8, marginTop: 12, borderWidth: 1, borderColor: '#f87171' }}>
+                        <ThemedText style={{ color: '#b91c1c', fontSize: 13, fontWeight: '600', textAlign: 'center', lineHeight: 20 }}>
+                          ⚠️ Tạm khóa giao dịch tại tủ do nhập sai mã PIN 5 lần. Vui lòng bấm Cấp lại mã PIN để lấy mã mới và tiếp tục!
+                        </ThemedText>
+                      </View>
+                    )}
+
+                    {/* Reset PIN Button - only for active orders OR if locked */}
+                    {(selectedOrder.status === "INITIALIZED" || selectedOrder.status === "RETURNED" || (selectedOrder.failedPinAttempts ?? 0) >= 5) && (
                         <TouchableOpacity
                           onPress={() => handleResetPin(selectedOrder.id)}
                           style={{
@@ -1894,6 +1914,14 @@ export default function OrdersScreen() {
                       gap: 8,
                     }}
                   >
+                    {selectedOrder.type === "LAUNDRY" && selectedOrder.actualWeight && (
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
+                        <ThemedText style={{ fontSize: 14, color: "#1976D2", fontWeight: '600' }}>Khối lượng thực tế</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: "#1976D2", fontWeight: 'bold' }}>
+                          {selectedOrder.actualWeight} {selectedOrder.weightUnit || 'kg'}
+                        </ThemedText>
+                      </View>
+                    )}
                     {selectedOrder.estimatedPrice && (
                       <View
                         style={{
@@ -1989,6 +2017,34 @@ export default function OrdersScreen() {
                     </View>
                   </View>
                 </View>
+
+                {/* Additional Info / Notes */}
+                {(selectedOrder.customerNote || selectedOrder.staffNote || selectedOrder.pickupDeadline) && (
+                  <View style={[styles.detailInfoBox, { marginTop: 16 }]}>
+                    <ThemedText style={{ fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 12 }}>Thông tin bổ sung</ThemedText>
+                    
+                    {selectedOrder.customerNote && (
+                      <View style={{ marginBottom: 12 }}>
+                        <ThemedText style={{ fontSize: 12, color: "#999", marginBottom: 4 }}>Ghi chú của bạn</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: "#333" }}>{selectedOrder.customerNote}</ThemedText>
+                      </View>
+                    )}
+                    
+                    {selectedOrder.staffNote && (
+                      <View style={{ marginBottom: 12, backgroundColor: '#fff8e1', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ffe082' }}>
+                        <ThemedText style={{ fontSize: 12, color: "#f57f17", fontWeight: 'bold', marginBottom: 4 }}>Ghi chú từ nhân viên</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: "#e65100" }}>{selectedOrder.staffNote}</ThemedText>
+                      </View>
+                    )}
+
+                    {selectedOrder.pickupDeadline && (
+                      <View style={{ marginBottom: 4 }}>
+                        <ThemedText style={{ fontSize: 12, color: "#d32f2f", fontWeight: 'bold', marginBottom: 4 }}>Hạn chót Cần Lấy Đồ (quá hạn tính phí)</ThemedText>
+                        <ThemedText style={{ fontSize: 14, color: "#b71c1c", fontWeight: '600' }}>{formatDate(selectedOrder.pickupDeadline)}</ThemedText>
+                      </View>
+                    )}
+                  </View>
+                )}
 
                 {/* Timestamps */}
                 <View

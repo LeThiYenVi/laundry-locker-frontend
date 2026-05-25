@@ -41,8 +41,8 @@ void initLockerController() {
     pinMode(RELAY_PIN, OUTPUT);
     pinMode(LED_STATUS, OUTPUT);
     
-    // Đảm bảo relay ở trạng thái OFF ban đầu (khóa đóng)
-    setRelay(false);
+    // Đặt trạng thái ban đầu là LOCKED (không phụ thuộc relay ON/OFF)
+    setRelay(!RELAY_ON_UNLOCK);
     // ESP8266 built-in LED is active LOW
     digitalWrite(LED_STATUS, HIGH);
     
@@ -54,8 +54,8 @@ void initLockerController() {
 void unlockBox() {
     Serial.println("[LOCKER] Unlocking box...");
     
-    // Kích hoạt relay để mở solenoid
-    setRelay(true);
+    // Ánh xạ relay theo cấu hình phần cứng
+    setRelay(RELAY_ON_UNLOCK);
     // ESP8266 built-in LED is active LOW
     digitalWrite(LED_STATUS, LOW);
     
@@ -68,8 +68,8 @@ void unlockBox() {
 void lockBox() {
     Serial.println("[LOCKER] Locking box...");
     
-    // Tắt relay để đóng solenoid
-    setRelay(false);
+    // Ánh xạ relay theo cấu hình phần cứng
+    setRelay(!RELAY_ON_UNLOCK);
     // ESP8266 built-in LED is active LOW
     digitalWrite(LED_STATUS, HIGH);
     
