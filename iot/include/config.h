@@ -15,8 +15,11 @@
 // #define WIFI_SSID "Thai Binh"              // Thay bằng tên WiFi của bạn
 // #define WIFI_PASSWORD "thaibinh7704"      // Thay bằng mật khẩu WiFi
 
-#define WIFI_SSID "MinhNhat-L3"              
-#define WIFI_PASSWORD "29112002" 
+// #define WIFI_SSID "MinhNhat-L3"              
+// #define WIFI_PASSWORD "29112002" 
+
+#define WIFI_SSID "Tang B"              // Thay bằng tên WiFi của bạn
+#define WIFI_PASSWORD "123456783"      // Thay bằng mật khẩu WiFi
 
 // ============================================
 // Backend API Configuration
@@ -42,7 +45,7 @@
 // ============================================
 // Timing Configuration
 // ============================================
-#define UNLOCK_DURATION 5000        // Thời gian mở khóa (ms): 5 giây
+#define UNLOCK_DURATION 15000        // Thời gian mở khóa (ms): 5 giây
 #define STATUS_REPORT_INTERVAL 30000   // Gửi status lên backend mỗi 30 giây
 #define WIFI_RECONNECT_INTERVAL 10000  // Thử kết nối lại WiFi sau 10 giây
 #define BUTTON_DEBOUNCE_TIME 200       // Debounce cho nút nhấn (ms)
@@ -57,7 +60,12 @@
 // ============================================
 // Relay thường sử dụng active LOW (bật khi LOW, tắt khi HIGH)
 // Thay đổi nếu relay của bạn hoạt động khác
-#define RELAY_ACTIVE_LOW false  // Thử đổi thành false nếu relay không hoạt động
+#define RELAY_ACTIVE_LOW true  // Thử đổi thành false nếu relay không hoạt động
+
+// Mapping hành vi relay với trạng thái khóa:
+// - true:  Relay ON  => UNLOCK (mặc định)
+// - false: Relay ON  => LOCK (dùng khi phần cứng đang bị đảo hành vi)
+#define RELAY_ON_UNLOCK false
 
 // ============================================
 // MQTT Configuration

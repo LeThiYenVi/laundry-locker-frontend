@@ -152,6 +152,7 @@
     "stores": {
       "title": "Quản lý cửa hàng",
       "description": "Quản lý các cửa hàng trong hệ thống",
+      "addStore": "Thêm cửa hàng",
       "searchPlaceholder": "Tìm kiếm cửa hàng...",
       "columns": {
         "store": "Cửa hàng",
@@ -164,6 +165,27 @@
       "status": {
         "active": "Hoạt động",
         "inactive": "Vô hiệu"
+      },
+      "modal": {
+        "createTitle": "Thêm cửa hàng mới",
+        "editTitle": "Chỉnh sửa cửa hàng",
+        "name": "Tên cửa hàng",
+        "namePlaceholder": "Ví dụ: Cửa hàng Quận 1",
+        "address": "Địa chỉ",
+        "addressPlaceholder": "123 Lê Lợi, Quận 1, TP.HCM",
+        "phone": "Số điện thoại",
+        "phonePlaceholder": "0901234567",
+        "openTime": "Giờ mở cửa",
+        "closeTime": "Giờ đóng cửa",
+        "description": "Mô tả (tùy chọn)",
+        "descriptionPlaceholder": "Mô tả ngắn về cửa hàng",
+        "saving": "Đang lưu...",
+        "createBtn": "Tạo cửa hàng",
+        "saveBtn": "Lưu thay đổi",
+        "createSuccess": "Đã tạo cửa hàng thành công!",
+        "editSuccess": "Đã cập nhật cửa hàng thành công!",
+        "createFailed": "Không thể tạo cửa hàng",
+        "editFailed": "Không thể cập nhật cửa hàng"
       }
     },
     "lockers": {

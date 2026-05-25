@@ -16,6 +16,13 @@ export interface KanbanColumnConfig {
 
 export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
   {
+    status: OrderStatus.INITIALIZED,
+    label: "Khởi tạo",
+    accent: "border-slate-400",
+    bg: "bg-slate-50/50 dark:bg-slate-950/20",
+    badge: "bg-slate-100 text-slate-800 border-slate-200",
+  },
+  {
     status: OrderStatus.WAITING,
     label: "Chờ lấy đồ",
     accent: "border-yellow-400",

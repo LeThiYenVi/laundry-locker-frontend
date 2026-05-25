@@ -150,6 +150,7 @@
     "stores": {
       "title": "店舗管理",
       "description": "システムの店舗を管理",
+      "addStore": "店舗を追加",
       "searchPlaceholder": "店舗を検索...",
       "columns": {
         "store": "店舗",
@@ -162,6 +163,27 @@
       "status": {
         "active": "アクティブ",
         "inactive": "非アクティブ"
+      },
+      "modal": {
+        "createTitle": "新しい店舗を追加",
+        "editTitle": "店舗を編集",
+        "name": "店舗名",
+        "namePlaceholder": "例: 1区店舗",
+        "address": "住所",
+        "addressPlaceholder": "123 Le Loi, District 1, HCM City",
+        "phone": "電話番号",
+        "phonePlaceholder": "0901234567",
+        "openTime": "開店時間",
+        "closeTime": "閉店時間",
+        "description": "説明 (任意)",
+        "descriptionPlaceholder": "店舗の簡単な説明",
+        "saving": "保存中...",
+        "createBtn": "店舗を作成",
+        "saveBtn": "変更を保存",
+        "createSuccess": "店舗を作成しました！",
+        "editSuccess": "店舗を更新しました！",
+        "createFailed": "店舗の作成に失敗しました",
+        "editFailed": "店舗の更新に失敗しました"
       }
     },
     "lockers": {
