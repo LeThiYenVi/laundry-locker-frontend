@@ -255,6 +255,7 @@ export interface Order {
   status: OrderStatus;
   pin?: string;
   pinCode?: string;
+  failedPinAttempts?: number;
 
   // Customer Info (from API response)
   customer?: {

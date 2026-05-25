@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Store, MapPin, Phone, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ interface StoreModalProps {
 }
 
 export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
+  const { t } = useTranslation();
   const [createStore, { isLoading: isCreating }] = useCreateStoreMutation();
   const [updateStore, { isLoading: isUpdating }] = useUpdateStoreMutation();
   const isSaving = isCreating || isUpdating;
@@ -64,17 +66,17 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
     try {
       if (mode === "create") {
         await createStore(formData).unwrap();
-        toast.success("Đã tạo cửa hàng thành công!");
+        toast.success(t("admin.stores.modal.createSuccess"));
       } else if (store) {
         await updateStore({ id: store.id, data: formData }).unwrap();
-        toast.success("Đã cập nhật cửa hàng thành công!");
+        toast.success(t("admin.stores.modal.editSuccess"));
       }
       onClose();
     } catch {
       toast.error(
         mode === "create"
-          ? "Không thể tạo cửa hàng"
-          : "Không thể cập nhật cửa hàng",
+          ? t("admin.stores.modal.createFailed")
+          : t("admin.stores.modal.editFailed"),
       );
     }
   };
@@ -85,20 +87,20 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store size={20} className="text-blue-600" />
-            {mode === "create" ? "Thêm cửa hàng mớii" : "Chỉnh sửa cửa hàng"}
+            {mode === "create" ? t("admin.stores.modal.createTitle") : t("admin.stores.modal.editTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Tên cửa hàng *</Label>
+            <Label htmlFor="name">{t("admin.stores.modal.name")} *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder="Ví dụ: Cửa hàng Quận 1"
+              placeholder={t("admin.stores.modal.namePlaceholder")}
               required
             />
           </div>
@@ -106,7 +108,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
           <div className="space-y-2">
             <Label htmlFor="address" className="flex items-center gap-2">
               <MapPin size={14} />
-              Địa chỉ *
+              {t("admin.stores.modal.address")} *
             </Label>
             <Input
               id="address"
@@ -114,7 +116,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
               }
-              placeholder="123 Lê Lợi, Quận 1, TP.HCM"
+              placeholder={t("admin.stores.modal.addressPlaceholder")}
               required
             />
           </div>
@@ -122,7 +124,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
           <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2">
               <Phone size={14} />
-              Số điện thoại *
+              {t("admin.stores.modal.phone")} *
             </Label>
             <Input
               id="phone"
@@ -130,7 +132,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
               }
-              placeholder="0901234567"
+              placeholder={t("admin.stores.modal.phonePlaceholder")}
               required
             />
           </div>
@@ -139,7 +141,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
             <div className="space-y-2">
               <Label htmlFor="openTime" className="flex items-center gap-2">
                 <Clock size={14} />
-                Giờ mở cửa
+                {t("admin.stores.modal.openTime")}
               </Label>
               <Input
                 id="openTime"
@@ -153,7 +155,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
             <div className="space-y-2">
               <Label htmlFor="closeTime" className="flex items-center gap-2">
                 <Clock size={14} />
-                Giờ đóng cửa
+                {t("admin.stores.modal.closeTime")}
               </Label>
               <Input
                 id="closeTime"
@@ -167,14 +169,14 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Mô tả (tùy chọn)</Label>
+            <Label htmlFor="description">{t("admin.stores.modal.description")}</Label>
             <Input
               id="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Mô tả ngắn về cửa hàng"
+              placeholder={t("admin.stores.modal.descriptionPlaceholder")}
             />
           </div>
 
@@ -185,7 +187,7 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
               onClick={onClose}
               disabled={isSaving}
             >
-              Hủy
+              {t("button.cancel")}
             </Button>
             <Button
               type="submit"
@@ -193,10 +195,10 @@ export function StoreModal({ isOpen, onClose, store, mode }: StoreModalProps) {
               className="bg-blue-600 hover:bg-blue-700"
             >
               {isSaving
-                ? "Đang lưu..."
+                ? t("admin.stores.modal.saving")
                 : mode === "create"
-                  ? "Tạo cửa hàng"
-                  : "Lưu thay đổi"}
+                  ? t("admin.stores.modal.createBtn")
+                  : t("admin.stores.modal.saveBtn")}
             </Button>
           </div>
         </form>

@@ -152,6 +152,7 @@
     "stores": {
       "title": "Store Management",
       "description": "Manage stores in the system",
+      "addStore": "Add Store",
       "searchPlaceholder": "Search stores...",
       "columns": {
         "store": "Store",
@@ -164,6 +165,27 @@
       "status": {
         "active": "Active",
         "inactive": "Inactive"
+      },
+      "modal": {
+        "createTitle": "Add New Store",
+        "editTitle": "Edit Store",
+        "name": "Store Name",
+        "namePlaceholder": "e.g. District 1 Store",
+        "address": "Address",
+        "addressPlaceholder": "123 Le Loi, District 1, HCM City",
+        "phone": "Phone Number",
+        "phonePlaceholder": "0901234567",
+        "openTime": "Opening Time",
+        "closeTime": "Closing Time",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "Short description of the store",
+        "saving": "Saving...",
+        "createBtn": "Create Store",
+        "saveBtn": "Save Changes",
+        "createSuccess": "Store created successfully!",
+        "editSuccess": "Store updated successfully!",
+        "createFailed": "Failed to create store",
+        "editFailed": "Failed to update store"
       }
     },
     "lockers": {
