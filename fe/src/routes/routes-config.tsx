@@ -42,6 +42,9 @@ const ServicesPage = lazy(() => import("../pages/Admin/services"));
 const PaymentsPage = lazy(() => import("../pages/Admin/payments"));
 const LoyaltyPage = lazy(() => import("../pages/Admin/loyalty"));
 const SchedulerPage = lazy(() => import("../pages/Admin/scheduler"));
+const LockersAdminPage = lazy(() => import("../pages/Admin/lockers"));
+const LockerLayoutPage = lazy(() => import("../pages/Admin/lockers/layout-view"));
+const MaintenanceAdminPage = lazy(() => import("../pages/Admin/maintenance"));
 const NotificationsPage = lazy(() => import("../pages/Admin/notifications"));
 const PromotionsPage = lazy(() => import("../pages/Admin/promotions"));
 
@@ -207,6 +210,30 @@ const routesConfig: RouteObject[] = [
         element: (
           <LazyWrapper>
             <ServicesPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "lockers",
+        element: (
+          <LazyWrapper>
+            <LockersAdminPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "lockers/:lockerId",
+        element: (
+          <LazyWrapper>
+            <LockerLayoutPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "maintenance",
+        element: (
+          <LazyWrapper>
+            <MaintenanceAdminPage />
           </LazyWrapper>
         ),
       },

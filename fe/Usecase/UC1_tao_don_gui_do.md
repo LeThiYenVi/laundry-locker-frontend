@@ -1,5 +1,9 @@
 # UC1: Khách Hàng Tạo Đơn và Gửi Đồ Vào Tủ
 
+<!-- CURRENT_STATUS_START -->
+> **Cập nhật 2026-06-13:** Tài liệu này đã được rà soát để bám theo trạng thái hiện tại của dự án. Backend Phase 2 cho locker flow đã triển khai SEND / RENTAL / QR / RBAC / maintenance; FE admin build pass; Flutter mobile đã có luồng Customer, Manager và Maintenance. Nguồn trạng thái chuẩn: `laundry-locker-microservices/docs/CURRENT_PROJECT_STATUS.md`, `RUN_RESULT.md`, `LOCKER_FLOW_PLAN.md`.
+<!-- CURRENT_STATUS_END -->
+
 ## Tổng quan
 
 Khách hàng (USER) mở app, chọn locker, chọn dịch vụ, tạo đơn hàng. Hệ thống tự động gán box và cấp mã PIN 6 số. Khách đến tủ, nhập PIN trên tablet (thiết bị IoT), tủ mở ra, khách bỏ đồ vào rồi xác nhận trên app.

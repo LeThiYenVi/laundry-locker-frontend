@@ -45,6 +45,18 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     permission: "manage_services",
   },
   {
+    icon: Boxes,
+    path: "/admin/lockers",
+    label: "admin.sidebar.lockers",
+    permission: "admin_access",
+  },
+  {
+    icon: Briefcase,
+    path: "/admin/maintenance",
+    label: "admin.sidebar.maintenance",
+    permission: "admin_access",
+  },
+  {
     icon: Package,
     path: "/admin/orders",
     label: "admin.sidebar.orders",

@@ -26,7 +26,7 @@ interface OrderTimelineProps {
   order: Order;
 }
 
-const STATUS_FLOW = [
+const STATUS_FLOW: OrderStatus[] = [
   OrderStatus.INITIALIZED,
   OrderStatus.RESERVED,
   OrderStatus.WAITING,

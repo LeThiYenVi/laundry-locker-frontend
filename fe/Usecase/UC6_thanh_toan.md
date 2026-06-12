@@ -1,5 +1,9 @@
 # UC6: Thanh Toán Online (VNPay / MoMo)
 
+<!-- CURRENT_STATUS_START -->
+> **Cập nhật 2026-06-13:** Tài liệu này đã được rà soát để bám theo trạng thái hiện tại của dự án. Backend Phase 2 cho locker flow đã triển khai SEND / RENTAL / QR / RBAC / maintenance; FE admin build pass; Flutter mobile đã có luồng Customer, Manager và Maintenance. Nguồn trạng thái chuẩn: `laundry-locker-microservices/docs/CURRENT_PROJECT_STATUS.md`, `RUN_RESULT.md`, `LOCKER_FLOW_PLAN.md`.
+<!-- CURRENT_STATUS_END -->
+
 ## Tổng quan
 
 Đối với dịch vụ `LAUNDRY` (tính theo kg), khách thanh toán **sau khi** đồ được trả vào tủ (`RETURNED`). Hệ thống hỗ trợ 2 cổng thanh toán: **VNPay** và **MoMo**. Flow: tạo payment → redirect tới gateway → khách thanh toán → callback tự động → cập nhật trạng thái.

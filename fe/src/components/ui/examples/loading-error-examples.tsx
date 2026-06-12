@@ -13,7 +13,7 @@ import { useGetAllUsersQuery } from '~/stores/apis/admin';
 
 // Example 1: Full page loading
 export function UsersPageExample() {
-  const { data, isLoading, error } = useGetAllUsersQuery({ pageNumber: 0, pageSize: 10 });
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: 0, size: 10 });
 
   // Show loading state
   if (isLoading) {
@@ -47,7 +47,7 @@ export function UsersPageExample() {
 
 // Example 2: Table loading with inline error
 export function UsersTableExample() {
-  const { data, isLoading, error } = useGetAllUsersQuery({ pageNumber: 0, pageSize: 10 });
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: 0, size: 10 });
 
   return (
     <div className="space-y-4">
@@ -75,7 +75,7 @@ export function UsersTableExample() {
 
 // Example 3: Dashboard with card loading
 export function DashboardExample() {
-  const { data, isLoading, error } = useGetAllUsersQuery({ pageNumber: 0, pageSize: 10 });
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: 0, size: 10 });
 
   if (isLoading) {
     return (
@@ -95,7 +95,7 @@ export function DashboardExample() {
 
 // Example 4: Card variant error
 export function OrdersPageExample() {
-  const { data, isLoading, error } = useGetAllUsersQuery({ pageNumber: 0, pageSize: 10 });
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: 0, size: 10 });
 
   return (
     <div className="space-y-4">

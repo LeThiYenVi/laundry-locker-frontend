@@ -1,5 +1,9 @@
 # UC2: Staff Thu Gom Đồ Từ Tủ (COLLECT)
 
+<!-- CURRENT_STATUS_START -->
+> **Cập nhật 2026-06-13:** Tài liệu này đã được rà soát để bám theo trạng thái hiện tại của dự án. Backend Phase 2 cho locker flow đã triển khai SEND / RENTAL / QR / RBAC / maintenance; FE admin build pass; Flutter mobile đã có luồng Customer, Manager và Maintenance. Nguồn trạng thái chuẩn: `laundry-locker-microservices/docs/CURRENT_PROJECT_STATUS.md`, `RUN_RESULT.md`, `LOCKER_FLOW_PLAN.md`.
+<!-- CURRENT_STATUS_END -->
+
 ## Tổng quan
 
 Khi đơn hàng ở trạng thái `WAITING` (khách đã bỏ đồ), Partner chấp nhận đơn và tạo mã AccessCode loại COLLECT cho Staff. Staff (nhân viên thực địa, không có tài khoản) đến tủ, nhập mã trên tablet IoT, tủ mở ra, Staff lấy đồ mang về cửa hàng.

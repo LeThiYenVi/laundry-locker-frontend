@@ -6,7 +6,7 @@ import { useGetAllUsersQuery } from '~/stores/apis/admin';
 
 // Example 1: Full ServerErrorCard with RTK Query error
 export function UsersPageWithServerError() {
-  const { data, isLoading, error } = useGetAllUsersQuery({ pageNumber: 0, pageSize: 10 });
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: 0, size: 10 });
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -30,7 +30,7 @@ export function UsersPageWithServerError() {
 
 // Example 2: Inline error in a page
 export function OrdersPageWithInlineError() {
-  const { data, isLoading, error } = useGetAllUsersQuery({ pageNumber: 0, pageSize: 10 });
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: 0, size: 10 });
 
   return (
     <div className="p-6 space-y-4">

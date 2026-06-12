@@ -50,9 +50,9 @@ export const loyaltyApi = baseApi.injectEndpoints({
       ApiResponse<Page<LoyaltyTransactionResponse>>,
       PageableRequest
     >({
-      query: ({ pageNumber = 0, pageSize = 10, sort }) => ({
+      query: ({ page = 0, size = 10, sort }) => ({
         url: LOYALTY_ENDPOINTS.TRANSACTIONS,
-        params: { page: pageNumber, size: pageSize, ...(sort && { sort }) },
+        params: { page, size, ...(sort && { sort }) },
       }),
       providesTags: [TAGS.LOYALTY],
     }),

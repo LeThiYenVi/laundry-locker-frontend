@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { LockerStatus } from "~/types/admin/enums";
-import { useGetAllLockersQuery } from "~/stores/apis/admin";
+import {
+  useGetAllLockersQuery,
+  useSetLockerMaintenanceMutation,
+} from "~/stores/apis/admin";
 
 export type LockerStatusFilter = "ALL" | LockerStatus;
 
@@ -76,7 +80,31 @@ export function useLockers() {
 
   const hasActiveFilters = status !== "ALL" || searchQuery !== "";
 
+  const [setMaintenance] = useSetLockerMaintenanceMutation();
+
+  const handleMaintenance = async (lockerId: number) => {
+    try {
+      await setMaintenance({ id: lockerId, data: { maintenance: true } }).unwrap();
+      toast.success("Đã chuyển tủ sang bảo trì");
+      refetch();
+    } catch {
+      toast.error("Không chuyển được trạng thái bảo trì");
+    }
+  };
+
+  const handleActivate = async (lockerId: number) => {
+    try {
+      await setMaintenance({ id: lockerId, data: { maintenance: false } }).unwrap();
+      toast.success("Tủ đã hoạt động lại");
+      refetch();
+    } catch {
+      toast.error("Không kích hoạt được tủ");
+    }
+  };
+
   return {
+    handleMaintenance,
+    handleActivate,
     lockers: paginatedLockers,
     totalElements: filteredLockers.length,
     totalPages: Math.ceil(filteredLockers.length / pageSize),

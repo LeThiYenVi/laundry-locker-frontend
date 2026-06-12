@@ -90,7 +90,8 @@
       "scheduler": "Scheduler",
       "notifications": "Notifications",
       "promotions": "Promotions",
-      "settings": "Settings"
+      "settings": "Settings",
+      "maintenance": "Maintenance"
     },
     "dashboard": {
       "title": "Overview",

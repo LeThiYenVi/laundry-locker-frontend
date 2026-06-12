@@ -1,5 +1,9 @@
 # Yêu cầu bổ sung API cho Backend (Laundry Locker)
 
+<!-- CURRENT_STATUS_START -->
+> **Cập nhật 2026-06-13:** Tài liệu này đã được rà soát để bám theo trạng thái hiện tại của dự án. Backend Phase 2 cho locker flow đã triển khai SEND / RENTAL / QR / RBAC / maintenance; FE admin build pass; Flutter mobile đã có luồng Customer, Manager và Maintenance. Nguồn trạng thái chuẩn: `laundry-locker-microservices/docs/CURRENT_PROJECT_STATUS.md`, `RUN_RESULT.md`, `LOCKER_FLOW_PLAN.md`.
+<!-- CURRENT_STATUS_END -->
+
 ## Bối cảnh (Context)
 Hiện tại, trên ứng dụng Kiosk (Tablet Web) đặt cố định tại một tủ khoá (Locker) cụ thể. Người dùng trên UI sẽ thực hiện luồng:
 1. Màn hình chọn ô tủ trống của Locker hiện tại.
