@@ -46,6 +46,9 @@ export interface FaultCellResponse {
   lockerId: number;
   lockerCode: string | null;
   lockerName: string | null;
+  lockerAddress: string | null;
+  lockerLatitude: number | null;
+  lockerLongitude: number | null;
   boxId: number;
   boxNumber: number;
   cellType: string;
@@ -68,6 +71,13 @@ export interface LockerReportResponse {
   resolvedByUserId: number | null;
   resolvedAt: string | null;
   createdAt: string;
+  lockerCode: string | null;
+  lockerName: string | null;
+  lockerAddress: string | null;
+  lockerLatitude: number | null;
+  lockerLongitude: number | null;
+  boxNumber: number | null;
+  cellType: string | null;
 }
 
 const TAG = 'Lockers' as const;

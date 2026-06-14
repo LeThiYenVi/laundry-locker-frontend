@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, RefreshCw, UserCheck, Wrench } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  MapPin,
+  Navigation,
+  RefreshCw,
+  UserCheck,
+  Wrench,
+} from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -18,6 +26,28 @@ const REPORT_BADGE: Record<string, string> = {
   IN_PROGRESS: "bg-yellow-100 text-yellow-800 border-yellow-300",
   RESOLVED: "bg-green-100 text-green-800 border-green-300",
 };
+
+type LocationPayload = {
+  lockerAddress?: string | null;
+  lockerLatitude?: number | null;
+  lockerLongitude?: number | null;
+};
+
+function openDirections(location: LocationPayload) {
+  const { lockerAddress, lockerLatitude, lockerLongitude } = location;
+  const url =
+    lockerLatitude != null && lockerLongitude != null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lockerLatitude},${lockerLongitude}&travelmode=driving`
+      : lockerAddress
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lockerAddress)}`
+        : null;
+
+  if (!url) {
+    toast.error("Tủ này chưa có vị trí để chỉ đường");
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
 
 export default function MaintenancePage() {
   const faults = useGetFaultCellsQuery();
@@ -41,6 +71,9 @@ export default function MaintenancePage() {
 
   const faultList = faults.data?.data ?? [];
   const reportList = reports.data?.data ?? [];
+  const openReports = reportList.filter((r) => r.status === "OPEN").length;
+  const inProgressReports = reportList.filter((r) => r.status === "IN_PROGRESS").length;
+  const resolvedReports = reportList.filter((r) => r.status === "RESOLVED").length;
 
   return (
     <div className="space-y-6">
@@ -48,6 +81,33 @@ export default function MaintenancePage() {
         title="Bảo trì tủ"
         description="Sự cố ô tủ đang mở và phiếu xử lý của đội kỹ thuật"
       />
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Ô hỏng</p>
+            <p className="text-2xl font-bold text-red-700">{faultList.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Phiếu mới</p>
+            <p className="text-2xl font-bold text-orange-700">{openReports}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Đang xử lý</p>
+            <p className="text-2xl font-bold text-yellow-700">{inProgressReports}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Đã xong</p>
+            <p className="text-2xl font-bold text-green-700">{resolvedReports}</p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -85,22 +145,33 @@ export default function MaintenancePage() {
                       {f.faultReason ?? "Không rõ lý do"}
                       {f.rowIndex != null && ` · hàng ${f.rowIndex}, cột ${f.colIndex}`}
                     </p>
+                    {f.lockerAddress && (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {f.lockerAddress}
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={pending === f.boxId}
-                    onClick={() =>
-                      act(
-                        f.boxId,
-                        () => clearFault(f.boxId).unwrap(),
-                        `Ô #${f.boxNumber} đã hoạt động lại`,
-                        "Không xóa được trạng thái hỏng",
-                      )
-                    }
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-1" /> Đã sửa xong
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openDirections(f)}>
+                      <Navigation className="w-4 h-4 mr-1" /> Chỉ đường
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={pending === f.boxId}
+                      onClick={() =>
+                        act(
+                          f.boxId,
+                          () => clearFault(f.boxId).unwrap(),
+                          `Ô #${f.boxNumber} đã hoạt động lại`,
+                          "Không xóa được trạng thái hỏng",
+                        )
+                      }
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-1" /> Đã sửa xong
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -130,13 +201,24 @@ export default function MaintenancePage() {
                       </Badge>
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {r.description} · tủ {r.lockerId}
-                      {r.boxId ? ` · ô ${r.boxId}` : ""} ·{" "}
+                      {r.description} · {r.lockerName ?? `tủ ${r.lockerId}`}
+                      {r.boxNumber ? ` · ô ${r.boxNumber}` : r.boxId ? ` · ô ${r.boxId}` : ""}{" "}
+                      {r.cellType ? `· ${r.cellType} ` : ""}
+                      ·{" "}
                       {new Date(r.createdAt).toLocaleString("vi-VN")}
                       {r.assignedToUserId ? ` · KTV #${r.assignedToUserId}` : ""}
                     </p>
+                    {r.lockerAddress && (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {r.lockerAddress}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openDirections(r)}>
+                      <Navigation className="w-4 h-4 mr-1" /> Chỉ đường
+                    </Button>
                     {r.status === "OPEN" && (
                       <Button
                         size="sm"
