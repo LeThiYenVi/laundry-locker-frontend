@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  Ban,
   Box as BoxIcon,
   CheckCircle2,
   Plane,
   RefreshCw,
+  RotateCcw,
+  Sparkles,
   Wrench,
   Luggage,
 } from "lucide-react";
@@ -17,6 +20,9 @@ import {
   useGetLockerLayoutQuery,
   useReportBoxFaultMutation,
   useClearBoxFaultMutation,
+  useSetBoxOutOfServiceMutation,
+  useSetBoxCleaningMutation,
+  useReturnBoxToServiceMutation,
   type CellResponse,
 } from "~/stores/apis/admin/lockerOps";
 
@@ -25,17 +31,49 @@ const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
   RESERVED: { label: "Đã giữ chỗ", cls: "bg-blue-50 border-blue-300 text-blue-800" },
   OCCUPIED: { label: "Có đồ", cls: "bg-orange-50 border-orange-300 text-orange-800" },
   FAULT: { label: "Hỏng", cls: "bg-red-50 border-red-400 text-red-800" },
+  OUT_OF_SERVICE: { label: "Ngưng dùng", cls: "bg-slate-100 border-slate-400 text-slate-700" },
+  CLEANING: { label: "Đang vệ sinh", cls: "bg-cyan-50 border-cyan-300 text-cyan-800" },
 };
+
+function ActBtn({
+  icon,
+  label,
+  onClick,
+  busy,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  busy: boolean;
+}) {
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="h-6 px-2 text-[11px]"
+      disabled={busy}
+      onClick={onClick}
+    >
+      {icon} {label}
+    </Button>
+  );
+}
 
 function CellTile({
   cell,
   onFault,
   onClear,
+  onOutOfService,
+  onCleaning,
+  onReturn,
   busy,
 }: {
   cell: CellResponse;
   onFault: (cell: CellResponse) => void;
   onClear: (cell: CellResponse) => void;
+  onOutOfService: (cell: CellResponse) => void;
+  onCleaning: (cell: CellResponse) => void;
+  onReturn: (cell: CellResponse) => void;
   busy: boolean;
 }) {
   const style = STATUS_STYLE[cell.status] ?? {
@@ -57,27 +95,49 @@ function CellTile({
       {cell.faultReason && (
         <span className="text-[11px] leading-tight line-clamp-2">{cell.faultReason}</span>
       )}
-      <div className="mt-auto flex gap-1">
+      <div className="mt-auto flex flex-wrap gap-1">
         {cell.status === "FAULT" ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[11px]"
-            disabled={busy}
+          <ActBtn
+            icon={<CheckCircle2 className="w-3 h-3 mr-1" />}
+            label="Đã sửa"
+            busy={busy}
             onClick={() => onClear(cell)}
-          >
-            <CheckCircle2 className="w-3 h-3 mr-1" /> Đã sửa
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[11px]"
-            disabled={busy}
+          />
+        ) : cell.status === "OUT_OF_SERVICE" || cell.status === "CLEANING" ? (
+          <ActBtn
+            icon={<RotateCcw className="w-3 h-3 mr-1" />}
+            label="Khôi phục"
+            busy={busy}
+            onClick={() => onReturn(cell)}
+          />
+        ) : cell.status === "OCCUPIED" || cell.status === "RESERVED" ? (
+          <ActBtn
+            icon={<Wrench className="w-3 h-3 mr-1" />}
+            label="Báo hỏng"
+            busy={busy}
             onClick={() => onFault(cell)}
-          >
-            <Wrench className="w-3 h-3 mr-1" /> Báo hỏng
-          </Button>
+          />
+        ) : (
+          <>
+            <ActBtn
+              icon={<Wrench className="w-3 h-3 mr-1" />}
+              label="Hỏng"
+              busy={busy}
+              onClick={() => onFault(cell)}
+            />
+            <ActBtn
+              icon={<Ban className="w-3 h-3 mr-1" />}
+              label="Ngưng"
+              busy={busy}
+              onClick={() => onOutOfService(cell)}
+            />
+            <ActBtn
+              icon={<Sparkles className="w-3 h-3 mr-1" />}
+              label="Vệ sinh"
+              busy={busy}
+              onClick={() => onCleaning(cell)}
+            />
+          </>
         )}
       </div>
     </div>
@@ -94,6 +154,9 @@ export default function LockerLayoutPage() {
   });
   const [reportFault, { isLoading: faulting }] = useReportBoxFaultMutation();
   const [clearFault, { isLoading: clearing }] = useClearBoxFaultMutation();
+  const [outOfService, { isLoading: oosing }] = useSetBoxOutOfServiceMutation();
+  const [cleaning, { isLoading: cleaningBusy }] = useSetBoxCleaningMutation();
+  const [returnToService, { isLoading: returning }] = useReturnBoxToServiceMutation();
   const [pendingBox, setPendingBox] = useState<number | null>(null);
 
   const layout = data?.data;
@@ -135,6 +198,47 @@ export default function LockerLayoutPage() {
       toast.success(`Ô #${cell.boxNumber} đã hoạt động lại`);
     } catch {
       toast.error("Không xóa được trạng thái hỏng");
+    } finally {
+      setPendingBox(null);
+    }
+  };
+
+  const handleOutOfService = async (cell: CellResponse) => {
+    const reason = window.prompt(
+      `Lý do ngưng dùng ô #${cell.boxNumber}? (để trống nếu không có)`,
+      "",
+    );
+    if (reason === null) return;
+    setPendingBox(cell.id);
+    try {
+      await outOfService({ boxId: cell.id, reason: reason.trim() || undefined }).unwrap();
+      toast.success(`Đã ngưng dùng ô #${cell.boxNumber}`);
+    } catch {
+      toast.error("Không ngưng dùng được ô (ô đang có đơn?)");
+    } finally {
+      setPendingBox(null);
+    }
+  };
+
+  const handleCleaning = async (cell: CellResponse) => {
+    setPendingBox(cell.id);
+    try {
+      await cleaning(cell.id).unwrap();
+      toast.success(`Ô #${cell.boxNumber} đang vệ sinh`);
+    } catch {
+      toast.error("Không đánh dấu vệ sinh được (ô đang có đơn?)");
+    } finally {
+      setPendingBox(null);
+    }
+  };
+
+  const handleReturn = async (cell: CellResponse) => {
+    setPendingBox(cell.id);
+    try {
+      await returnToService(cell.id).unwrap();
+      toast.success(`Ô #${cell.boxNumber} đã hoạt động lại`);
+    } catch {
+      toast.error("Không khôi phục được ô");
     } finally {
       setPendingBox(null);
     }
@@ -232,7 +336,13 @@ export default function LockerLayoutPage() {
                     cell={cell}
                     onFault={handleFault}
                     onClear={handleClear}
-                    busy={(faulting || clearing) && pendingBox === cell.id}
+                    onOutOfService={handleOutOfService}
+                    onCleaning={handleCleaning}
+                    onReturn={handleReturn}
+                    busy={
+                      (faulting || clearing || oosing || cleaningBusy || returning) &&
+                      pendingBox === cell.id
+                    }
                   />
                 ))}
               </div>
