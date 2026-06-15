@@ -75,6 +75,7 @@ export default function MaintenancePage() {
   const openReports = reportList.filter((r) => r.status === "OPEN").length;
   const inProgressReports = reportList.filter((r) => r.status === "IN_PROGRESS").length;
   const resolvedReports = reportList.filter((r) => r.status === "RESOLVED").length;
+  const overdueReports = reportList.filter((r) => r.overdue).length;
 
   return (
     <div className="space-y-6">
@@ -185,6 +186,11 @@ export default function MaintenancePage() {
           <CardTitle className="text-base flex items-center gap-2">
             <Wrench className="w-4 h-4" />
             Phiếu sự cố đang mở ({reportList.length})
+            {overdueReports > 0 && (
+              <span className="text-red-600 font-semibold">
+                {" "}· {overdueReports} quá hạn SLA
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -200,6 +206,14 @@ export default function MaintenancePage() {
                       <Badge className={`ml-1 ${REPORT_BADGE[r.status] ?? ""}`} variant="outline">
                         {r.status}
                       </Badge>
+                      {r.overdue && (
+                        <Badge
+                          className="ml-1 bg-red-100 text-red-800 border-red-300"
+                          variant="outline"
+                        >
+                          Quá hạn SLA
+                        </Badge>
+                      )}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {r.description} · {r.lockerName ?? `tủ ${r.lockerId}`}

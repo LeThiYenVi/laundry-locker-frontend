@@ -78,6 +78,9 @@ export interface LockerReportResponse {
   lockerLongitude: number | null;
   boxNumber: number | null;
   cellType: string | null;
+  slaHours: number | null;
+  slaDueAt: string | null;
+  overdue: boolean | null;
 }
 
 export interface RepairLogResponse {
