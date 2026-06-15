@@ -14,6 +14,7 @@ import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "~/components/shared/page-header";
 import { RepairLogDialog } from "./RepairLogDialog";
+import { MaintenanceSchedules } from "./MaintenanceSchedules";
 import {
   useGetFaultCellsQuery,
   useGetMaintenanceReportsQuery,
@@ -275,6 +276,8 @@ export default function MaintenancePage() {
           )}
         </CardContent>
       </Card>
+
+      <MaintenanceSchedules />
     </div>
   );
 }

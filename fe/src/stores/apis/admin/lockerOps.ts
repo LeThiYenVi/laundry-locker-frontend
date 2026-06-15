@@ -91,6 +91,19 @@ export interface RepairLogResponse {
   createdAt: string;
 }
 
+export interface MaintenanceScheduleResponse {
+  id: number;
+  lockerId: number;
+  lockerName: string | null;
+  lockerCode: string | null;
+  title: string;
+  intervalDays: number;
+  lastDoneAt: string | null;
+  nextDueAt: string | null;
+  active: boolean | null;
+  due: boolean | null;
+}
+
 const TAG = 'Lockers' as const;
 
 export const lockerOpsApi = baseApi.injectEndpoints({
@@ -194,6 +207,46 @@ export const lockerOpsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { reportId }) => [{ type: TAG, id: `logs-${reportId}` }],
     }),
+
+    // L5 — bảo trì phòng ngừa (lịch kiểm tra định kỳ)
+    getMaintenanceSchedules: builder.query<
+      ApiResponse<MaintenanceScheduleResponse[]>,
+      void
+    >({
+      query: () => '/api/maintenance/schedules',
+      providesTags: [{ type: TAG, id: 'schedules' }],
+    }),
+
+    createMaintenanceSchedule: builder.mutation<
+      ApiResponse<MaintenanceScheduleResponse>,
+      { lockerId: number; title: string; intervalDays: number }
+    >({
+      query: (body) => ({
+        url: '/api/admin/lockers/schedules',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [{ type: TAG, id: 'schedules' }],
+    }),
+
+    completeMaintenanceSchedule: builder.mutation<
+      ApiResponse<MaintenanceScheduleResponse>,
+      number
+    >({
+      query: (id) => ({
+        url: `/api/maintenance/schedules/${id}/complete`,
+        method: 'POST',
+      }),
+      invalidatesTags: [{ type: TAG, id: 'schedules' }],
+    }),
+
+    deleteMaintenanceSchedule: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/api/admin/lockers/schedules/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: TAG, id: 'schedules' }],
+    }),
   }),
 });
 
@@ -211,4 +264,8 @@ export const {
   useReturnBoxToServiceMutation,
   useGetReportLogsQuery,
   useAddReportLogMutation,
+  useGetMaintenanceSchedulesQuery,
+  useCreateMaintenanceScheduleMutation,
+  useCompleteMaintenanceScheduleMutation,
+  useDeleteMaintenanceScheduleMutation,
 } = lockerOpsApi;
