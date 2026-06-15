@@ -15,7 +15,7 @@ interface BreadcrumbProps {
 // Path mapping - no "admin" or "Trang chủ"
 const pathMap: Record<string, string> = {
   dashboard: "Dashboard",
-  users: "Ngườii dùng",
+  users: "Người dùng",
   orders: "Đơn hàng",
   stores: "Cửa hàng",
   lockers: "Tủ đồ",

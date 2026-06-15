@@ -16,7 +16,7 @@ const ROUTE_NAMES: Record<string, string> = {
   "/auth/login": "Đăng nhập",
   "/auth/register": "Đăng ký",
   "/admin/dashboard": "Dashboard",
-  "/admin/users": "Ngườii dùng",
+  "/admin/users": "Người dùng",
   "/admin/orders": "Đơn hàng",
   "/admin/stores": "Cửa hàng",
   "/admin/lockers": "Tủ đồ",

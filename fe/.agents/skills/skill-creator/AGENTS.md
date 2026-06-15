@@ -10,7 +10,7 @@ File này chứa thông tin quan trọng dành cho AI coding agents làm việc 
 **Mô tả:** Frontend cho hệ thống tủ giặt thông minh (Smart Laundry Lockers)  
 **Ngôn ngữ chính:** TypeScript, Vietnamese (comments và documentation)
 
-Dự án là một Single Page Application (SPA) cung cấp giao diện quản lý cho 2 loại ngườii dùng chính:
+Dự án là một Single Page Application (SPA) cung cấp giao diện quản lý cho 2 loại người dùng chính:
 - **Admin**: Quản lý toàn hệ thống (users, stores, lockers, orders, payments, etc.)
 - **Partner**: Chủ cửa hàng/quản lý đối tác (dashboard, orders, staff, revenue)
 

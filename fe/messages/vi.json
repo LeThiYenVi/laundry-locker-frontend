@@ -78,7 +78,7 @@
   "admin": {
     "sidebar": {
       "dashboard": "Dashboard",
-      "users": "Ngườii dùng",
+      "users": "Người dùng",
       "orders": "Đơn hàng",
       "stores": "Cửa hàng",
       "lockers": "Tủ đồ",
@@ -98,20 +98,20 @@
       "welcome": "Chào mừng trở lại",
       "monthlyOrders": "Số đơn hàng trong tháng",
       "monthlyRevenue": "Doanh thu tháng này",
-      "newUsers": "Ngườii dùng mới"
+      "newUsers": "Người dùng mới"
     },
     "users": {
-      "title": "Quản lý ngườii dùng",
-      "description": "Quản lý tài khoản ngườii dùng trong hệ thống",
-      "addUser": "Thêm ngườii dùng",
-      "searchPlaceholder": "Tìm kiếm ngườii dùng...",
+      "title": "Quản lý người dùng",
+      "description": "Quản lý tài khoản người dùng trong hệ thống",
+      "addUser": "Thêm người dùng",
+      "searchPlaceholder": "Tìm kiếm người dùng...",
       "status": {
         "active": "Hoạt động",
         "inactive": "Vô hiệu",
         "pending": "Chờ xác thực"
       },
       "columns": {
-        "user": "Ngườii dùng",
+        "user": "Người dùng",
         "role": "Vai trò",
         "status": "Trạng thái",
         "provider": "Đăng nhập",
