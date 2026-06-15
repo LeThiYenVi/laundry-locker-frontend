@@ -80,6 +80,14 @@ export interface LockerReportResponse {
   cellType: string | null;
 }
 
+export interface RepairLogResponse {
+  id: number;
+  reportId: number;
+  actorUserId: number | null;
+  note: string;
+  createdAt: string;
+}
+
 const TAG = 'Lockers' as const;
 
 export const lockerOpsApi = baseApi.injectEndpoints({
@@ -165,6 +173,24 @@ export const lockerOpsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [TAG],
     }),
+
+    // L5 — nhật ký xử lý phiếu bảo trì (work-log)
+    getReportLogs: builder.query<ApiResponse<RepairLogResponse[]>, number>({
+      query: (reportId) => `/api/maintenance/reports/${reportId}/logs`,
+      providesTags: (_r, _e, id) => [{ type: TAG, id: `logs-${id}` }],
+    }),
+
+    addReportLog: builder.mutation<
+      ApiResponse<RepairLogResponse>,
+      { reportId: number; note: string }
+    >({
+      query: ({ reportId, note }) => ({
+        url: `/api/maintenance/reports/${reportId}/logs`,
+        method: 'POST',
+        body: { note },
+      }),
+      invalidatesTags: (_r, _e, { reportId }) => [{ type: TAG, id: `logs-${reportId}` }],
+    }),
   }),
 });
 
@@ -180,4 +206,6 @@ export const {
   useSetBoxOutOfServiceMutation,
   useSetBoxCleaningMutation,
   useReturnBoxToServiceMutation,
+  useGetReportLogsQuery,
+  useAddReportLogMutation,
 } = lockerOpsApi;
