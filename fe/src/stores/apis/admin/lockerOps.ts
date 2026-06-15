@@ -136,6 +136,35 @@ export const lockerOpsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [TAG],
     }),
+
+    // L5 — vòng đời ô: ngưng dùng / vệ sinh / khôi phục
+    setBoxOutOfService: builder.mutation<
+      ApiResponse<CellResponse>,
+      { boxId: number; reason?: string }
+    >({
+      query: ({ boxId, reason }) => ({
+        url: `/api/maintenance/boxes/${boxId}/out-of-service`,
+        method: 'POST',
+        body: reason ? { reason } : undefined,
+      }),
+      invalidatesTags: [TAG],
+    }),
+
+    setBoxCleaning: builder.mutation<ApiResponse<CellResponse>, number>({
+      query: (boxId) => ({
+        url: `/api/maintenance/boxes/${boxId}/cleaning`,
+        method: 'POST',
+      }),
+      invalidatesTags: [TAG],
+    }),
+
+    returnBoxToService: builder.mutation<ApiResponse<CellResponse>, number>({
+      query: (boxId) => ({
+        url: `/api/maintenance/boxes/${boxId}/return-to-service`,
+        method: 'POST',
+      }),
+      invalidatesTags: [TAG],
+    }),
   }),
 });
 
@@ -148,4 +177,7 @@ export const {
   useResolveReportMutation,
   useReportBoxFaultMutation,
   useClearBoxFaultMutation,
+  useSetBoxOutOfServiceMutation,
+  useSetBoxCleaningMutation,
+  useReturnBoxToServiceMutation,
 } = lockerOpsApi;
