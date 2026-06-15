@@ -8,9 +8,17 @@ export default defineConfig({
       jsxRuntime: 'automatic',
     }),
   ],
+  // Development server and proxy: same-origin dev server proxies /api to gateway
   server: {
     port: 3000,
     strictPort: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:18080',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   resolve: {
     alias: {
