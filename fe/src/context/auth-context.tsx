@@ -61,6 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isWaitingFor2FA, setIsWaitingFor2FA] = useState(false);
   const [maskedEmail, setMaskedEmail] = useState("");
   const [tempToken, setTempToken] = useState("");
+  // Email entered in step 1 — the verify-2fa response doesn't echo it back,
+  // so we keep it to fill the User.email field after verification.
+  const [pendingAdminEmail, setPendingAdminEmail] = useState("");
 
   // ── Partner OTP state ──
   const [isWaitingForOTP, setIsWaitingForOTP] = useState(false);
@@ -167,6 +170,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setTempToken(data.tempToken);
     setMaskedEmail(data.maskedEmail);
+    setPendingAdminEmail(email);
     setIsWaitingFor2FA(true);
   };
 
@@ -186,30 +190,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setError(null);
-    const data = await apiFetch<{
-      accessToken: string;
-      refreshToken: string;
-      user: Record<string, unknown>;
-    }>(AUTH_ENDPOINTS.ADMIN_VERIFY_2FA, { tempToken, otpCode });
+    const data = await apiFetch<Record<string, unknown>>(
+      AUTH_ENDPOINTS.ADMIN_VERIFY_2FA,
+      { tempToken, otpCode },
+    );
 
+    const emailUsed = pendingAdminEmail;
     setIsWaitingFor2FA(false);
     setTempToken("");
     setMaskedEmail("");
+    setPendingAdminEmail("");
 
-    // Normalize API response: backend returns `roles` (plural) and `name`, map to User shape
-    const raw = data.user;
+    // Backend returns a FLAT auth payload from `authMap`:
+    //   { accountId, userId, accessToken, refreshToken, tokenType, expiresAt, roles, name, ... }
+    // There is no nested `user` object and no `id` field, so reading `data.user.id`
+    // crashed with "Cannot read properties of undefined (reading 'id')".
+    // Read the flat fields, but stay tolerant of a nested `user` shape too.
+    const raw = ((data.user as Record<string, unknown>) ?? data) ?? {};
     const normalizedUser: User = {
-      id: String(raw.id ?? ""),
+      id: String(raw.id ?? raw.userId ?? raw.accountId ?? ""),
       fullName: (raw.fullName as string) || (raw.name as string) || "",
-      email: (raw.email as string) || "",
+      email: (raw.email as string) || emailUsed || "",
       role: (raw.role as string[]) ?? (raw.roles as string[]) ?? [],
       permissions: (raw.permissions as string[]) ?? [],
       avatar: (raw.avatar as string) ?? (raw.imageUrl as string) ?? undefined,
     };
 
     persistLogin({
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
+      accessToken: data.accessToken as string,
+      refreshToken: data.refreshToken as string,
       user: normalizedUser,
     });
   };
@@ -218,6 +227,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsWaitingFor2FA(false);
     setTempToken("");
     setMaskedEmail("");
+    setPendingAdminEmail("");
     setError(null);
   };
 
