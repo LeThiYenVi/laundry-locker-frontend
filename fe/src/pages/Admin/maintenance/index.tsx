@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
 import { PageHeader } from "~/components/shared/page-header";
+import { RepairLogDialog } from "./RepairLogDialog";
 import {
   useGetFaultCellsQuery,
   useGetMaintenanceReportsQuery,
@@ -219,6 +220,7 @@ export default function MaintenancePage() {
                     <Button size="sm" variant="outline" onClick={() => openDirections(r)}>
                       <Navigation className="w-4 h-4 mr-1" /> Chỉ đường
                     </Button>
+                    <RepairLogDialog reportId={r.id} title={`#${r.id} · ${r.title}`} />
                     {r.status === "OPEN" && (
                       <Button
                         size="sm"
