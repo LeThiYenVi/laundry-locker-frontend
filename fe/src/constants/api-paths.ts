@@ -1,7 +1,8 @@
 // API Base URLs
-// Lưu ý: Mặc định là localhost cho Web. Nếu dùng Emulator Android, hãy đổi trong file .env thành 10.0.2.2
+// Mặc định trỏ về backend đã deploy trên DigitalOcean (cả nhóm dùng chung server + DB).
+// Có thể override bằng VITE_API_BASE_URL trong .env khi chạy backend local.
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+  import.meta.env.VITE_API_BASE_URL || "http://146.190.84.136:8080";
 
 // Root URIs
 export const ROOT_URI = {

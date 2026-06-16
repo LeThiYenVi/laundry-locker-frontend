@@ -8,13 +8,16 @@ export default defineConfig({
       jsxRuntime: 'automatic',
     }),
   ],
-  // Development server and proxy: same-origin dev server proxies /api to gateway
+  // Development server and proxy: same-origin dev server proxies /api to gateway.
+  // Default target is the deployed DigitalOcean gateway so the whole team hits the
+  // server (and its database) without running docker locally. Override VITE_API_BASE_URL
+  // / this target if you need to run the backend locally on http://localhost:18080.
   server: {
     port: 3000,
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:18080',
+        target: 'http://146.190.84.136:8080',
         changeOrigin: true,
         secure: false,
       },
