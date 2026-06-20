@@ -13,14 +13,13 @@ import { Switch } from "~/components/ui/switch";
 import { Badge } from "~/components/ui/badge";
 import { useCreateUserMutation } from "~/stores/apis/admin";
 
-const ALL_ROLES = ["USER", "STAFF", "ADMIN", "MODERATOR", "PARTNER"] as const;
+const ALL_ROLES = ["CUSTOMER", "ADMIN", "MANAGER", "MAINTENANCE"] as const;
 
 const ROLE_STYLES: Record<string, string> = {
   ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
-  STAFF: "bg-blue-50 text-blue-700 border-blue-200",
-  USER: "bg-muted/30 text-foreground/80 border-border/50",
-  PARTNER: "bg-orange-50 text-orange-700 border-orange-200",
-  MODERATOR: "bg-teal-50 text-teal-700 border-teal-200",
+  MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
+  CUSTOMER: "bg-muted/30 text-foreground/80 border-border/50",
+  MAINTENANCE: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 interface Props {
@@ -34,7 +33,7 @@ const EMPTY_FORM = {
   firstName: "",
   lastName: "",
   phoneNumber: "",
-  roles: ["USER"] as string[],
+  roles: ["CUSTOMER"] as string[],
   enabled: true,
 };
 

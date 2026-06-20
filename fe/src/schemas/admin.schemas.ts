@@ -15,9 +15,14 @@ export const AuthProviderSchema = z.enum([
 ]);
 
 export const RoleNameSchema = z.enum([
+  'CUSTOMER',
+  'ADMIN',
+  'MANAGER',
+  'MAINTENANCE',
+  // Legacy/back-compat values still present in seed data; kept so request and
+  // response validation does not break on existing accounts.
   'USER',
   'STAFF',
-  'ADMIN',
   'MODERATOR',
   'PARTNER',
 ]);
