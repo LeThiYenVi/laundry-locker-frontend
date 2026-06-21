@@ -190,6 +190,16 @@ export function UserTable({
       },
     }),
 
+    columnHelper.accessor("phoneNumber", {
+      header: "SĐT",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+          <Smartphone size={14} className="text-muted-foreground/70 shrink-0" />
+          {row.original.phoneNumber || "—"}
+        </span>
+      ),
+    }),
+
     columnHelper.accessor("roles", {
       header: t("admin.users.columns.role"),
       cell: ({ row }) => (

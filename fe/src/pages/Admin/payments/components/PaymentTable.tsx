@@ -83,7 +83,12 @@ const getStatusBadge = (status: PaymentStatus) => {
     },
   };
 
-  const variant = variants[status];
+  const variant = variants[status] ?? {
+    bg: "bg-muted/30",
+    text: "text-foreground/80",
+    icon: Ban,
+    label: (status as string) || "—",
+  };
   const Icon = variant.icon;
   return (
     <Badge className={`${variant.bg} ${variant.text} border-0 font-medium`}>
@@ -161,7 +166,7 @@ export function PaymentTable({
       header: "Khách hàng",
       cell: ({ row }) => (
         <span className="font-medium text-foreground">
-          {row.original.customerName}
+          {row.original.customerName || `Khách #${row.original.userId ?? "?"}`}
         </span>
       ),
     }),

@@ -8,6 +8,7 @@ export interface AdminUserResponse {
   id: number;
   email: string;
   name: string;
+  phoneNumber?: string;
   imageUrl: string;
   provider: AuthProvider;
   emailVerified: boolean;

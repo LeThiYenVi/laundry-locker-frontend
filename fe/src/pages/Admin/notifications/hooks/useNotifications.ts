@@ -10,6 +10,7 @@ import {
   useDeleteNotificationMutation,
 } from "@/stores/apis/admin/notifications";
 import type { AdminNotificationResponse } from "~/types/admin/notification";
+import { extractList } from "~/lib/extract-list";
 
 export type NotificationStatusFilter = "ALL" | NotificationStatus;
 export type NotificationTypeFilter = "ALL" | NotificationType;
@@ -42,7 +43,7 @@ export function useNotifications() {
     useDeleteNotificationMutation();
 
   const allNotifications: AdminNotificationResponse[] =
-    data?.data?.content ?? [];
+    extractList<AdminNotificationResponse>(data?.data);
 
   const filteredNotifications = useMemo(() => {
     if (!searchQuery) return allNotifications;
@@ -77,8 +78,8 @@ export function useNotifications() {
 
   return {
     notifications: filteredNotifications,
-    totalElements: data?.data?.totalElements ?? 0,
-    totalPages: data?.data?.totalPages ?? 0,
+    totalElements: filteredNotifications.length,
+    totalPages: 1,
     stats: undefined,
     isLoading,
     isLoadingStats: false,

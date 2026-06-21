@@ -17,7 +17,12 @@ import {
   useAdjustUserPointsMutation,
   useGetUserLoyaltyHistoryQuery,
 } from "~/stores/apis/admin";
-import type { LoyaltyTier, AdjustmentType } from "~/types/admin/loyalty";
+import type {
+  LoyaltyTier,
+  AdjustmentType,
+  PointsHistoryItemDTO,
+} from "~/types/admin/loyalty";
+import { extractList } from "~/lib/extract-list";
 
 interface Props {
   userId: number;
@@ -60,8 +65,8 @@ export function UserLoyaltySection({ userId }: Props) {
       { userId, page: historyPage, size: 10 },
       { skip: !userId },
     );
-  const historyList = historyData?.data?.content ?? [];
-  const historyTotal = historyData?.data?.totalElements ?? 0;
+  const historyList = extractList<PointsHistoryItemDTO>(historyData?.data);
+  const historyTotal = historyList.length;
 
   const [adjustForm, setAdjustForm] = useState({
     pointsAmount: "",

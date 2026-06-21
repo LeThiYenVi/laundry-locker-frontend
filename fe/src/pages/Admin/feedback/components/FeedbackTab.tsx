@@ -22,6 +22,8 @@ import {
 } from "~/components/ui/table";
 import { useGetAllFeedbackQuery } from "~/stores/apis/admin";
 import { fmtDate, StarRow, ErrorBanner } from "./shared";
+import { extractList } from "~/lib/extract-list";
+import type { FeedbackDTO } from "~/types/admin/feedback";
 
 export function FeedbackTab() {
   const navigate = useNavigate();
@@ -36,8 +38,8 @@ export function FeedbackTab() {
     ...(isResolved !== "all" && { isResolved: isResolved === "true" }),
   });
 
-  const list = data?.data?.content ?? [];
-  const total = data?.data?.totalElements ?? 0;
+  const list = extractList<FeedbackDTO>(data?.data);
+  const total = list.length;
 
   return (
     <div className="space-y-4">
