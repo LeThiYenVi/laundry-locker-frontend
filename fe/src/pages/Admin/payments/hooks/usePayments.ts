@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { PaymentStatus } from "~/types/admin/enums";
 import { useGetAllPaymentsQuery } from "@/stores/apis/admin/payments";
 import type { PaymentResponse } from "~/types/admin/payment";
+import { extractList } from "~/lib/extract-list";
 
 export type PaymentStatusFilter = "ALL" | PaymentStatus;
 
@@ -23,7 +24,7 @@ export function usePayments() {
     ...(status !== "ALL" ? { status } : {}),
   });
 
-  const allPayments: PaymentResponse[] = data?.data?.content ?? [];
+  const allPayments: PaymentResponse[] = extractList<PaymentResponse>(data?.data);
 
   const filteredPayments = useMemo(() => {
     if (!searchQuery) return allPayments;
@@ -38,7 +39,7 @@ export function usePayments() {
 
   const statusCounts = useMemo(
     () => ({
-      ALL: data?.data?.totalElements ?? 0,
+      ALL: allPayments.length,
       [PaymentStatus.COMPLETED]: allPayments.filter(
         (p) => p.status === PaymentStatus.COMPLETED,
       ).length,
@@ -60,7 +61,7 @@ export function usePayments() {
 
   const statistics = useMemo(
     () => ({
-      total: data?.data?.totalElements ?? 0,
+      total: allPayments.length,
       completed: allPayments.filter((p) => p.status === PaymentStatus.COMPLETED)
         .length,
       pending: allPayments.filter((p) => p.status === PaymentStatus.PENDING)
@@ -89,8 +90,8 @@ export function usePayments() {
 
   return {
     payments: filteredPayments,
-    totalElements: data?.data?.totalElements ?? 0,
-    totalPages: data?.data?.totalPages ?? 0,
+    totalElements: filteredPayments.length,
+    totalPages: 1,
     statistics,
     isLoading,
     status,

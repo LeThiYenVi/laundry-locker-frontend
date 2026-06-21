@@ -7,6 +7,7 @@ import {
   useUpdateServiceStatusMutation,
 } from "@/stores/apis/admin/services";
 import type { AdminServiceResponse } from "~/types/admin/service";
+import { extractList } from "~/lib/extract-list";
 
 export type ServiceStatus = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -32,7 +33,7 @@ export function useServices() {
   const [deleteService] = useDeleteServiceMutation();
   const [updateServiceStatus] = useUpdateServiceStatusMutation();
 
-  const allServices: AdminServiceResponse[] = data?.data?.content ?? [];
+  const allServices: AdminServiceResponse[] = extractList<AdminServiceResponse>(data?.data);
 
   const filteredServices = useMemo(() => {
     let result = [...allServices];
@@ -123,8 +124,8 @@ export function useServices() {
 
   return {
     services: filteredServices,
-    totalElements: data?.data?.totalElements ?? 0,
-    totalPages: data?.data?.totalPages ?? 0,
+    totalElements: filteredServices.length,
+    totalPages: 1,
     isLoading,
     status,
     setStatus,

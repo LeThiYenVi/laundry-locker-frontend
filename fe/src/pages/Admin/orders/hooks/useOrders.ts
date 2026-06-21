@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { OrderStatus } from "~/types/admin/enums";
 import { useGetAllOrdersQuery } from "@/stores/apis/admin/orders";
 import type { OrderResponse } from "~/types/admin/order";
+import { extractList } from "~/lib/extract-list";
 
 type OrderStatusFilter = "ALL" | OrderStatus;
 
@@ -23,7 +24,7 @@ export function useOrders() {
     ...(status !== "ALL" ? { status } : {}),
   });
 
-  const allOrders: OrderResponse[] = data?.data?.content ?? [];
+  const allOrders: OrderResponse[] = extractList<OrderResponse>(data?.data);
 
   const filteredOrders = useMemo(() => {
     if (!searchQuery) return allOrders;
@@ -37,7 +38,7 @@ export function useOrders() {
 
   const statusCounts = useMemo(
     () => ({
-      ALL: data?.data?.totalElements ?? 0,
+      ALL: allOrders.length,
       [OrderStatus.INITIALIZED]: allOrders.filter(
         (o) => o.status === OrderStatus.INITIALIZED,
       ).length,
@@ -79,8 +80,8 @@ export function useOrders() {
 
   return {
     orders: filteredOrders,
-    totalElements: data?.data?.totalElements ?? 0,
-    totalPages: data?.data?.totalPages ?? 0,
+    totalElements: filteredOrders.length,
+    totalPages: 1,
     isLoading,
     error: null,
     status,
