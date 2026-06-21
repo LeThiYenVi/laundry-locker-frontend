@@ -12,6 +12,7 @@ import {
   Search,
   Facebook,
   Loader2,
+  Wallet,
 } from "lucide-react";
 import { DataTable } from "~/components/shared/data-table";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
@@ -33,6 +34,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useUpdateUserStatusMutation } from "~/stores/apis/admin";
 import type { AdminUserResponse } from "~/types";
+import { WalletModal } from "./WalletModal";
 
 interface UserTableProps {
   users: AdminUserResponse[];
@@ -138,6 +140,7 @@ export function UserTable({
   const navigate = useNavigate();
   const [updateStatus] = useUpdateUserStatusMutation();
   const [pendingIds, setPendingIds] = useState<Set<number>>(new Set());
+  const [walletUser, setWalletUser] = useState<AdminUserResponse | null>(null);
 
   const handleToggleStatus = async (user: AdminUserResponse) => {
     if (pendingIds.has(user.id)) return;
@@ -307,6 +310,13 @@ export function UserTable({
               <Eye className="mr-2 h-4 w-4" />
               {t("dropdown.viewDetail")}
             </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => setWalletUser(row.original)}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              Ví
+            </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
               <span className="mr-2">🗑️</span> {t("button.delete")}
             </DropdownMenuItem>
@@ -317,19 +327,29 @@ export function UserTable({
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={users}
-      isLoading={isLoading}
-      emptyMessage={t("common.noData")}
-      serverPagination={{
-        pageIndex: page,
-        pageSize,
-        pageCount: totalPages,
-        totalRows: totalElements,
-        onPageChange,
-        onPageSizeChange,
-      }}
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={users}
+        isLoading={isLoading}
+        emptyMessage={t("common.noData")}
+        serverPagination={{
+          pageIndex: page,
+          pageSize,
+          pageCount: totalPages,
+          totalRows: totalElements,
+          onPageChange,
+          onPageSizeChange,
+        }}
+      />
+      {walletUser && (
+        <WalletModal
+          open={!!walletUser}
+          onClose={() => setWalletUser(null)}
+          userId={walletUser.id}
+          userName={walletUser.name || walletUser.email}
+        />
+      )}
+    </>
   );
 }
