@@ -6,6 +6,7 @@ import {
   useDeleteStoreMutation,
 } from "@/stores/apis/admin/stores";
 import type { AdminStoreResponse } from "~/types/admin/store";
+import { extractList } from "~/lib/extract-list";
 
 export type StoreStatus = "ALL" | "ACTIVE" | "INACTIVE";
 
@@ -31,7 +32,7 @@ export function useStores() {
   });
   const [deleteStore] = useDeleteStoreMutation();
 
-  const allStores: AdminStoreResponse[] = data?.data?.content ?? [];
+  const allStores: AdminStoreResponse[] = extractList<AdminStoreResponse>(data?.data);
 
   const filteredStores = useMemo(() => {
     let result = [...allStores];
@@ -93,8 +94,8 @@ export function useStores() {
 
   return {
     stores: filteredStores,
-    totalElements: data?.data?.totalElements ?? 0,
-    totalPages: data?.data?.totalPages ?? 0,
+    totalElements: filteredStores.length,
+    totalPages: 1,
     isLoading,
     status,
     setStatus,

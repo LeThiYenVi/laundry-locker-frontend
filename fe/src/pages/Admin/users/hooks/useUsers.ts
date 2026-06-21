@@ -5,6 +5,40 @@ import type { AdminUserResponse } from "~/types";
 
 export type UserStatus = "ALL" | "ACTIVE" | "INACTIVE" | "PENDING";
 
+/** Row shape the table renders; extends AdminUserResponse with phone from the backend. */
+export type AdminUserRow = AdminUserResponse & { phoneNumber?: string };
+
+/**
+ * Backend `/api/admin/users` returns a flat `List<UserSummary>`:
+ * `{ id, email, phoneNumber, fullName, status, roles }` — NOT a paginated Page,
+ * and field names differ from the table's `AdminUserResponse`. Map it here so the
+ * table works without changing the shared backend contract.
+ */
+interface BackendUserSummary {
+  id: number;
+  email?: string;
+  phoneNumber?: string;
+  fullName?: string;
+  status?: string;
+  roles?: string[];
+}
+
+function mapUser(u: BackendUserSummary): AdminUserRow {
+  return {
+    id: u.id,
+    email: u.email ?? "",
+    name: u.fullName ?? "",
+    imageUrl: "",
+    provider: "LOCAL" as AdminUserResponse["provider"],
+    emailVerified: true,
+    enabled: (u.status ?? "ACTIVE").toUpperCase() === "ACTIVE",
+    roles: u.roles ?? [],
+    createdAt: "",
+    updatedAt: "",
+    phoneNumber: u.phoneNumber,
+  };
+}
+
 export function useUsers() {
   const [status, setStatus] = useState<UserStatus>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,9 +57,14 @@ export function useUsers() {
     refetch,
   } = useGetAllUsersQuery({ page, size: pageSize });
 
-  const users: AdminUserResponse[] = apiData?.data?.content ?? [];
-  const totalElements = apiData?.data?.totalElements ?? 0;
-  const totalPages = apiData?.data?.totalPages ?? 0;
+  // Tolerate both a flat list (current backend) and a paginated Page (future).
+  const raw = apiData?.data as unknown;
+  const rawList: BackendUserSummary[] = Array.isArray(raw)
+    ? (raw as BackendUserSummary[])
+    : ((raw as { content?: BackendUserSummary[] })?.content ?? []);
+  const users: AdminUserRow[] = rawList.map(mapUser);
+  const totalElements = users.length;
+  const totalPages = 1;
 
   const filteredUsers = useMemo(() => {
     let result = [...users];

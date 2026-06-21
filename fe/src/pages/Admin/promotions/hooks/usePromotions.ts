@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PromotionStatus } from "~/types/admin/enums";
+import { extractList } from "~/lib/extract-list";
 import {
   useGetAllPromotionsQuery,
   useDeletePromotionMutation,
@@ -41,7 +42,7 @@ export function usePromotions() {
   const [deletePromotion, { isLoading: isDeleting }] =
     useDeletePromotionMutation();
 
-  const allPromotions: PromotionResponse[] = data?.data?.content ?? [];
+  const allPromotions: PromotionResponse[] = extractList<PromotionResponse>(data?.data);
 
   const filteredPromotions = useMemo(() => {
     let list = allPromotions;
@@ -119,8 +120,8 @@ export function usePromotions() {
 
   return {
     promotions: filteredPromotions,
-    totalElements: data?.data?.totalElements ?? 0,
-    totalPages: data?.data?.totalPages ?? 0,
+    totalElements: filteredPromotions.length,
+    totalPages: 1,
     isLoading,
     isSaving: isCreating || isUpdating,
     isDeleting,

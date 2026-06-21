@@ -6,6 +6,8 @@ import {
   useGetAllLockersQuery,
   useSetLockerMaintenanceMutation,
 } from "~/stores/apis/admin";
+import { extractList } from "~/lib/extract-list";
+import type { AdminLockerResponse } from "~/types";
 
 export type LockerStatusFilter = "ALL" | LockerStatus;
 
@@ -25,7 +27,7 @@ export function useLockers() {
     size: 200,
   });
 
-  const allLockers = data?.data?.content ?? [];
+  const allLockers = extractList<AdminLockerResponse>(data?.data);
 
   const filteredLockers = useMemo(() => {
     let result = [...allLockers];

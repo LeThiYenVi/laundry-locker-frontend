@@ -243,15 +243,22 @@ export function UserTable({
 
     columnHelper.accessor("createdAt", {
       header: t("common.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {new Date(row.original.createdAt).toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const raw = row.original.createdAt;
+        const d = raw ? new Date(raw) : null;
+        const valid = d && !Number.isNaN(d.getTime());
+        return (
+          <span className="text-sm text-muted-foreground">
+            {valid
+              ? d!.toLocaleDateString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
+              : "—"}
+          </span>
+        );
+      },
     }),
 
     columnHelper.accessor("enabled", {
