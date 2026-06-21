@@ -24,6 +24,8 @@ import {
   useResolveReportMutation,
 } from "~/stores/apis/admin";
 import { fmtDate, REPORT_STATUS_META, ErrorBanner } from "./shared";
+import { extractList } from "~/lib/extract-list";
+import type { ReportDTO } from "~/types/admin/feedback";
 
 export function ReportsTab() {
   const [status, setStatus] = useState<string>("all");
@@ -38,8 +40,8 @@ export function ReportsTab() {
   const [resolveReport, { isLoading: isResolving }] =
     useResolveReportMutation();
 
-  const list = data?.data?.content ?? [];
-  const total = data?.data?.totalElements ?? 0;
+  const list = extractList<ReportDTO>(data?.data);
+  const total = list.length;
 
   return (
     <div className="space-y-4">

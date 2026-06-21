@@ -76,12 +76,12 @@ const TruncatedText = ({
   maxLength = 25,
   className = "",
 }: {
-  text: string;
+  text?: string | null;
   maxLength?: number;
   className?: string;
 }) => {
-  if (text.length <= maxLength)
-    return <span className={className}>{text}</span>;
+  if (!text || text.length <= maxLength)
+    return <span className={className}>{text || "—"}</span>;
 
   return (
     <TooltipProvider>
@@ -140,7 +140,13 @@ const getStatusBadge = (status: LockerStatus, t: (key: string) => string) => {
     },
   };
 
-  const variant = variants[status];
+  const variant = variants[status] ?? {
+    bg: "bg-muted/30",
+    text: "text-foreground/80",
+    border: "border-border/50",
+    icon: XCircle,
+    label: (status as string) || "—",
+  };
   const Icon = variant.icon;
 
   return (
@@ -231,9 +237,10 @@ export function LockerTable({
     columnHelper.accessor("totalBoxes", {
       header: t("admin.lockers.columns.boxes"),
       cell: ({ row }) => {
-        const { availableBoxes, totalBoxes } = row.original;
-        const occupiedBoxes = totalBoxes - availableBoxes;
-        const availablePercent = (availableBoxes / totalBoxes) * 100;
+        const availableBoxes = row.original.availableBoxes ?? 0;
+        const totalBoxes = row.original.totalBoxes ?? 0;
+        const availablePercent =
+          totalBoxes > 0 ? (availableBoxes / totalBoxes) * 100 : 0;
 
         return (
           <div className="flex flex-col gap-1.5 w-28">

@@ -141,7 +141,7 @@ export function OrderTimeline({ order }: OrderTimelineProps) {
         <div className="border-t border-border/30 pt-3">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {events.map((event, idx) => {
-              const meta = STATUS_META[event.status];
+              const meta = STATUS_META[event.status] ?? STATUS_META[STATUS_FLOW[0]];
               const Icon = meta.icon;
               const isActive = idx === events.length - 1;
               return (

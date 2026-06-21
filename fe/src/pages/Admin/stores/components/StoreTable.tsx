@@ -73,12 +73,12 @@ const TruncatedText = ({
   maxLength = 30,
   className = "",
 }: {
-  text: string;
+  text?: string | null;
   maxLength?: number;
   className?: string;
 }) => {
-  if (text.length <= maxLength)
-    return <span className={className}>{text}</span>;
+  if (!text || text.length <= maxLength)
+    return <span className={className}>{text || "—"}</span>;
 
   return (
     <TooltipProvider>

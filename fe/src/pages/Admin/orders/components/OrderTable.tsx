@@ -171,7 +171,13 @@ const getStatusBadge = (status: OrderStatus) => {
     },
   };
 
-  const variant = variants[status];
+  const variant = variants[status] ?? {
+    bg: "bg-muted/30",
+    text: "text-foreground/80",
+    border: "border-border/50",
+    label: (status as string) || "—",
+    icon: Clock,
+  };
   const Icon = variant.icon;
 
   return (
@@ -244,13 +250,13 @@ export function OrderTable({
       header: t("admin.orders.columns.service"),
       cell: ({ row }) => (
         <div className="flex flex-col gap-1">
-          {row.original.orderDetails?.slice(0, 2).map((item) => (
+          {row.original.orderDetails?.slice(0, 2).map((item, idx) => (
             <Badge
-              key={item.id}
+              key={item.id ?? idx}
               variant="outline"
               className="bg-muted/30 text-foreground/80 font-normal w-fit text-xs"
             >
-              {item.serviceName} × {item.quantity}
+              {item.serviceName ?? "Dịch vụ"} × {item.quantity}
             </Badge>
           ))}
           {row.original.orderDetails &&

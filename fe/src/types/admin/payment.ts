@@ -7,8 +7,9 @@ import type { PaymentMethod, PaymentStatus } from './enums';
 export interface PaymentResponse {
   id: number;
   orderId: number;
+  userId?: number;
   customerId: number;
-  customerName: string;
+  customerName?: string;
   amount: number;
   method: PaymentMethod;
   status: PaymentStatus;

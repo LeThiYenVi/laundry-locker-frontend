@@ -236,7 +236,7 @@ export function PaymentDetailModal({
             <div className="grid grid-cols-2 gap-x-6 gap-y-4">
               <LabelValue label="Mã thanh toán">#{payment.id}</LabelValue>
               <LabelValue label="Mã đơn hàng">#{payment.orderId}</LabelValue>
-              <LabelValue label="Khách hàng">{payment.customerName}</LabelValue>
+              <LabelValue label="Khách hàng">{payment.customerName || `Khách #${payment.userId ?? "?"}`}</LabelValue>
               <LabelValue label="Thời gian tạo">
                 {fmtDate(payment.createdAt)}
               </LabelValue>
