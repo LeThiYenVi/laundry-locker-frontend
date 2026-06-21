@@ -93,6 +93,12 @@ export const ADMIN_ENDPOINTS = {
   PAYMENT_STATUS: (paymentId: number) =>
     `${ROOT_URI.ADMIN}/payments/${paymentId}/status`,
 
+  // Wallet Management
+  WALLET_BY_USER: (userId: number) => `${ROOT_URI.ADMIN}/wallet/${userId}`,
+  WALLET_TRANSACTIONS: (userId: number) =>
+    `${ROOT_URI.ADMIN}/wallet/${userId}/transactions`,
+  WALLET_ADJUST: (userId: number) => `${ROOT_URI.ADMIN}/wallet/${userId}/adjust`,
+
   // Scheduler Management
   SCHEDULER_STATUS: `${ROOT_URI.ADMIN}/scheduler/status`,
   SCHEDULER_AUTO_CANCEL: `${ROOT_URI.ADMIN}/scheduler/auto-cancel`,

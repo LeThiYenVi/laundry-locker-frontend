@@ -117,6 +117,7 @@ export const baseApi = createApi({
     "NotificationStats", // Stats của notifications
     "NotificationTemplates", // Templates của notifications
     "Promotions", // Quản lý khuyến mãi
+    "Wallet", // Ví nội bộ / điều chỉnh số dư
   ],
 
   endpoints: () => ({}),
