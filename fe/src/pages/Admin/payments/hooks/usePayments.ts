@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PaymentStatus } from "~/types/admin/enums";
 import { useGetAllPaymentsQuery } from "@/stores/apis/admin/payments";
+import { useGetAllUsersQuery } from "@/stores/apis/admin/users";
 import type { PaymentResponse } from "~/types/admin/payment";
 import { extractList } from "~/lib/extract-list";
 
@@ -24,7 +25,27 @@ export function usePayments() {
     ...(status !== "ALL" ? { status } : {}),
   });
 
-  const allPayments: PaymentResponse[] = extractList<PaymentResponse>(data?.data);
+  // Join customer names from the users list (backend payments only carry userId).
+  const { data: usersData } = useGetAllUsersQuery({ page: 0, size: 1000 });
+  const userNameById = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const u of extractList<{ id: number; fullName?: string; email?: string }>(
+      usersData?.data,
+    )) {
+      m.set(u.id, u.fullName || u.email || `#${u.id}`);
+    }
+    return m;
+  }, [usersData]);
+
+  const allPayments: PaymentResponse[] = useMemo(
+    () =>
+      extractList<PaymentResponse>(data?.data).map((p) => ({
+        ...p,
+        customerName:
+          p.customerName || userNameById.get((p.userId ?? p.customerId) as number),
+      })),
+    [data, userNameById],
+  );
 
   const filteredPayments = useMemo(() => {
     if (!searchQuery) return allPayments;

@@ -5,6 +5,7 @@ import { LockerStatus } from "~/types/admin/enums";
 import {
   useGetAllLockersQuery,
   useSetLockerMaintenanceMutation,
+  useGetAllStoresQuery,
 } from "~/stores/apis/admin";
 import { extractList } from "~/lib/extract-list";
 import type { AdminLockerResponse } from "~/types";
@@ -27,7 +28,24 @@ export function useLockers() {
     size: 200,
   });
 
-  const allLockers = extractList<AdminLockerResponse>(data?.data);
+  // Join store names from the stores list (locker payload only carries storeId).
+  const { data: storesData } = useGetAllStoresQuery({ page: 0, size: 1000 });
+  const storeNameById = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const s of extractList<{ id: number; name?: string }>(storesData?.data)) {
+      m.set(s.id, s.name ?? `#${s.id}`);
+    }
+    return m;
+  }, [storesData]);
+
+  const allLockers = useMemo(
+    () =>
+      extractList<AdminLockerResponse>(data?.data).map((l) => ({
+        ...l,
+        storeName: l.storeName || storeNameById.get(l.storeId),
+      })),
+    [data, storeNameById],
+  );
 
   const filteredLockers = useMemo(() => {
     let result = [...allLockers];
