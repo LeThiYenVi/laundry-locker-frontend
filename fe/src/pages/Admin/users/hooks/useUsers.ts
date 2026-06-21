@@ -21,6 +21,10 @@ interface BackendUserSummary {
   fullName?: string;
   status?: string;
   roles?: string[];
+  createdAt?: string;
+  provider?: string;
+  emailVerified?: boolean;
+  imageUrl?: string;
 }
 
 function mapUser(u: BackendUserSummary): AdminUserRow {
@@ -28,12 +32,12 @@ function mapUser(u: BackendUserSummary): AdminUserRow {
     id: u.id,
     email: u.email ?? "",
     name: u.fullName ?? "",
-    imageUrl: "",
-    provider: "LOCAL" as AdminUserResponse["provider"],
-    emailVerified: true,
+    imageUrl: u.imageUrl ?? "",
+    provider: (u.provider ?? "LOCAL") as AdminUserResponse["provider"],
+    emailVerified: u.emailVerified ?? false,
     enabled: (u.status ?? "ACTIVE").toUpperCase() === "ACTIVE",
     roles: u.roles ?? [],
-    createdAt: "",
+    createdAt: u.createdAt ?? "",
     updatedAt: "",
     phoneNumber: u.phoneNumber,
   };
