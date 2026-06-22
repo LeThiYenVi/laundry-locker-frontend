@@ -13,6 +13,8 @@ export interface AdminNotificationResponse {
   type: NotificationType;
   status: NotificationStatus;
   channel?: NotificationChannel;
+  /** Raw recipient id from the backend (notification-service returns `userId`). */
+  userId?: number;
   recipientId?: number;
   recipientName?: string;
   recipientEmail?: string;

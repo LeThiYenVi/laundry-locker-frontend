@@ -9,6 +9,7 @@ import {
   useGetAllNotificationsQuery,
   useDeleteNotificationMutation,
 } from "@/stores/apis/admin/notifications";
+import { useGetAllUsersQuery } from "@/stores/apis/admin/users";
 import type { AdminNotificationResponse } from "~/types/admin/notification";
 import { extractList } from "~/lib/extract-list";
 
@@ -42,8 +43,36 @@ export function useNotifications() {
   const [deleteNotification, { isLoading: isDeleting }] =
     useDeleteNotificationMutation();
 
-  const allNotifications: AdminNotificationResponse[] =
-    extractList<AdminNotificationResponse>(data?.data);
+  // Join recipient names from the users list (notification-service only carries
+  // `userId`, no name/email).
+  const { data: usersData } = useGetAllUsersQuery({ page: 0, size: 1000 });
+  const userById = useMemo(() => {
+    const m = new Map<number, { name: string; email?: string }>();
+    for (const u of extractList<{
+      id: number;
+      fullName?: string;
+      email?: string;
+    }>(usersData?.data)) {
+      m.set(u.id, { name: u.fullName || u.email || `#${u.id}`, email: u.email });
+    }
+    return m;
+  }, [usersData]);
+
+  const allNotifications: AdminNotificationResponse[] = useMemo(
+    () =>
+      extractList<AdminNotificationResponse>(data?.data).map((n) => {
+        const recipientId = n.recipientId ?? n.userId;
+        const matched =
+          recipientId != null ? userById.get(recipientId) : undefined;
+        return {
+          ...n,
+          recipientId,
+          recipientName: n.recipientName ?? matched?.name,
+          recipientEmail: n.recipientEmail ?? matched?.email,
+        };
+      }),
+    [data, userById],
+  );
 
   const filteredNotifications = useMemo(() => {
     if (!searchQuery) return allNotifications;
