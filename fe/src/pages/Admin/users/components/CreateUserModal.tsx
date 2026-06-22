@@ -16,10 +16,13 @@ import { useCreateUserMutation } from "~/stores/apis/admin";
 const ALL_ROLES = ["CUSTOMER", "ADMIN", "MANAGER", "MAINTENANCE"] as const;
 
 const ROLE_STYLES: Record<string, string> = {
-  ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
-  MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
+  ADMIN:
+    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30",
+  MANAGER:
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
   CUSTOMER: "bg-muted/30 text-foreground/80 border-border/50",
-  MAINTENANCE: "bg-orange-50 text-orange-700 border-orange-200",
+  MAINTENANCE:
+    "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30",
 };
 
 interface Props {
@@ -61,13 +64,33 @@ export function CreateUserModal({ open, onClose }: Props) {
       setError("Email và Tên là bắt buộc.");
       return;
     }
+    // Omit empty optional fields so the backend stores NULL instead of "".
+    // (email & phone_number are UNIQUE; empty strings collide, NULLs don't.)
+    const payload = {
+      email: form.email.trim(),
+      password: form.password,
+      firstName: form.firstName.trim(),
+      roles: form.roles,
+      enabled: form.enabled,
+      ...(form.lastName.trim() ? { lastName: form.lastName.trim() } : {}),
+      ...(form.phoneNumber.trim()
+        ? { phoneNumber: form.phoneNumber.trim() }
+        : {}),
+    };
     try {
-      await createUser(form).unwrap();
+      await createUser(payload).unwrap();
       setForm({ ...EMPTY_FORM });
       onClose();
     } catch (e: unknown) {
-      const err = e as { data?: { message?: string } };
-      setError(err?.data?.message ?? "Tạo người dùng thất bại.");
+      const err = e as { status?: number; data?: { message?: string } };
+      const msg = err?.data?.message ?? "";
+      if (err?.status === 409 || /unique|integrity|constraint|exist|tồn tại/i.test(msg)) {
+        setError(
+          "Email hoặc số điện thoại đã tồn tại. Vui lòng dùng giá trị khác.",
+        );
+      } else {
+        setError(msg || "Tạo người dùng thất bại.");
+      }
     }
   };
 
@@ -183,7 +206,7 @@ export function CreateUserModal({ open, onClose }: Props) {
                     className={`transition-all rounded-md border px-2 py-1 text-xs font-medium ${
                       selected
                         ? (ROLE_STYLES[role] ?? "bg-muted/50 text-foreground/80")
-                        : "bg-white text-muted-foreground/70 border-border/50 hover:border-gray-400"
+                        : "bg-background text-muted-foreground border-border hover:border-foreground/40"
                     }`}
                   >
                     {role}

@@ -244,7 +244,7 @@ export function StoreTable({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-40 bg-white border border-border/50"
+            className="w-40 bg-popover border border-border/50"
           >
             <DropdownMenuItem
               onClick={() => navigate(`/admin/stores/${row.original.id}`)}

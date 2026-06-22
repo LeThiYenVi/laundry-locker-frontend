@@ -124,7 +124,7 @@ export default function PromotionsPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
                 isActive
                   ? `${tab.activeClass} border-transparent shadow-sm`
-                  : "bg-white text-muted-foreground border-border/50 hover:border-border/70"
+                  : "bg-background text-muted-foreground border-border/50 hover:border-border/70"
               }`}
             >
               <Icon size={12} />

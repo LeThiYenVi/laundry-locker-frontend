@@ -264,7 +264,7 @@ export function PartnerTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-44 bg-white border border-border/50"
+              className="w-44 bg-popover border border-border/50"
             >
               <DropdownMenuItem
                 onClick={() => onViewDetail(partner.id)}
