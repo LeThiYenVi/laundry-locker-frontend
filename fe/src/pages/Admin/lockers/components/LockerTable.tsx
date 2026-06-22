@@ -302,7 +302,7 @@ export function LockerTable({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-48 bg-white border border-border/50"
+                className="w-48 bg-popover border border-border/50"
               >
                 <DropdownMenuItem
                   onClick={() => navigate(`/admin/lockers/${locker.id}`)}

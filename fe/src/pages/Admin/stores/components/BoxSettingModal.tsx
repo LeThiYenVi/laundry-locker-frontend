@@ -180,7 +180,7 @@ export function BoxSettingModal({
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
                         isSelected
                           ? `${optCfg.bg} ${optCfg.border} ${optCfg.text} ring-2 ring-offset-1 ring-current`
-                          : "bg-white border-border/50 text-muted-foreground hover:border-border/70"
+                          : "bg-background border-border/50 text-muted-foreground hover:border-border/70"
                       }`}
                     >
                       {optCfg.label}
