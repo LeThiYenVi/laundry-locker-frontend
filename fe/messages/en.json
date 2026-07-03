@@ -91,7 +91,8 @@
       "notifications": "Notifications",
       "promotions": "Promotions",
       "settings": "Settings",
-      "maintenance": "Maintenance"
+      "maintenance": "Maintenance",
+      "drones": "Drones"
     },
     "dashboard": {
       "title": "Overview",

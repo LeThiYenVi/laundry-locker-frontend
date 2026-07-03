@@ -13,6 +13,7 @@ import {
   Settings,
   Briefcase,
   Tag,
+  Plane,
 } from "lucide-react";
 import type { NavItem } from "@/types";
 
@@ -45,6 +46,12 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: Briefcase,
     path: "/admin/maintenance",
     label: "admin.sidebar.maintenance",
+    permission: "admin_access",
+  },
+  {
+    icon: Plane,
+    path: "/admin/drones",
+    label: "admin.sidebar.drones",
     permission: "admin_access",
   },
   {
