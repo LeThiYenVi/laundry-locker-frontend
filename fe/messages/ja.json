@@ -91,7 +91,8 @@
       "notifications": "通知",
       "promotions": "プロモーション",
       "settings": "設定",
-      "maintenance": "メンテナンス"
+      "maintenance": "メンテナンス",
+      "drones": "ドローン"
     },
     "dashboard": {
       "title": "概要",

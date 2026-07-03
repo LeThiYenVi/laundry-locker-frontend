@@ -13,3 +13,4 @@ export * from "./partners";
 export * from "./notifications";
 export * from "./promotions";
 export * from "./feedbackApi";
+export * from "./drones";
