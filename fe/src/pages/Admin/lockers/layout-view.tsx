@@ -9,6 +9,7 @@ import {
   RefreshCw,
   RotateCcw,
   Sparkles,
+  Unlock,
   Wrench,
   Luggage,
 } from "lucide-react";
@@ -23,6 +24,7 @@ import {
   useSetBoxOutOfServiceMutation,
   useSetBoxCleaningMutation,
   useReturnBoxToServiceMutation,
+  useForceOpenBoxMutation,
   type CellResponse,
 } from "~/stores/apis/admin/lockerOps";
 
@@ -66,6 +68,7 @@ function CellTile({
   onOutOfService,
   onCleaning,
   onReturn,
+  onForceOpen,
   busy,
 }: {
   cell: CellResponse;
@@ -74,6 +77,7 @@ function CellTile({
   onOutOfService: (cell: CellResponse) => void;
   onCleaning: (cell: CellResponse) => void;
   onReturn: (cell: CellResponse) => void;
+  onForceOpen: (cell: CellResponse) => void;
   busy: boolean;
 }) {
   const style = STATUS_STYLE[cell.status] ?? {
@@ -139,6 +143,12 @@ function CellTile({
             />
           </>
         )}
+        <ActBtn
+          icon={<Unlock className="w-3 h-3 mr-1" />}
+          label="Mở khẩn cấp"
+          busy={busy}
+          onClick={() => onForceOpen(cell)}
+        />
       </div>
     </div>
   );
@@ -157,6 +167,7 @@ export default function LockerLayoutPage() {
   const [outOfService, { isLoading: oosing }] = useSetBoxOutOfServiceMutation();
   const [cleaning, { isLoading: cleaningBusy }] = useSetBoxCleaningMutation();
   const [returnToService, { isLoading: returning }] = useReturnBoxToServiceMutation();
+  const [forceOpen, { isLoading: forceOpening }] = useForceOpenBoxMutation();
   const [pendingBox, setPendingBox] = useState<number | null>(null);
 
   const layout = data?.data;
@@ -239,6 +250,26 @@ export default function LockerLayoutPage() {
       toast.success(`Ô #${cell.boxNumber} đã hoạt động lại`);
     } catch {
       toast.error("Không khôi phục được ô");
+    } finally {
+      setPendingBox(null);
+    }
+  };
+
+  const handleForceOpen = async (cell: CellResponse) => {
+    const confirmed = window.confirm(
+      `Mở khẩn cấp ô #${cell.boxNumber} mà không cần PIN khách?\nHành động này sẽ được ghi vào nhật ký hệ thống.`,
+    );
+    if (!confirmed) return;
+    setPendingBox(cell.id);
+    try {
+      const res = await forceOpen(cell.id).unwrap();
+      if (res.data?.accepted) {
+        toast.success(`Đã mở ô #${cell.boxNumber}`);
+      } else {
+        toast.error(`${res.data?.message ?? "Không mở được tủ"}`);
+      }
+    } catch {
+      toast.error("Không gửi được lệnh mở tủ");
     } finally {
       setPendingBox(null);
     }
@@ -339,8 +370,9 @@ export default function LockerLayoutPage() {
                     onOutOfService={handleOutOfService}
                     onCleaning={handleCleaning}
                     onReturn={handleReturn}
+                    onForceOpen={handleForceOpen}
                     busy={
-                      (faulting || clearing || oosing || cleaningBusy || returning) &&
+                      (faulting || clearing || oosing || cleaningBusy || returning || forceOpening) &&
                       pendingBox === cell.id
                     }
                   />

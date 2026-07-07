@@ -81,6 +81,8 @@ export interface LockerReportResponse {
   slaHours: number | null;
   slaDueAt: string | null;
   overdue: boolean | null;
+  reporterName: string | null;
+  reporterPhone: string | null;
 }
 
 export interface RepairLogResponse {
@@ -104,12 +106,20 @@ export interface MaintenanceScheduleResponse {
   due: boolean | null;
 }
 
+export interface DeviceStatusResponse {
+  id: number;
+  deviceId: string;
+  lockerId: number | null;
+  status: string;
+  lastSeenAt: string | null;
+}
+
 const TAG = 'Lockers' as const;
 
 export const lockerOpsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getLockerStats: builder.query<ApiResponse<LockerStatsResponse[]>, void>({
-      query: () => '/api/manage/lockers/stats',
+      query: () => '/api/admin/lockers/stats',
       providesTags: [TAG],
     }),
 
@@ -190,6 +200,16 @@ export const lockerOpsApi = baseApi.injectEndpoints({
       invalidatesTags: [TAG],
     }),
 
+    // Emergency override: open a box without the customer's PIN/QR. Always
+    // audited (credential MASTER) by iot-service's box_access_logs.
+    forceOpenBox: builder.mutation<ApiResponse<Record<string, unknown>>, number>({
+      query: (boxId) => ({
+        url: `/api/maintenance/boxes/${boxId}/force-open`,
+        method: 'POST',
+      }),
+      invalidatesTags: [TAG],
+    }),
+
     // L5 — nhật ký xử lý phiếu bảo trì (work-log)
     getReportLogs: builder.query<ApiResponse<RepairLogResponse[]>, number>({
       query: (reportId) => `/api/maintenance/reports/${reportId}/logs`,
@@ -208,7 +228,7 @@ export const lockerOpsApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { reportId }) => [{ type: TAG, id: `logs-${reportId}` }],
     }),
 
-    // L5 — bảo trì phòng ngừa (lịch kiểm tra định kỳ)
+    // L5 — bảo trì phòng ngừa (lịch kiểm tra định kỳ), dùng bởi MaintenanceSchedules.tsx
     getMaintenanceSchedules: builder.query<
       ApiResponse<MaintenanceScheduleResponse[]>,
       void
@@ -247,6 +267,12 @@ export const lockerOpsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: TAG, id: 'schedules' }],
     }),
+
+    // Cabinet heartbeat was collected but never surfaced anywhere until now.
+    getDeviceStatuses: builder.query<ApiResponse<DeviceStatusResponse[]>, void>({
+      query: () => '/api/admin/iot/device-status',
+      providesTags: [{ type: TAG, id: 'device-status' }],
+    }),
   }),
 });
 
@@ -262,10 +288,12 @@ export const {
   useSetBoxOutOfServiceMutation,
   useSetBoxCleaningMutation,
   useReturnBoxToServiceMutation,
+  useForceOpenBoxMutation,
   useGetReportLogsQuery,
   useAddReportLogMutation,
   useGetMaintenanceSchedulesQuery,
   useCreateMaintenanceScheduleMutation,
   useCompleteMaintenanceScheduleMutation,
   useDeleteMaintenanceScheduleMutation,
+  useGetDeviceStatusesQuery,
 } = lockerOpsApi;
