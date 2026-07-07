@@ -125,7 +125,7 @@ export function BoxSettingModal({
 
   const handleForceOpen = async () => {
     try {
-      await apiPost(`/api/admin/lockers/boxes/${box.id}/force-open`, {});
+      await apiPost(`/api/maintenance/boxes/${box.id}/force-open`, {});
       setConfirmForceOpen(false);
       onRefresh();
       onClose();

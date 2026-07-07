@@ -4,8 +4,11 @@ import {
   CheckCircle2,
   MapPin,
   Navigation,
+  Phone,
   RefreshCw,
   UserCheck,
+  Wifi,
+  WifiOff,
   Wrench,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -21,6 +24,7 @@ import {
   useClaimReportMutation,
   useResolveReportMutation,
   useClearBoxFaultMutation,
+  useGetDeviceStatusesQuery,
 } from "~/stores/apis/admin/lockerOps";
 
 const REPORT_BADGE: Record<string, string> = {
@@ -54,6 +58,7 @@ function openDirections(location: LocationPayload) {
 export default function MaintenancePage() {
   const faults = useGetFaultCellsQuery();
   const reports = useGetMaintenanceReportsQuery();
+  const deviceStatuses = useGetDeviceStatusesQuery();
   const [claim] = useClaimReportMutation();
   const [resolve] = useResolveReportMutation();
   const [clearFault] = useClearBoxFaultMutation();
@@ -224,6 +229,12 @@ export default function MaintenancePage() {
                       {new Date(r.createdAt).toLocaleString("vi-VN")}
                       {r.assignedToUserId ? ` · KTV #${r.assignedToUserId}` : ""}
                     </p>
+                    {(r.reporterName || r.reporterPhone) && (
+                      <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5" />
+                        {[r.reporterName, r.reporterPhone].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                     {r.lockerAddress && (
                       <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5" />
@@ -278,6 +289,60 @@ export default function MaintenancePage() {
       </Card>
 
       <MaintenanceSchedules />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Wifi className="w-4 h-4" />
+            Sức khỏe thiết bị (cabinet)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(deviceStatuses.data?.data ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              Chưa có dữ liệu heartbeat thiết bị nào.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {(deviceStatuses.data?.data ?? []).map((d) => {
+                const online = d.status?.toUpperCase() === "ONLINE";
+                return (
+                  <div key={d.id} className="py-3 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      {online ? (
+                        <Wifi className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <WifiOff className="w-4 h-4 text-red-500" />
+                      )}
+                      <div>
+                        <p className="font-medium">{d.deviceId}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {d.lockerId ? `Tủ ${d.lockerId}` : "Chưa gán tủ"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge
+                        variant="outline"
+                        className={
+                          online
+                            ? "bg-green-100 text-green-800 border-green-300"
+                            : "bg-red-100 text-red-800 border-red-300"
+                        }
+                      >
+                        {d.status}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {d.lastSeenAt ? new Date(d.lastSeenAt).toLocaleString("vi-VN") : "Chưa từng kết nối"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
