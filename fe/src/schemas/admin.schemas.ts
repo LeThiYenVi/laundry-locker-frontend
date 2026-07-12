@@ -19,6 +19,7 @@ export const RoleNameSchema = z.enum([
   'ADMIN',
   'MANAGER',
   'MAINTENANCE',
+  'TECHNICIAN',
   // Legacy/back-compat values still present in seed data; kept so request and
   // response validation does not break on existing accounts.
   'USER',
