@@ -144,7 +144,7 @@ export function UserLoyaltySection({ userId }: Props) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Điểm hiện tại</span>
                   <span className="font-semibold">
-                    {loyalty.currentPoints.toLocaleString("vi-VN")} điểm
+                    {(loyalty.currentPoints ?? 0).toLocaleString("vi-VN")} điểm
                   </span>
                 </div>
                 {loyalty.pointsToNextTier != null && (
@@ -152,7 +152,7 @@ export function UserLoyaltySection({ userId }: Props) {
                     <div className="flex justify-between text-xs text-muted-foreground/70 mb-1">
                       <span>Đến hạng tiếp theo</span>
                       <span>
-                        {loyalty.pointsToNextTier.toLocaleString("vi-VN")} điểm
+                        {(loyalty.pointsToNextTier ?? 0).toLocaleString("vi-VN")} điểm
                         nữa
                       </span>
                     </div>
@@ -175,12 +175,12 @@ export function UserLoyaltySection({ userId }: Props) {
                     },
                     {
                       label: "Điểm đã kiếm",
-                      value: loyalty.totalPointsEarned.toLocaleString("vi-VN"),
+                      value: (loyalty.totalPointsEarned ?? 0).toLocaleString("vi-VN"),
                     },
                     {
                       label: "Điểm đã dùng",
                       value:
-                        loyalty.totalPointsRedeemed.toLocaleString("vi-VN"),
+                        (loyalty.totalPointsRedeemed ?? 0).toLocaleString("vi-VN"),
                     },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-muted/30 rounded-lg p-2">
@@ -345,11 +345,11 @@ export function UserLoyaltySection({ userId }: Props) {
                           </td>
                           <td className={`py-2 px-2 font-semibold ${meta.cls}`}>
                             {meta.sign}
-                            {tx.pointsAmount.toLocaleString("vi-VN")}
+                            {(tx.pointsAmount ?? 0).toLocaleString("vi-VN")}
                           </td>
                           <td className="py-2 px-2 text-muted-foreground">
-                            {tx.balanceBefore.toLocaleString("vi-VN")} →{" "}
-                            {tx.balanceAfter.toLocaleString("vi-VN")}
+                            {(tx.balanceBefore ?? 0).toLocaleString("vi-VN")} →{" "}
+                            {(tx.balanceAfter ?? 0).toLocaleString("vi-VN")}
                           </td>
                           <td className="py-2 px-2 text-muted-foreground/70 text-xs whitespace-nowrap">
                             {new Date(tx.transactionDate).toLocaleDateString(
