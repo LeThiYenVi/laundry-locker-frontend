@@ -114,6 +114,8 @@ const getRoleBadge = (role: string) => {
     MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
     CUSTOMER: "bg-muted/30 text-foreground/80 border-border/50",
     MAINTENANCE: "bg-orange-50 text-orange-700 border-orange-200",
+    TECHNICIAN: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    STAFF: "bg-teal-50 text-teal-700 border-teal-200",
   };
 
   return (

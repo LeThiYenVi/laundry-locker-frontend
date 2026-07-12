@@ -13,7 +13,7 @@ import { Switch } from "~/components/ui/switch";
 import { Badge } from "~/components/ui/badge";
 import { useCreateUserMutation } from "~/stores/apis/admin";
 
-const ALL_ROLES = ["CUSTOMER", "ADMIN", "MANAGER", "MAINTENANCE"] as const;
+const ALL_ROLES = ["CUSTOMER", "ADMIN", "MANAGER", "MAINTENANCE", "TECHNICIAN"] as const;
 
 const ROLE_STYLES: Record<string, string> = {
   ADMIN:
@@ -23,6 +23,8 @@ const ROLE_STYLES: Record<string, string> = {
   CUSTOMER: "bg-muted/30 text-foreground/80 border-border/50",
   MAINTENANCE:
     "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30",
+  TECHNICIAN:
+    "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30",
 };
 
 interface Props {
