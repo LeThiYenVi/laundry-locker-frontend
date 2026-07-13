@@ -42,17 +42,23 @@ function ActBtn({
   label,
   onClick,
   busy,
+  isLight,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
   busy: boolean;
+  isLight?: boolean;
 }) {
   return (
     <Button
       size="sm"
       variant="outline"
-      className="h-6 px-2 text-[11px]"
+      className={`h-6 px-2 text-[11px] ${
+        isLight
+          ? "border-white/40 bg-black/10 text-white hover:bg-black/20 hover:text-white"
+          : "hover:bg-slate-100"
+      }`}
       disabled={busy}
       onClick={onClick}
     >
@@ -80,32 +86,83 @@ function CellTile({
   onForceOpen: (cell: CellResponse) => void;
   busy: boolean;
 }) {
-  const style = STATUS_STYLE[cell.status] ?? {
-    label: cell.status,
-    cls: "bg-muted border-border text-foreground",
-  };
+  const isDrone = cell.cellType === "DRONE";
+  let bgClass = "";
+  let borderClass = "";
+  let textClass = "";
+
+  if (isDrone) {
+    bgClass = "bg-gradient-to-br from-indigo-500 to-indigo-600";
+    borderClass = "border-indigo-400";
+    textClass = "text-white";
+  } else {
+    switch (cell.status) {
+      case "AVAILABLE":
+        bgClass = "bg-gradient-to-br from-cyan-500/90 to-cyan-600";
+        borderClass = "border-cyan-400";
+        textClass = "text-white";
+        break;
+      case "OCCUPIED":
+      case "IN_USE":
+        bgClass = "bg-gradient-to-br from-slate-100 to-slate-300";
+        borderClass = "border-slate-300";
+        textClass = "text-slate-600";
+        break;
+      case "RESERVED":
+        bgClass = "bg-gradient-to-br from-amber-200 to-amber-500";
+        borderClass = "border-amber-400";
+        textClass = "text-amber-900";
+        break;
+      case "FAULT":
+        bgClass = "bg-gradient-to-br from-red-400 to-red-600";
+        borderClass = "border-red-400";
+        textClass = "text-white";
+        break;
+      case "CLEANING":
+        bgClass = "bg-gradient-to-br from-blue-300 to-blue-500";
+        borderClass = "border-blue-300";
+        textClass = "text-white";
+        break;
+      default:
+        bgClass = "bg-gradient-to-br from-gray-200 to-gray-400";
+        borderClass = "border-gray-300";
+        textClass = "text-gray-700";
+        break;
+    }
+  }
+
+  const isLightText = textClass === "text-white";
+
   return (
     <div
-      className={`rounded-lg border-2 p-3 flex flex-col gap-1 min-h-28 ${style.cls}`}
+      className={`relative h-full rounded-xl border-2 p-3 flex flex-col gap-1 overflow-hidden shadow-sm hover:shadow-md transition-all ${bgClass} ${borderClass} ${textClass}`}
       title={cell.faultReason ?? undefined}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-sm">Ô #{cell.boxNumber}</span>
-        {cell.cellType === "DRONE" && <Plane className="w-4 h-4" />}
-        {cell.cellType === "XL" && <Luggage className="w-4 h-4" />}
-        {cell.cellType === "STANDARD" && <BoxIcon className="w-4 h-4" />}
+      {/* Decorative metallic handle */}
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-black/10 rounded-full border border-white/20" />
+      
+      <div className="flex items-center justify-between z-10">
+        <span className="font-semibold text-sm drop-shadow-sm">Ô #{cell.boxNumber}</span>
+        {isDrone && <Plane className="w-5 h-5 opacity-90 drop-shadow-md" />}
+        {cell.cellType === "XL" && <Luggage className="w-5 h-5 opacity-80" />}
+        {cell.cellType === "STANDARD" && <BoxIcon className="w-5 h-5 opacity-80" />}
       </div>
-      <span className="text-xs">{style.label}</span>
+      <span className="text-xs font-medium z-10 drop-shadow-sm">
+        {STATUS_STYLE[cell.status]?.label ?? cell.status}
+      </span>
       {cell.faultReason && (
-        <span className="text-[11px] leading-tight line-clamp-2">{cell.faultReason}</span>
+        <span className="text-[11px] leading-tight line-clamp-2 mt-1 z-10 opacity-90">
+          {cell.faultReason}
+        </span>
       )}
-      <div className="mt-auto flex flex-wrap gap-1">
+      <div className="mt-auto flex flex-wrap gap-1.5 pt-2 z-10">
         {cell.status === "FAULT" ? (
           <ActBtn
             icon={<CheckCircle2 className="w-3 h-3 mr-1" />}
             label="Đã sửa"
             busy={busy}
             onClick={() => onClear(cell)}
+            isLight={isLightText}
           />
         ) : cell.status === "OUT_OF_SERVICE" || cell.status === "CLEANING" ? (
           <ActBtn
@@ -113,6 +170,7 @@ function CellTile({
             label="Khôi phục"
             busy={busy}
             onClick={() => onReturn(cell)}
+            isLight={isLightText}
           />
         ) : cell.status === "OCCUPIED" || cell.status === "RESERVED" ? (
           <ActBtn
@@ -120,6 +178,7 @@ function CellTile({
             label="Báo hỏng"
             busy={busy}
             onClick={() => onFault(cell)}
+            isLight={isLightText}
           />
         ) : (
           <>
@@ -128,18 +187,21 @@ function CellTile({
               label="Hỏng"
               busy={busy}
               onClick={() => onFault(cell)}
+              isLight={isLightText}
             />
             <ActBtn
               icon={<Ban className="w-3 h-3 mr-1" />}
               label="Ngưng"
               busy={busy}
               onClick={() => onOutOfService(cell)}
+              isLight={isLightText}
             />
             <ActBtn
               icon={<Sparkles className="w-3 h-3 mr-1" />}
               label="Vệ sinh"
               busy={busy}
               onClick={() => onCleaning(cell)}
+              isLight={isLightText}
             />
           </>
         )}
@@ -148,6 +210,7 @@ function CellTile({
           label="Mở khẩn cấp"
           busy={busy}
           onClick={() => onForceOpen(cell)}
+          isLight={isLightText}
         />
       </div>
     </div>
@@ -172,20 +235,12 @@ export default function LockerLayoutPage() {
 
   const layout = data?.data;
 
-  const rows = useMemo(() => {
+  const cells = useMemo(() => {
     if (!layout) return [];
-    const byRow = new Map<number, CellResponse[]>();
-    for (const cell of layout.cells) {
-      const row = cell.rowIndex ?? 0;
-      if (!byRow.has(row)) byRow.set(row, []);
-      byRow.get(row)!.push(cell);
-    }
-    return [...byRow.entries()]
-      .sort(([a], [b]) => a - b)
-      .map(([row, cells]) => ({
-        row,
-        cells: cells.sort((a, b) => (a.colIndex ?? 0) - (b.colIndex ?? 0)),
-      }));
+    return [...layout.cells].sort((a, b) => {
+      if (a.rowIndex !== b.rowIndex) return (a.rowIndex ?? 0) - (b.rowIndex ?? 0);
+      return (a.colIndex ?? 0) - (b.colIndex ?? 0);
+    });
   }, [layout]);
 
   const handleFault = async (cell: CellResponse) => {
@@ -352,18 +407,26 @@ export default function LockerLayoutPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {rows.map(({ row, cells }) => (
-            <div key={row} className="flex items-stretch gap-3">
-              <div className="w-14 shrink-0 flex items-center justify-center text-xs text-muted-foreground border rounded-md bg-muted/40">
-                Hàng {row}
-              </div>
-              <div
-                className="grid gap-3 flex-1"
-                style={{ gridTemplateColumns: `repeat(${Math.max(cells.length, 1)}, minmax(0, 1fr))` }}
-              >
-                {cells.map((cell) => (
+          <div
+            className="grid gap-3 p-4 bg-muted/20 rounded-xl border border-muted/40"
+            style={{
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gridAutoRows: "minmax(140px, auto)",
+            }}
+          >
+            {cells.map((cell) => {
+              const span = cell.cellType === "XL" ? 2 : 1;
+              return (
+                <div
+                  key={cell.id}
+                  style={{
+                    gridColumnStart: (cell.colIndex ?? 0) + 1,
+                    gridRowStart: (cell.rowIndex ?? 0) + 1,
+                    gridRowEnd: `span ${span}`,
+                  }}
+                  className="flex flex-col h-full shadow-sm transition-all hover:shadow-md"
+                >
                   <CellTile
-                    key={cell.id}
                     cell={cell}
                     onFault={handleFault}
                     onClear={handleClear}
@@ -376,10 +439,10 @@ export default function LockerLayoutPage() {
                       pendingBox === cell.id
                     }
                   />
-                ))}
-              </div>
-            </div>
-          ))}
+                </div>
+              );
+            })}
+          </div>
           <div className="flex flex-wrap gap-3 pt-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1"><Plane className="w-3 h-3" /> Ô nhận hàng drone</span>
             <span className="inline-flex items-center gap-1"><Luggage className="w-3 h-3" /> Ô vali (XL)</span>
