@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
+    "build": "tsc -b && vite build",
+    "lint": "eslint src/main.tsx src/App.tsx src/pages/LandingPage.tsx",
     "preview": "vite preview",
     "deploy": "npm run build && npx wrangler deploy"
   },
