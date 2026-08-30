@@ -1,8 +1,9 @@
 // API Base URLs
-// Mặc định trỏ về backend đã deploy trên DigitalOcean (cả nhóm dùng chung server + DB).
-// Có thể override bằng VITE_API_BASE_URL trong .env khi chạy backend local.
+// Mặc định trỏ về API production (Azure VM sau Nginx/TLS) qua domain, không hard-code IP:
+// đổi server chỉ cần đổi DNS. Override bằng VITE_API_BASE_URL trong .env khi chạy
+// backend local (http://localhost:18080).
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://146.190.84.136:8080";
+  import.meta.env.VITE_API_BASE_URL || "https://api.locker-drone.tech";
 
 // Root URIs
 export const ROOT_URI = {

@@ -13,7 +13,8 @@ import { Switch } from "~/components/ui/switch";
 import { Badge } from "~/components/ui/badge";
 import { useCreateUserMutation } from "~/stores/apis/admin";
 
-const ALL_ROLES = ["CUSTOMER", "ADMIN", "MANAGER", "MAINTENANCE", "TECHNICIAN"] as const;
+// Role model chuẩn (khớp JwtGatewayFilter.hasRequiredRole): MANAGER/STAFF đã khai tử.
+const ALL_ROLES = ["CUSTOMER", "ADMIN", "MAINTENANCE", "TECHNICIAN"] as const;
 
 const ROLE_STYLES: Record<string, string> = {
   ADMIN:
