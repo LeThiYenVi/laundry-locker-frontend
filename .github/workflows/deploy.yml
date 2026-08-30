@@ -8,8 +8,9 @@ on:
       - 'fe/**'
       - 'landingPage/**'
       - '.github/workflows/deploy.yml'
-    paths-ignore:
-      - 'DEPLOY-LOG.md'   # tránh vòng lặp: job ghi nhật ký tự commit file này
+    # Không đặt paths-ignore cạnh paths trong cùng một event: GitHub Actions từ chối
+    # workflow ngay lúc khởi động (run 0 job, không có log). Cũng không cần nữa —
+    # DEPLOY-LOG.md nằm ở gốc repo nên vốn đã không khớp danh sách paths ở trên.
   workflow_dispatch:
 
 permissions:
